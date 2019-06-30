@@ -1,0 +1,158 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Demandes de créneaux de polymérisations{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('build/vis.css') }}">
+    <style type="text/css">
+        table {
+			width: 100%;
+			font-size: 2vmin;
+	   }
+		th{
+			color:#000008;
+			background-color: #1e90ff;
+		}
+		td{
+			font-weight: bold;
+		}
+		.btn.btn-info.btn-block{
+			background-color: #1dd60c;
+		}
+		
+	</style>
+{%endblock%}
+
+{% block body %}
+	<h1>Prévisualisation des créneaux de polymérisations ✅</h1>
+ 		<div id="visualization">
+		</div>
+		<h1>Demandes en cours ✅</h1>
+	{% for Moyen in moyens %}
+    	{%set moy ={id:  Moyen.id ,content: Moyen.Libelle}%}
+	{% endfor %}
+		<!-- Modal -->
+		<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalTitle" aria-hidden="true">
+			<div class="modal-dialog" role="document">
+					<pre>{{dump('data-id')}}</pre>
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+							</div>
+					<div class="modal-body">
+						{{ render(controller('App\\Controller\\PlanningMCController::DemandesCrea',{ 'datejour':  datedeb|date('Y-m-d'), 'user': app.user })) }}
+					</div>
+				</div>
+			</div>
+		</div>
+<div class="table-responsive">
+    <table class="table">
+		<thead>		
+		</thead>
+			<table class="table">	
+			{% set start_jour = datedeb | date('d') %}
+			{% set end_jour = datefin | date('d') %}
+			{% for day in  start_jour .. end_jour %}
+				{% set jour = day-start_jour %}
+				{% set myDate = datedeb|date_modify(['+',jour,'days']|join) %}
+				{% set myDa = myDate|localizeddate('none', 'none', null, null, 'EEEE') %}
+				{% set myDat = myDate|date('d/m/y')|upper %}
+				<tr>
+					<td colspan="11">
+						<button type="button" class="btn btn-info btn-block">
+							<a href="" data-toggle="modal" data-target="#exampleModal" data-id={{ myDat }}>
+									<span>CREER UNE DEMANDE POUR LE {{myDa}} {{myDat}}</span></a>
+						</button>
+					</td>
+				</tr>
+				<thead>
+						<tr> 
+								<th> Jour </th>	
+								<th> Id </th>
+								<th> Cycle </th>
+								<th> Date Proposée </th>
+								<th> Heure Proposée </th>
+								<th> Outillages </th>
+								<th> Plannification </th>
+								<th> Commentaires </th>
+								<th> Date de création </th>
+								<th> Date de modification </th>
+								<th> Action </th>
+				
+							</tr>
+				</thead>
+				{% for cycle in Cycles if cycle.datePropose|date('d/m/Y') == myDate|date('d/m/Y') %}					
+					<tbody>
+					<tr>
+						<td> </td>
+						<td>{{ cycle.id  }}</td>
+						<td>{{ cycle.cycle.nom }}</td>
+						<td>{{ cycle.datePropose ?  cycle.datePropose|date('d/m/Y') : ''  }}</td>
+						<td>{{ cycle.heurePropose ? cycle.heurePropose|date('H:i:s') : '' }}</td>
+						<td>{{ cycle.outillages  }}</td>
+						<td>{{ cycle.plannifie ? 'OUI' : 'NON'}}</td>
+						<td>{{ cycle.commentaires }}</td>
+						<td>{{ cycle.dateCreation ? cycle.dateCreation|date('d/m/Y H:i:s') : '' }}</td>
+						<td>{{ cycle.dateModif ? cycle.dateModif|date('d/m/Y H:i:s') : '' }}</td>
+						<td>
+							<a href="{{ path('Modif_Demandes', {'id': cycle.id}) }}">Modifier</a>
+						</td>
+					</tr>
+					</tbody>
+				{% endfor %}
+			{% endfor %}
+		</table>				
+	</table>
+ </div> 
+
+{% endblock %}
+ 
+{% block javascripts %}
+<script src="{{ asset('build/vis.js') }}"></script>
+<script src="{{ asset('build/handlebars.min.js') }}"></script>
+    <script src="{{ asset('build/prototype.js') }}"></script>
+    <script src="{{ asset('build/sweetalert.min.js') }}"></script>
+    <script id="item-template" type="text/x-handlebars-template">
+            <table class="infos">
+                <tr>
+                    <td colspan="3" class="programmes">{% verbatim %}{{programmes}}{% endverbatim %}</td>
+                    <th><img src="{{asset('build/images/{{statut}}.png')}}" width="31" height="20" alt="{% verbatim %}{{icone}}{% endverbatim %}"></th>
+                    <td colspan="3" class="statut">{% verbatim %}{{statut}}{% endverbatim %}</td>
+                </tr>
+            </table>
+    </script>
+    <script id="item-popup" type="text/x-handlebars-template">
+            <table class="infos">
+                <tr>
+                    <td colspan="3" class="programmes">{% verbatim %}{{programmes}}{% endverbatim %}</td>
+                    <td colspan="3" class="statut">{% verbatim %}{{statut}}{% endverbatim %}</td>
+                </tr>
+            </table>
+    </script>
+<script type="text/javascript">
+const lang = navigator.language; // "de_DE"; // "en_US"; // 
+const locale = (lang && lang !== undefined) ? lang.match(/^\w{2}/)[0] : 
+    (lang === "de" || lang === "fr" || lang === "it" || lang === "nl") ? lang : "en"; // "en"; // "de"; //
+        // create a handlebars template
+        var source = document.getElementById('item-template').innerHTML;
+        var template = Handlebars.compile(source);
+        console.log(template)
+var conteneur = document.getElementById ('visualization');
+
+var groups = {{moyens|raw}};
+console.log(groups);
+var items = new vis.DataSet ({{taches|raw}});
+console.log(items);
+var options = {
+			template:template,
+            stack: true,
+            start: '{{datedeb|date('Y-m-d\\TH:i:sP') }}',
+            end: '{{datefin|date('Y-m-d\\TH:i:sP') }}',
+            orientation: 'top'};
+var timeline = new vis.Timeline (conteneur, items, groups, options);
+console.log(options.end);
+</script>
+{% endblock %}
+

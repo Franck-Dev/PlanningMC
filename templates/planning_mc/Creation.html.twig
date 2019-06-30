@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% form_theme formProg 'bootstrap_4_layout.html.twig' %}
+
+{% block title %}APAMC{% endblock %}
+
+{% block body %}
+	<h1>Création des Programmes de  ! ✅</h1>
+
+    {{form_start(formProg)}}
+
+    {{form_widget(formProg)}}
+
+    <button type="submit" class="btn btn-success">Ajouter le programme</button>
+
+    {{form_end(formProg)}}
+
+{% endblock %}

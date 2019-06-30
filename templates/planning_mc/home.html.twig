@@ -1,0 +1,331 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}APAMC {{ controller_name }}!{% endblock %}
+
+{% block body %}
+<style>
+    .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
+    .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
+    body {
+        background-color: #fafafa;
+        font-size: 16px;
+        line-height: 1.5;
+    }
+    
+    h1,h2,h3,h4,h5,h6 {
+        font-weight: 400;	
+    }
+    
+    #header {
+        border-bottom: 5px solid #37474F;
+        color: #37474F;
+        margin-bottom: 1.5rem;
+        padding: 1rem 0;
+    }
+    
+    #revenue-tag {
+        font-weight: inherit !important;
+        border-radius: 0px !important;
+    }
+    
+    .card {
+        border: 0rem;
+        border-radius: 0rem;
+    }
+    
+    .card-header {
+        background-color: #37474F;
+        border-radius: 0 !important;
+        color:	white;
+        margin-bottom: 0;
+        padding:	1rem;
+    }
+    
+    .card-block {
+        border: 1px solid #cccccc;	
+    }
+    
+    .shadow {
+        box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.14),
+                                0 1px 18px 0 rgba(0, 0, 0, 0.12),
+                                0 3px 5px -1px rgba(0, 0, 0, 0.2);
+    }
+    
+    #revenue-column-chart, #products-revenue-pie-chart, #orders-spline-chart,#sales-doughnut-chart-us,#users-countries-bar-chart {
+        height: 300px;
+        width: 100%;
+    }			
+</style>
+
+<div class="example-wrapper">
+
+<h1> Bienvenue sur l'application de l'UAP PE ✅</h1>
+
+    <ul>
+        <li>Pour le moulage le planning sera sur chaque utilisateur en lieu et place des moyens</li>
+    </ul>
+</div>
+<div class="container">
+        <h2 id="header">
+            <strong>Indicateurs Polymérisation</strong>
+            <small class="text-muted">Jan 2019 - Dec 2019</small>
+        </h2>
+        
+        <div class="row m-b-1">
+            <div class="col-lg-3">
+                <div class="card shadow">
+                    <h4 class="card-header">Qté Pcs Produites <span class="tag tag-success" id="revenue-tag">15,341</span></h4>
+                    <div class="card-block">
+                        <div id="revenue-column-chart"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3">
+                    <div class="card shadow">
+                        <h4 class="card-header">TRS <span class="tag tag-success" id="revenue-tag"> 2500 Heures</span></h4>
+                        <div class="card-block">
+                            <div id="sales-doughnut-chart-us"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card shadow">
+                        <h4 class="card-header">Charges par Moyens <span class="tag tag-success" id="revenue-tag">12000 Heures</span></h4>
+                        <div class="card-block">
+                            <div id="users-countries-bar-chart"></div>
+                        </div>
+                    </div>
+                </div>
+        </div> <!-- row -->
+        <hr></hr>
+        <div class="row m-b-1">
+            <div class="col-lg-6">
+                <div class="card shadow">
+                    <h4 class="card-header">Répartition des programmes</h4>
+                    <div class="card-block">
+                        <div id="products-revenue-pie-chart"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card shadow">
+                    <h4 class="card-header">OTD Moulage</h4>
+                    <div class="card-block">
+                        <div id="orders-spline-chart"></div>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- row -->
+    </div> <!-- container -->
+
+{% endblock %}
+{% block javascripts %}
+<script src="{{ asset('build/jquery.min.js') }}"></script>
+<script src="{{ asset('build/canvasjs.min.js') }}"></script>
+<script src="{{ asset('build/bootstrap.min.js') }}"></script>
+<script src="{{ asset('build/tether.min.js') }}"></script>
+<script type="text/javascript"> 
+        $(function () {
+            var totalRevenue = 15341110;
+            var totalUsers = 7687036;
+            // CanvasJS column chart to show revenue from Jan 2015 - Dec 2015
+            var revenueColumnChart = new CanvasJS.Chart("revenue-column-chart", {
+                animationEnabled: true,
+                backgroundColor: "transparent",
+                theme: "theme2",
+                axisX: {
+                    labelFontSize: 14,
+                    valueFormatString: "MMM YYYY"
+                },
+                axisY: {
+                    labelFontSize: 14,
+                    prefix: "$"
+                },
+                toolTip: {
+                    borderThickness: 0,
+                    cornerRadius: 0
+                },
+                data: [
+                    {
+                        type: "column",
+                        yValueFormatString: "$###,###.##",
+                        dataPoints: [
+                            { x: new Date("1 Jan 2015"), y: 868800 },
+                            { x: new Date("1 Feb 2015"), y: 1071550 },
+                            { x: new Date("1 Mar 2015"), y: 1286200 },
+                            { x: new Date("1 Apr 2015"), y: 1106900 },
+                            { x: new Date("1 May 2015"), y: 1033800 },
+                            { x: new Date("1 Jun 2015"), y: 1017160 },
+                            { x: new Date("1 Jul 2015"), y: 1458000 },
+                            { x: new Date("1 Aug 2015"), y: 1165850 },
+                            { x: new Date("1 Sep 2015"), y: 1594150 },
+                            { x: new Date("1 Oct 2015"), y: 1501700 },
+                            { x: new Date("1 Nov 2015"), y: 1588400 },
+                            { x: new Date("1 Dec 2015"), y: 1648600 }
+                        ]
+                    }
+                ]
+            });
+            
+            revenueColumnChart.render();
+
+				// CanvasJS doughnut chart to show annual sales percentage from United States(US)
+				var salesDoughnutChartUS = new CanvasJS.Chart("sales-doughnut-chart-us", { 
+                    animationEnabled: true,
+                    theme: "theme2",
+					title: {
+						fontColor: "#848484",
+						fontSize: 70,
+						horizontalAlign: "center",
+						text: "47%",
+						verticalAlign: "center"
+					},
+					toolTip: {
+						backgroundColor: "#ffffff",
+						borderThickness: 0,
+						cornerRadius: 0,
+						fontColor: "#424242"
+					},
+					data: [
+						{
+							explodeOnClick: false,
+							innerRadius: "96%",
+							radius: "90%",
+							startAngle: 270,
+							type: "doughnut",
+							dataPoints: [
+								{ y: 47, color: "#c70000", toolTipContent: "United States: $<span>" + CanvasJS.formatNumber(Math.round(47 / 100 * totalRevenue), '#,###,###') + "</span>" },
+								{ y: 53, color: "#424242", toolTipContent: null }
+							]
+						}
+					]
+                });
+                
+                salesDoughnutChartUS.render();
+
+            //CanvasJS pie chart to show product wise annual revenue for 2015
+            var productsRevenuePieChart = new CanvasJS.Chart("products-revenue-pie-chart", {
+                animationEnabled: true,
+                theme: "theme2",
+                legend: {
+                    fontSize: 14
+                },
+                toolTip: {
+                    borderThickness: 0,
+                    content: "<span style='\"'color: {color};'\"'>{name}</span>: ${y} (#percent%)",
+                    cornerRadius: 0
+                },
+                data: [
+                    {       
+                        indexLabelFontColor: "#676464",
+                        indexLabelFontSize: 14,
+                        legendMarkerType: "square",
+                        legendText: "{indexLabel}",
+                        showInLegend: true,
+                        startAngle:  90,
+                        type: "pie",
+                        dataPoints: [
+                            {  y: 6289855, name:"FP A65 ATC", indexLabel: "FP A65 ATC", legendText: "FP A65 ATC", exploded: true },
+                            {  y: 2761400, name:"FP A61 ATC", indexLabel: "FP A61 ATC", legendText: "FP A61 ATC" },
+                            {  y: 3681866, name:"FP A44 ATC", indexLabel: "FP A44 ATC", legendText: "FP A44 ATC", color: "#8064a1" },
+                            {  y: 2607989, name:"FP A51 ATC", indexLabel: "FP A51 ATC", legendText: "FP A51 ATC" }
+                        ]
+                    }
+                ]
+            });
+            
+            productsRevenuePieChart.render();
+            
+            //CanvasJS spline chart to show orders from Jan 2015 to Dec 2015
+            var ordersSplineChart = new CanvasJS.Chart("orders-spline-chart", {
+                animationEnabled: true,
+                theme: "theme2",
+                toolTip: {
+                    borderThickness: 0,
+                    cornerRadius: 0
+                },
+                axisX: {
+                    labelFontSize: 14,
+                    maximum: new Date("31 Dec 2015"),
+                    valueFormatString: "MMM YYYY"
+                },
+                axisY: {
+                    gridThickness: 0,
+                    labelFontSize: 14,
+                    lineThickness: 2
+                },
+                data: [
+                    {
+                        type: "spline",
+                        dataPoints: [
+                            { x: new Date("1 Jan 2015"), y: 17376 },
+                            { x: new Date("1 Feb 2015"), y: 21431 },
+                            { x: new Date("1 Mar 2015"), y: 25724 },
+                            { x: new Date("1 Apr 2015"), y: 22138 },
+                            { x: new Date("1 May 2015"), y: 20676 },
+                            { x: new Date("1 Jun 2015"), y: 25429 },
+                            { x: new Date("1 Jul 2015"), y: 29160 },
+                            { x: new Date("1 Aug 2015"), y: 23317 },
+                            { x: new Date("1 Sep 2015"), y: 31883 },
+                            { x: new Date("1 Oct 2015"), y: 30034 },
+                            { x: new Date("1 Nov 2015"), y: 31768 },
+                            { x: new Date("1 Dec 2015"), y: 41215 }
+                        ]
+                    }
+                ]
+            });
+
+            ordersSplineChart.render();
+            
+            // CanvasJS bar chart to show country wise annual users percentage
+				var usersCountriesBarChart = new CanvasJS.Chart("users-countries-bar-chart", {
+					animationEnabled: true,
+					theme: "theme2",
+					axisX: {
+						labelFontColor: "#848484",
+						labelFontSize: 18,
+						lineThickness: 0,
+						tickThickness: 0
+					},
+					axisY: {
+						gridThickness: 0,
+						lineThickness: 0,
+						tickThickness: 0,
+						valueFormatString: " "
+						                    
+					},
+					toolTip: {
+						backgroundColor: "#ffffff",
+						borderThickness: 0,
+						cornerRadius: 0,
+						fontColor: "#424242",
+						contentFormatter: function (e) {
+							return e.entries[0].dataPoint.label + ": " +  CanvasJS.formatNumber(Math.round(e.entries[0].dataPoint.y / 100 * totalUsers), '###,###'); // calculating and showing country wise number of users inside tooltip
+						}
+					},
+					data: [
+						{
+							color: "#424242",
+							indexLabelFontColor: "#848484",
+							indexLabelFontFamily: "calibri",
+							indexLabelFontSize: 18,
+							indexLabelPlacement: "outside",
+							type: "bar",
+							dataPoints: [
+								{ y: 2,  indexLabel: "2%",  label: "Etuve2" },
+								{ y: 4,  indexLabel: "4%",  label: "Etuve3" },
+								{ y: 5,  indexLabel: "5%",  label: "Autoclave3" },
+								{ y: 12, indexLabel: "12%", label: "Autoclave2" },
+								{ y: 9,  indexLabel: "9%",  label: "Autoclave6" },
+								{ y: 10, indexLabel: "10%", label: "Autoclave4" },
+								{ y: 14, indexLabel: "14%", label: "Autoclave5" },
+								{ y: 44, indexLabel: "44%", label: "Autoclave1" }
+							]
+						}
+					]
+				});
+            usersCountriesBarChart.render();
+        });
+</script>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% form_theme formPolyms 'bootstrap_4_layout.html.twig'%}
+
+{% block title %}Plannifications{% endblock %}
+
+{% block body %}
+	<h1>Validation des créneaux de polymérisations ✅</h1>
+
+
+    {{form_start(formPolyms)}}
+
+    {{form_widget(formPolyms)}}
+
+    <button type="submit" class="btn btn-success">Valider la polym</button>
+
+    {{form_end(formPolyms)}}
+
+
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Listes des Programmes{% endblock %}
+
+{% block body %}
+	<h1>Listing des Programmes ! ✅</h1>
+        <div class="dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Moyen
+            <span class="caret"></span></button>
+            <ul class="dropdown-menu">
+                {%for moyen in Moyens%}
+                    <li><a href="{{ path('Consul_ProgMoy', {'id': moyen.id}) }}">{{moyen.libelle}}</a></li>
+                {%endfor%}
+            </ul>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Nom</th>
+                        <th>Description</th>
+                        <th>Tps Theorique</th>
+                        <th>Durée</th>
+                        <th>Tps Chargement</th>
+                        <th>Tps Dechargement</th>
+                        <th>Moyen</th>
+                        <th>Thermocouples</th>
+                        <th>SPC</th>
+                        <th>Date Creation</th>
+                        <th>Date Modification</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for cycle in Cycles %}
+                    <tr>
+                        <td>{{ cycle.id }}</td>
+                        <td>{{ cycle.nom }}</td>
+                        <td>{{ cycle.description }}</td>
+                        <td>{{ cycle.tpstheo}}</td>
+                        <td>{{ cycle.duree ? cycle.duree|date('H:i:s') : '' }}</td>
+                        <td>{{ cycle.TpsChargement ? cycle.TpsChargement|date('H:i:s') : '' }}</td>
+                        <td>{{ cycle.TpsDechargement ? cycle.TpsDechargement|date('H:i:s') : '' }}</td>
+                        <td>{{ cycle.CateMoyen.libelle}}</td>
+                        <td>{{ cycle.Thermocouples }}</td>
+                        <td>{{ cycle.Spc }}</td>
+                        <td>{{ cycle.datecreation  ? cycle.datecreation|date('Y/m/d H:i:s') : '' }}</td>
+                        <td>{{ cycle.datemodif ? cycle.datemodif|date('Y/m/d H:i:s') : '' }}</td>
+                        <td>
+                            <a href="{{ path('Modification', {'id': cycle.id}) }}">Editer</a>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td>{{ Cycles.id }}</td>
+                        <td>{{ Cycles.nom }}</td>
+                        <td>{{ Cycles.description }}</td>
+                        <td>{{ Cycles.tpstheo}}</td>
+                        <td>{{ Cycles.duree ? Cycles.duree|date('H:i:s') : '' }}</td>
+                        <td>{{ Cycles.TpsChargement ? Cycles.TpsChargement|date('H:i:s') : '' }}</td>
+                        <td>{{ Cycles.TpsDechargement ? Cycles.TpsDechargement|date('H:i:s') : '' }}</td>
+                        <td>{{ Cycles.CateMoyen.libelle}}</td>
+                        <td>{{ Cycles.Thermocouples }}</td>
+                        <td>{{ Cycles.Spc }}</td>
+                        <td>{{ Cycles.datecreation  ? Cycles.datecreation|date('Y/m/d H:i:s') : '' }}</td>
+                        <td>{{ Cycles.datemodif ? Cycles.datemodif|date('Y/m/d H:i:s') : '' }}</td>
+                        <td>
+                            <a href="{{ path('Modification', {'id': Cycles.id}) }}">Editer</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    <a href="{{ path('Creation') }}">Creer un nouveau cycle</a>
+
+{% endblock %}

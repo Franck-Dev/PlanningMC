@@ -1,0 +1,292 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Planning {{ controller_name }}!{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('build/vis.css') }}">
+    <style type="text/css">
+        table {
+            width: 100%;
+            font-size: 2vmin;
+       }
+        .sweetalert-lg {
+            width: 600px;
+        }
+    </style>
+{%endblock%}    
+{% block body %}
+    {% for tache in Taches %}
+        {{ tache.id }}
+        {{ tache.Identification }}
+        {{ tache.Action}}
+        {{ tache.DebutDate ? tache.DebutDate|date('H:i:s') : '' }}
+        {{ tache.FinDate ? tache.FinDate|date('H:i:s') : '' }}
+        {{ tache.TpsChargement ? tache.TpsChargement|date('H:i:s') : '' }}
+        {{ tache.TpsDechargement ? tache.TpsDechargement|date('H:i:s') : '' }}
+        {{ tache.Statut }}
+        {{ tache.datecreation  ? tache.datecreation|date('Y/m/d H:i:s') : '' }}
+        {{ tache.datemodif ? tache.datemodif|date('Y/m/d H:i:s') : '' }}
+    {% endfor %}
+    <div id="visualization">
+        <h2>Planning de la semaine </h2>
+        <input type="button" id="jour" value="Aujourd'hui">
+        <input type="button" id="semaine-1" value="Semaine dernière">
+        <input type="button" id="semaine" value="Semaine en cours">
+        <input type="button" id="semaine+1" value="Semaine suivante">
+    </div>
+    <p></p>
+    <div id="log"></div>
+{% endblock %}
+{% block javascripts %}
+    <script src="{{ asset('build/vis.js') }}"></script>
+    <script src="{{ asset('build/handlebars.min.js') }}"></script>
+    <script src="{{ asset('build/prototype.js') }}"></script>
+    <script src="{{ asset('build/sweetalert.min.js') }}"></script>
+    <script id="item-template" type="text/x-handlebars-template">
+            <table class="infos">
+                <tr>
+                    <td colspan="3" class="programmes">{% verbatim %}{{programmes}}{% endverbatim %}</td>
+                    <th><img src="{{asset('build/images/{{statut}}.png')}}" width="31" height="20" alt="{% verbatim %}{{icone}}{% endverbatim %}"></th>
+                    <td colspan="3" class="statut">{% verbatim %}{{statut}}{% endverbatim %}</td>
+                </tr>
+            </table>
+    </script>
+    <script id="item-popup" type="text/x-handlebars-template">
+            <table class="infos">
+                <tr>
+                    <td colspan="3" class="programmes">{% verbatim %}{{programmes}}{% endverbatim %}</td>
+                    <td colspan="3" class="statut">{% verbatim %}{{statut}}{% endverbatim %}</td>
+                </tr>
+            </table>
+    </script>
+    <script type="text/javascript">
+    const lang = navigator.language; // "de_DE"; // "en_US"; // 
+    const locale = (lang && lang !== undefined) ? lang.match(/^\w{2}/)[0] : 
+    (lang === "de" || lang === "fr" || lang === "it" || lang === "nl") ? lang : "en"; // "en"; // "de"; //
+        // create a handlebars template
+        var source = document.getElementById('item-template').innerHTML;
+        var template = Handlebars.compile(source);
+        //console.log(template)
+        var conteneur = document.getElementById ('visualization');
+
+        var groups = {{Moyens|raw}};
+
+        var items = new vis.DataSet ({{Taches|raw}});
+
+        var itemsold = new vis.DataSet ([
+            {id: 1, programmes: 'PRP10001', statut: 'PLANNIFIE', start: '2019-02-19 22:00:00', end: '2019-02-20 02:00:00', group: 2, className: 'pink', title: 'Prendre les outillages en salle de moulage'},
+            {id: 2, programmes: 'PRP10002', statut: 'VALIDE', start: '2019-02-19 23:00:00', end: '2019-02-20 05:15:00', group: 1, style: 'background-color: red', satut: 'Plannifie', title: ['OT98765','OT123456']},
+            {id: 3, programmes: 'PRP10003', statut: 'ENCOURS', start: '2019-02-20 06:00:00', end: '2019-02-20 18:10:00', group: 1, style: 'background-color: green'},
+            {id: 4, programmes: 'PRP10004', statut: 'TERMINE', start: '2019-02-20 22:00:00', end: '2019-02-21 08:50:00', group: 4, style: 'background-color: yellow'},
+            {id: 5, programmes: 'PRP10005', statut: 'REMPLACE', start: '2019-02-20 04:00:00', end: '2019-02-20 09:30:00', group: 2, style: 'background-color: brown'},
+            {id: 6, programmes: 'PRP10006', statut: 'ANNULE', start: '2019-02-20 22:00:00', end: '2019-02-21 02:00:00', group: 1, style: 'background-color: #ed12dd'}
+        ]);
+
+        var options = {
+            template:template ,
+            stack: true,
+            start: new Date(),
+            end: new Date(1000*60*60*24*7 + (new Date()).valueOf()),
+            orientation: 'top',
+            editable : { 
+                add : true , // ajoute de nouveaux éléments en double tapant  
+                updateTime : true , // déplace les éléments horizontalement  
+                updateGroup : true , // déplace les éléments d'un groupe à un autre  
+                remove : true , // supprime un élément en appuyant sur le bouton de suppression en haut à droite  
+                overrideItems : false  // autorise ces options à remplacer item.editable
+            },
+            
+            onUpdate: function (item, callback) { 
+                prettyPromptItemUpdate('Données de polymérisation', 'Edition', item, groups, timeline, callback); 
+            }, 
+
+            tooltip: {
+                followMouse: true
+            }
+        };
+
+        var timeline = new vis.Timeline (conteneur, items, groups, options);
+        
+        items.on('*', function (event, properties) {
+            logEvent(event, properties);
+        });
+
+        function logEvent(event, properties) {
+            var log = document.getElementById('log');
+            var msg = document.createElement('div');
+            msg.innerHTML = 'event=' + JSON.stringify(event) + ', ' +
+            'properties=' + JSON.stringify(properties);
+            log.firstChild ? log.insertBefore(msg, log.firstChild) : log.appendChild(msg);
+        }
+
+        function prettyPromptItemUpdate(title, text, item, groups, timeline, callback) { 
+            var html = htmlForSweetAlert(item); 
+            swal({ 
+                title: title, 
+                text: text, 
+                content: html, 
+                //icon: "success"  
+            });
+        } 
+        function htmlForSweetAlert(item) { 
+            var form = document.createElement('FORM'); 
+            form.setAttribute("role", "form"); 
+            form.setAttribute("class", "form-vertical"); 
+        
+            var divForm_row01 = document.createElement('DIV'); 
+            divForm_row01.setAttribute("class", "form-group"); 
+            var divTitle = document.createElement('DIV'); 
+            divTitle.setAttribute("class", "col-sm-8"); 
+            var labelTitle = document.createElement('LABEL'); 
+            labelTitle.innerHTML = translate(locale, "titre", "title"); 
+            labelTitle.setAttribute("for", "inputTitle"); 
+            labelTitle.setAttribute("class", "col-form-label") 
+            var inputTitle = document.createElement('INPUT'); 
+            inputTitle.id = "inputTitle"; 
+            inputTitle.setAttribute("class", "form-control"); 
+            inputTitle.setAttribute("type", "text"); 
+            inputTitle.setAttribute("value", item.programmes) 
+        
+            var divResources = document.createElement('DIV'); 
+            divResources.setAttribute("class", "col-sm-4"); 
+            var labelResources = document.createElement('LABEL'); 
+            labelResources.innerHTML = translate(locale, "ressources", "resources"); 
+            labelResources.setAttribute("for", "inputResources"); 
+            labelResources.setAttribute("class", "col-form-label") 
+            var inputResources = document.createElement('INPUT'); 
+            inputResources.id = "inputResources"; 
+            inputResources.setAttribute("class", "form-control"); 
+            inputResources.setAttribute("type", "text"); 
+            inputResources.setAttribute("value", groups[item.group].content) 
+        
+            var divStatut = document.createElement('DIV'); 
+            divStatut.setAttribute("class", "col-sm-4"); 
+            var labelStatut = document.createElement('LABEL'); 
+            labelStatut.innerHTML = translate(locale, "statut", "resources"); 
+            labelStatut.setAttribute("for", "inputStatut"); 
+            labelStatut.setAttribute("class", "col-form-label") 
+            var inputStatut = document.createElement('INPUT'); 
+            inputStatut.id = "inputStatut"; 
+            inputStatut.setAttribute("class", "form-control"); 
+            inputStatut.setAttribute("type", "text"); 
+            inputStatut.setAttribute("value", item.statut)
+
+            // var divPause = document.createElement('DIV'); 
+            // divPause.setAttribute("class", "col-sm-4"); 
+            // var labelPause = document.createElement('LABEL'); 
+            // labelPause.innerHTML = "break"; 
+            // labelPause.setAttribute("for", "selectPause"); 
+            // labelPause.setAttribute("class", "col-form-label") 
+            // var selectPause = document.createElement('SELECT'); 
+            // selectPause.id = "selectPause"; 
+            // selectPause.setAttribute("class", "form-control"); 
+            // var array = ["", "BREAK"]; 
+            // for (var i = 0; i < array.length; i++) { 
+            //     var option = document.createElement("option"); 
+            //     option.value = array[i]; 
+            //     option.text = array[i]; 
+            //     selectPause.appendChild(option); 
+            // }; 
+            // selectPause.value = item["break"]; 
+        
+            /* row 2 */ 
+            var divForm_row02 = document.createElement('DIV'); 
+            divForm_row02.setAttribute("class", "form-group");   
+        
+            var divDateDeb = document.createElement('DIV');
+            divDateDeb.setAttribute("class", "col-sm-6"); 
+            var labelDateDeb = document.createElement('LABEL'); 
+            labelDateDeb.innerHTML = translate(locale, "Date Début", "employees"); 
+            labelDateDeb.setAttribute("for", "inputDateDeb"); 
+            labelDateDeb.setAttribute("class", "col-form-label") 
+            var inputDateDeb = document.createElement('INPUT'); 
+            inputDateDeb.id = "inputDateDeb"; 
+            inputDateDeb.setAttribute("class", "form-control"); 
+            inputDateDeb.setAttribute("type", "text"); 
+            inputDateDeb.setAttribute("min", 0); 
+            inputDateDeb.setAttribute("value", item.start); 
+        
+            var divDateFin = document.createElement('DIV'); 
+            divDateFin.setAttribute("class", "col-sm-6"); 
+            var labelDateFin = document.createElement('LABEL'); 
+            labelDateFin.innerHTML = translate(locale, "Date Fin", "estimated"); 
+            labelDateFin.setAttribute("for", "inputDateFin"); 
+            labelDateFin.setAttribute("class", "col-form-label") 
+            var inputDateFin = document.createElement('INPUT'); 
+            inputDateFin.id = "inputPrevisionnel"; 
+            inputDateFin.setAttribute("class", "form-control"); 
+            inputDateFin.setAttribute("type", "text"); 
+            inputDateFin.setAttribute("min", 0); 
+            inputDateFin.setAttribute("value", item.end); 
+        
+            var divComment = document.createElement('DIV'); 
+            divComment.setAttribute("class", "col-sm-12"); 
+            var labelComment = document.createElement('LABEL'); 
+            labelComment.innerHTML = translate(locale, "Commentaires", "worked"); 
+            labelComment.setAttribute("for", "inputComment"); 
+            labelComment.setAttribute("class", "col-form-label") 
+            var inputComment = document.createElement('INPUT'); 
+            inputComment.id = "inputComment"; 
+            inputComment.setAttribute("class", "form-control"); 
+            inputComment.setAttribute("type", "text"); 
+            inputComment.setAttribute("value", item.title); 
+        
+            /* BUILD FORM */ 
+            /* ROW 01*/ 
+            divTitle.appendChild(inputTitle); 
+            inputTitle.parentNode.insertBefore(labelTitle, inputTitle); 
+        
+            divResources.appendChild(inputResources); 
+            inputResources.parentNode.insertBefore(labelResources, inputResources); 
+        
+            divStatut.appendChild(inputStatut); 
+            inputStatut.parentNode.insertBefore(labelStatut, inputStatut);
+        
+            // divPause.appendChild(selectPause); 
+            // selectPause.parentNode.insertBefore(labelPause, selectPause); 
+        
+            divForm_row01.appendChild(divTitle); 
+            divForm_row01.appendChild(divResources); 
+            divForm_row01.appendChild(divStatut);
+            // divForm_row01.appendChild(divPause); 
+        
+            /* ROW 02 */ 
+        
+            divDateDeb.appendChild(inputDateDeb); 
+            inputDateDeb.parentNode.insertBefore(labelDateDeb, inputDateDeb); 
+        
+            divDateFin.appendChild(inputDateFin); 
+            inputDateFin.parentNode.insertBefore(labelDateFin, inputDateFin); 
+        
+            divComment.appendChild(inputComment); 
+            inputComment.parentNode.insertBefore(labelComment, inputComment); 
+        
+            divForm_row02.appendChild(divDateDeb); 
+            divForm_row02.appendChild(divDateFin); 
+            divForm_row02.appendChild(divComment); 
+        
+            form.appendChild(divForm_row01); 
+            form.appendChild(divForm_row02); 
+            return form; 
+        } 
+        function translate(locale, fr, en) { 
+            return locale === "fr" ? fr : en; 
+        } 
+
+        document.getElementById('semaine').onclick = function() {
+        timeline.setWindow(new Date(), new Date(1000*60*60*24*7 + (new Date()).valueOf()));
+        }
+        document.getElementById('jour').onclick = function() {
+        timeline.setWindow(new Date(), new Date(1000*60*60*24 + (new Date()).valueOf()));
+        }
+        document.getElementById('semaine-1').onclick = function() {
+        timeline.setWindow(new Date( (new Date()).valueOf())-1000*60*60*24*7,new Date() );
+        }
+        document.getElementById('semaine+1').onclick = function() {
+        timeline.setWindow(new Date(1000*60*60*24*7 + (new Date()).valueOf()), new Date(1000*60*60*24*14 + (new Date()).valueOf()));
+        }
+    </script>
+{% endblock %}
+{% block mesJavascripts %}
+
+{%endblock%}

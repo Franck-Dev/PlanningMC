@@ -1,0 +1,103 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello {{ controller_name }}!{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('build/vis.css') }}">
+{%endblock%}    
+{% block body %}
+    <div id="visualization">
+        <h2>Planning ✅</h2>
+    </div>
+{% endblock %}
+{% block javascripts %}
+    <script src="{{ asset('build/vis.js') }}"></script>
+    <script type="text/javascript">       
+        var conteneur = document.getElementById ('visualization');
+
+        var groups = [
+            {
+                id: 1,
+                content: 'Autoclave 1'
+                // Optional: a field 'className', 'style', 'order', [properties]
+            },
+            {
+                id: 2,
+                content: 'Autoclave 2'
+                // Optional: a field 'className', 'style', 'order', [properties]
+            },
+            {
+                id: 3,
+                content: 'Autoclave 3'
+                // Optional: a field 'className', 'style', 'order', [properties]
+            },
+            {
+                id: 4,
+                content: 'Autoclave 4'
+                // Optional: a field 'className', 'style', 'order', [properties]
+            },
+            {
+                id: 5,
+                content: 'Autoclave 5'
+                // Optional: a field 'className', 'style', 'order', [properties]
+            },
+            {
+                id: 6,
+                content: 'Autoclave 6'
+                // Optional: a field 'className', 'style', 'order', [properties]
+            },
+            {
+                id: 7,
+                content: 'Etuve 1'
+                // Optional: a field 'className', 'style', 'order', [properties]
+            },
+            {
+                id: 8,
+                content: 'Etuve 2'
+                // Optional: a field 'className', 'style', 'order', [properties]
+            },
+            {
+                id: 9,
+                content: 'Etuve 3'
+                // Optional: a field 'className', 'style', 'order', [properties]
+            }
+            ];
+
+        var items = new vis.DataSet ([
+            {id: 1, content: 'PRP10001', start: '2019-02-O2', end: '2019-02-10', group: 2, className: 'pink'},
+            {id: 2, content: 'PRP10002', start: '2019-02-02', end: '2019-02-09', group: 1, style: 'background-color: red'},
+            {id: 3, content: 'PRP10003', start: '2019-04-18', end: '2019-04-19', group: 1, style: 'background-color: green'},
+            {id: 4, content: 'PRP10004', start: '2019-04-16', end: '2019-04-19', group: 4, style: 'background-color: yellow'},
+            {id: 5, content: 'PRP10005', start: '2019-06-25', end: '2019-06-29', group: 2, style: 'background-color: brown'},
+            {id: 6, content: 'PRP10006', start: '2019-01-27', end: '2019-01-29', group: 1, style: 'background-color: purple'}
+        ]);
+
+        var options = {
+            stack: true,
+            start: new Date(),
+            end: new Date(1000*60*60*24 + (new Date()).valueOf()),
+            orientation: 'top',
+            locale : 'en',   // choix de la langue
+            //timeAxis: {scale: 'hour', step: 1},
+            editable : { 
+                add : true , // ajoute de nouveaux éléments en double tapant  
+                updateTime : true , // déplace les éléments horizontalement  
+                updateGroup : true , // déplace les éléments d'un groupe à un autre  
+                remove : true , // supprime un élément en appuyant sur le bouton de suppression en haut à droite  
+                overrideItems : false  // autorise ces options à remplacer item.editable
+                }
+            //template : function ( item , element , data ) { return '<h1>' + item . header + data . moving ? '' + data . start : '' + '</ h1> <p>' + item . description + '</ p>' ;   
+            //    },
+            //onMoving : function ( item , callback ) { item . moving = true ;}  
+        };
+
+        var timeline = new vis.Timeline (conteneur, items, groups, options);
+        
+        document.getElementById ('visualization'). onclick = function (event) {
+        
+        var props = timeline.getEventProperties (event)
+        console.log (props);
+        }
+        console.log(timeline);
+    </script>
+{% endblock %}
