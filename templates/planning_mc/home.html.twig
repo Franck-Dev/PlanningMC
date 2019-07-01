@@ -59,11 +59,8 @@
 
 <div class="example-wrapper">
 
-<h1> Bienvenue sur l'application de l'UAP PE ✅</h1>
+<h1> Bienvenue sur l'application de l'UAP PE de l'Usine de Tarbes Composite ✅</h1>
 
-    <ul>
-        <li>Pour le moulage le planning sera sur chaque utilisateur en lieu et place des moyens</li>
-    </ul>
 </div>
 <div class="container">
         <h2 id="header">
@@ -127,8 +124,8 @@
 <script src="{{ asset('build/tether.min.js') }}"></script>
 <script type="text/javascript"> 
         $(function () {
-            var totalRevenue = 15341110;
-            var totalUsers = 7687036;
+            //var totalRevenue = 15341110;
+            //var totalUsers = 7687036;
             // CanvasJS column chart to show revenue from Jan 2015 - Dec 2015
             var revenueColumnChart = new CanvasJS.Chart("revenue-column-chart", {
                 animationEnabled: true,
@@ -149,7 +146,7 @@
                 data: [
                     {
                         type: "column",
-                        yValueFormatString: "$###,###.##",
+                        yValueFormatString: "###,###.##",
                         dataPoints: [
                             { x: new Date("1 Jan 2015"), y: 868800 },
                             { x: new Date("1 Feb 2015"), y: 1071550 },
@@ -170,36 +167,36 @@
             
             revenueColumnChart.render();
 
-				// CanvasJS doughnut chart to show annual sales percentage from United States(US)
-				var salesDoughnutChartUS = new CanvasJS.Chart("sales-doughnut-chart-us", { 
+                // CanvasJS doughnut chart to show annual sales percentage from United States(US)
+                var salesDoughnutChartUS = new CanvasJS.Chart("sales-doughnut-chart-us", { 
                     animationEnabled: true,
                     theme: "theme2",
-					title: {
-						fontColor: "#848484",
-						fontSize: 70,
-						horizontalAlign: "center",
-						text: "47%",
-						verticalAlign: "center"
-					},
-					toolTip: {
-						backgroundColor: "#ffffff",
-						borderThickness: 0,
-						cornerRadius: 0,
-						fontColor: "#424242"
-					},
-					data: [
-						{
-							explodeOnClick: false,
-							innerRadius: "96%",
-							radius: "90%",
-							startAngle: 270,
-							type: "doughnut",
-							dataPoints: [
-								{ y: 47, color: "#c70000", toolTipContent: "United States: $<span>" + CanvasJS.formatNumber(Math.round(47 / 100 * totalRevenue), '#,###,###') + "</span>" },
-								{ y: 53, color: "#424242", toolTipContent: null }
-							]
-						}
-					]
+                    title: {
+                            fontColor: "#848484",
+                            fontSize: 70,
+                            horizontalAlign: "center",
+                            text: "47%",
+                            verticalAlign: "center"
+                    },
+                    toolTip: {
+                            backgroundColor: "#ffffff",
+                            borderThickness: 0,
+                            cornerRadius: 0,
+                            fontColor: "#424242"
+                    },
+                    data: [
+                            {
+                                    explodeOnClick: false,
+                                    innerRadius: "76%",
+                                    radius: "90%",
+                                    startAngle: 270,
+                                    type: "doughnut",
+                                    dataPoints: [
+                                            { y: 47, color: "#c70000", toolTipContent: "United States: " },
+                                            { y: 53, color: "#424242", toolTipContent: null }
+                                    ]
+                            }
+                    ]
                 });
                 
                 salesDoughnutChartUS.render();

@@ -17,6 +17,7 @@ use App\Form\PlanifDemandeType;
 use App\Entity\Demandes;
 use App\Entity\Moyens;
 use App\Entity\User;
+use App\Entity\PolymReal;
 use App\Repository\DefaultRepositoryFactory;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
@@ -69,21 +70,21 @@ class PlanningMCController extends Controller
             $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification()]);
             $data[$i] = ['id'=> $tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $tache->getNumDemande()->getCommentaires()];
             $i = $i + 1;
-            dump($MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification()]));
-            dump($MoyUtil[0]->getId());
-            dump($Taches);
-            dump($tache->getNumDemande()->getCycle()->getCouleur());
+            //dump($MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification()]));
+            //dump($MoyUtil[0]->getId());
+            //dump($Taches);
+            //dump($tache->getNumDemande()->getCycle()->getCouleur());
         }
         //Implémentation dans la vairaible des polym créées
-        //$repo=$this->getDoctrine()->getRepository(PolymCrea::class);
-        //$Polyms=$repo -> findAll();
-        //foreach($Polyms as $polym){
-            //$MoyUtil=$repos -> findBy(['Libelle' => $polym->getNomPolym()()]);
-            //$data[$i] = ['id'=> $polym->getId(),'programmes'=> $polym->getProgramme(),'statut'=> $polym->getValidation(),'start'=> ($polym->getDebExe())->format('c'),'end'=> ($polym->getDateValid())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$polym->getNumDemande()->getCycle()->getCouleur(),'title'=> $polym->getNumDemande()->getCommentaires()];
-            //$i = $i + 1;
-        //}
+        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+        $Polyms=$repo -> findAll();
+        //dump($data);
+        foreach($Polyms as $polym){ 
+            $data[$i] = ['id'=> $polym->getId(),'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym()];
+            $i = $i + 1;
+        }
         $taches= new JsonResponse($data);
-        dump($taches);
+        //dump($taches);
 
         return $this->render('planning_mc/index.html.twig', [
             'controller_name' => 'PlanningMCController',
@@ -125,12 +126,30 @@ class PlanningMCController extends Controller
     {
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
         $Titres=$repo -> findAll();
-        dump($Titres);
-
+        
+        //Recherche du début de l'année avec n+1 mois pour effectuer les calcul des indicateurs         
+        $DateEncours = date("l", strtotime('first day of January '.date('Y') )); 
+        
+        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+        $Polyms=$repo -> findAllPcsByDate($DateEncours);
+        dump($Polyms);
+        $data = [];
+        $i = 0;
+//        { x: new Date("1 Jan 2015"), y: 868800 },
+//        { x: new Date("1 Feb 2015"), y: 1071550 },
+        foreach($Polyms as $polym){ 
+            $data[$i] = ['y'=> $polym[2],'name'=> $polym['Nom'],'indexLabel'=> $polym['Nom'],'legendText'=> $polym['Nom']];
+            $i = $i + 1;
+        }
+        dump($data);
+        $taches= new JsonResponse($data);
+        dump($taches->getContent());
         return $this->render('planning_mc/home.html.twig',[
             'controller_name' => 'PlanningMCController',
             'Titres' => $Titres,
+            'Taches' => $taches->getContent()
         ]);
+        
     }
 
 	/**
@@ -141,11 +160,12 @@ class PlanningMCController extends Controller
     {
 //Si la demande n'est pas déjà faite(modification), on l'a crée
     
-dump(new \Datetime($datejour));    
+dump(new \Datetime($datejour)); 
+
         if(!$demande){
             $demande = new Demandes();
             $demande->setDatepropose(new \Datetime($datejour));
-            $newdemande=true;  
+            $newdemande=true; 
         }
         else{
             $newdemande=false;
@@ -242,7 +262,7 @@ dump(new \Datetime($datejour));
         $lastDateTime = $lastDateTime->modify('23 hours');
 //Visualisation des demandes en cours par semaine
     $demande=new Demandes();
-    dump($demande);
+           
             if(!$demande){
                 $cycles = $this->getDoctrine()
                 ->getRepository(Demandes::class)
@@ -253,6 +273,7 @@ dump(new \Datetime($datejour));
                 ->getRepository(Demandes::class)
                 ->findAll();
             }
+            //dump($demande); 
 //Chargement de la variable qui récupère tous les moyens suivant un service
         $repos=$this->getDoctrine()->getRepository(Moyens::class);
         $moyens=$repos -> findBy(['Id_Service' => '8']);
@@ -275,15 +296,22 @@ dump(new \Datetime($datejour));
     $item=array();
         $data = [];
         $i = 0;
-        foreach($Taches as $tache){
+        foreach($Taches as $tache){            
             $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification()]);
             $data[$i] = ['id'=> $tache->getId(),'programmes'=> $tache->getAction(),'statut'=>$tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $tache->getNumDemande()->getCommentaires()];
             $i = $i + 1;
         }
-        dump($data);
+    $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+    $Polyms=$repo -> findAll();
+    //dump($data);
+        foreach($Polyms as $polym){ 
+            $data[$i] = ['id'=> $polym->getId(),'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym()];
+            $i = $i + 1;
+        }
+        //dump($data);
         $taches= new JsonResponse($data);
-        dump($taches);
-        dump($lastDateTime);
+        //dump($taches);
+        //dump($lastDateTime);
 //Transfert des variables à la vue
         return $this->render('planning_mc/Demandes.html.twig',[
            'Titres' => $Titres,
@@ -433,12 +461,18 @@ dump(new \Datetime($datejour));
             $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification()]);
             $data[$i] = ['id'=> $tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $tache->getNumDemande()->getCommentaires()];
             $i = $i + 1;
-            dump($MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification()]));
-            dump($MoyUtil[0]->getId());
-
+            //dump($MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification()]));
+            //dump($MoyUtil[0]->getId());
+        }
+        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+        $Polyms=$repo -> findAll();
+        //dump($data);
+        foreach($Polyms as $polym){ 
+            $data[$i] = ['id'=> $polym->getId(),'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym()];
+            $i = $i + 1;
         }
         $taches= new JsonResponse($data);
-        dump($taches);
+        //dump($taches);
 //Chargement des éléments du nav-bar menu
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
 

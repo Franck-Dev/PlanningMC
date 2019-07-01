@@ -47,4 +47,17 @@ class PolymRealRepository extends ServiceEntityRepository
         ;
     }
     */
+    public function findAllPcsByDate ( $date ) : array
+{
+    $entityManager = $this -> getEntityManager ();
+
+    $query = $entityManager -> createQuery (
+        'SELECT g.Nom , count(p.Programmes), sum(p.NbrPcs)
+        FROM App\Entity\PolymReal p LEFT OUTER JOIN  App\Entity\ProgMoyens g WITH g.id = p.Programmes  
+        WHERE p.DebPolym > :date
+        GROUP BY p.Programmes'
+    ) -> setParameter ( 'date' , $date );
+    // returns an array of Product objects
+    return $query -> execute ();
+}
 }
