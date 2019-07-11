@@ -51,7 +51,7 @@
                                 0 3px 5px -1px rgba(0, 0, 0, 0.2);
     }
     
-    #revenue-column-chart, #products-revenue-pie-chart, #orders-spline-chart,#sales-doughnut-chart-us,#users-countries-bar-chart,#chartContainer {
+    #revenue-column-chart, #products-revenue-pie-chart, #orders-spline-chart,#sales-doughnut-chart-us,#users-countries-bar-chart {
         height: 300px;
         width: 100%;
     }			
@@ -65,29 +65,29 @@
 <div class="container">
         <h2 id="header">
             <strong>Indicateurs Polymérisation</strong>
-            <small class="text-muted">Jan {{Jour| date('Y')}} - Dec {{Jour| date('Y')}}</small>
+            <small class="text-muted">Jan 2019 - Dec 2019</small>
         </h2>
         
         <div class="row m-b-1">
-            <div class="col-xl-4">
+            <div class="col-lg-3">
                 <div class="card shadow">
-                    <h4 class="card-header">Quantité Produite au {{Jour| date('d/m/Y')}} : {{TotPcs|raw}} <span class="tag tag-success" id="revenue-tag">pcs</span></h4>
+                    <h4 class="card-header">Qté Pcs Produites <span class="tag tag-success" id="revenue-tag">15,341</span></h4>
                     <div class="card-block">
                         <div id="revenue-column-chart"></div>
                     </div>
                 </div>
             </div>
-            <div class="col-xl-3">
+            <div class="col-lg-3">
                     <div class="card shadow">
-                        <h4 class="card-header">TRS du : {{Jour| date('d/m/Y')}} <span class="tag tag-success" id="revenue-tag">(Capa: {{CapaMach|raw}}H)</span></h4>
+                        <h4 class="card-header">TRS <span class="tag tag-success" id="revenue-tag"> 2500 Heures</span></h4>
                         <div class="card-block">
                             <div id="sales-doughnut-chart-us"></div>
                         </div>
                     </div>
                 </div>
-                <div class="col-xl-5">
+                <div class="col-lg-6">
                     <div class="card shadow">
-                        <h4 class="card-header">Charge de la semaine {{Jour| date('W')}} par Moyens (Totale : {{CharTot|raw}} H)<span class="tag tag-success" id="revenue-tag"> {{HProdSem|raw}}H de réalisées</span></h4>
+                        <h4 class="card-header">Charges par Moyens <span class="tag tag-success" id="revenue-tag">12000 Heures</span></h4>
                         <div class="card-block">
                             <div id="users-countries-bar-chart"></div>
                         </div>
@@ -96,9 +96,9 @@
         </div> <!-- row -->
         <hr></hr>
         <div class="row m-b-1">
-            <div class="col-xl-6">
+            <div class="col-lg-6">
                 <div class="card shadow">
-                    <h4 class="card-header">Production par programmes du : {{Jour| date('d/m/Y')}}</h4>
+                    <h4 class="card-header">Répartition des programmes</h4>
                     <div class="card-block">
                         <div id="products-revenue-pie-chart"></div>
                     </div>
@@ -114,27 +114,8 @@
                 </div>
             </div>
         </div> <!-- row -->
-        <hr></hr>
-        <div class="row">
-            <div class="col-xl-8">
-                <div class="card shadow">
-                    <h4 class="card-header">Production par moyen de la semaine {{Jour| date('W')}} :  {{PProdSem|raw}} pcs faites / Y à réaliser</h4>
-                    <div class="card-block">
-                        <div id="chartContainer"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xl-4">
-                <div class="card shadow">
-                    <h4 class="card-header">Productivité de la semaine {{Jour| date('W')}} : {{RapportPH|raw}} pcs/H</h4>
-                    <div class="card-block">
-                        <div id="Rapport-Heures-pieces"></div>
-                    </div>
-                </div>
-            </div>
-        </div><!-- row -->
-        <hr></hr>
     </div> <!-- container -->
+
 {% endblock %}
 {% block javascripts %}
 <script src="{{ asset('build/jquery.min.js') }}"></script>
@@ -148,16 +129,15 @@
             // CanvasJS column chart to show revenue from Jan 2015 - Dec 2015
             var revenueColumnChart = new CanvasJS.Chart("revenue-column-chart", {
                 animationEnabled: true,
-                exportEnabled: true,
                 backgroundColor: "transparent",
                 theme: "theme2",
                 axisX: {
                     labelFontSize: 14,
-                    valueFormatString: "MM YYYY"
+                    valueFormatString: "MMM YYYY"
                 },
                 axisY: {
                     labelFontSize: 14,
-                    prefix: ""
+                    prefix: "$"
                 },
                 toolTip: {
                     borderThickness: 0,
@@ -166,25 +146,36 @@
                 data: [
                     {
                         type: "column",
-                        yValueFormatString: "####",
-                        xValueType: "dateTime",
-                        dataPoints: {{RepartPcs|raw}}
+                        yValueFormatString: "###,###.##",
+                        dataPoints: [
+                            { x: new Date("1 Jan 2015"), y: 868800 },
+                            { x: new Date("1 Feb 2015"), y: 1071550 },
+                            { x: new Date("1 Mar 2015"), y: 1286200 },
+                            { x: new Date("1 Apr 2015"), y: 1106900 },
+                            { x: new Date("1 May 2015"), y: 1033800 },
+                            { x: new Date("1 Jun 2015"), y: 1017160 },
+                            { x: new Date("1 Jul 2015"), y: 1458000 },
+                            { x: new Date("1 Aug 2015"), y: 1165850 },
+                            { x: new Date("1 Sep 2015"), y: 1594150 },
+                            { x: new Date("1 Oct 2015"), y: 1501700 },
+                            { x: new Date("1 Nov 2015"), y: 1588400 },
+                            { x: new Date("1 Dec 2015"), y: 1648600 }
+                        ]
                     }
                 ]
             });
-
+            
             revenueColumnChart.render();
 
                 // CanvasJS doughnut chart to show annual sales percentage from United States(US)
                 var salesDoughnutChartUS = new CanvasJS.Chart("sales-doughnut-chart-us", { 
                     animationEnabled: true,
-                    exportEnabled: true,
                     theme: "theme2",
                     title: {
                             fontColor: "#848484",
                             fontSize: 70,
                             horizontalAlign: "center",
-                            text: {{PercentTRS|raw}}+"%",
+                            text: "47%",
                             verticalAlign: "center"
                     },
                     toolTip: {
@@ -200,53 +191,19 @@
                                     radius: "90%",
                                     startAngle: 270,
                                     type: "doughnut",
-                                    dataPoints: {{TRS|raw}}
+                                    dataPoints: [
+                                            { y: 47, color: "#c70000", toolTipContent: "United States: " },
+                                            { y: 53, color: "#424242", toolTipContent: null }
+                                    ]
                             }
                     ]
                 });
                 
                 salesDoughnutChartUS.render();
-                    
-             //Graphique sur la répartition des pcs svt programmes et machine
-             var chart = new CanvasJS.Chart("chartContainer", {
-                    animationEnabled: true,
-                    exportEnabled: true,
-                    title:{
-                            text: ""
-                    },
-                    axisX: {
-                            valueFormatString: "DDD",
-                            labelFontSize: 24
-                            //maximum: new date("14 Jul 2019")//{{FinSem|date('Y-m-d\\TH:i:sP')}}
-                    },
-                    axisY: {
-                            prefix: ""
-                    },
-                    toolTip: {
-                            shared: true
-                    },
-                    legend:{
-                            cursor: "pointer",
-                            itemclick: toggleDataSeries
-                    },
-                    data: {{Productivite|raw}}
-            });
-            chart.render();
-            console.log(new Date(2017, 1, 3));
 
-            function toggleDataSeries(e) {
-                    if(typeof(e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
-                            e.dataSeries.visible = false;
-                    }
-                    else {
-                            e.dataSeries.visible = true;
-                    }
-                    chart.render();
-}
             //CanvasJS pie chart to show product wise annual revenue for 2015
             var productsRevenuePieChart = new CanvasJS.Chart("products-revenue-pie-chart", {
                 animationEnabled: true,
-                exportEnabled: true,
                 theme: "theme2",
                 legend: {
                     fontSize: 14
@@ -258,18 +215,19 @@
                 },
                 data: [
                     {       
-                        type: "pie",
-			indexLabel: "{name} ({y})",
                         indexLabelFontColor: "#676464",
                         indexLabelFontSize: 14,
-                        percentFormatString: "#0.##",
-                        toolTipContent: "{y} (#percent%)",
                         legendMarkerType: "square",
                         legendText: "{indexLabel}",
-                        showInLegend: false,
+                        showInLegend: true,
                         startAngle:  90,
                         type: "pie",
-                        dataPoints: {{RepartPolyms|raw}}
+                        dataPoints: [
+                            {  y: 6289855, name:"FP A65 ATC", indexLabel: "FP A65 ATC", legendText: "FP A65 ATC", exploded: true },
+                            {  y: 2761400, name:"FP A61 ATC", indexLabel: "FP A61 ATC", legendText: "FP A61 ATC" },
+                            {  y: 3681866, name:"FP A44 ATC", indexLabel: "FP A44 ATC", legendText: "FP A44 ATC", color: "#8064a1" },
+                            {  y: 2607989, name:"FP A51 ATC", indexLabel: "FP A51 ATC", legendText: "FP A51 ATC" }
+                        ]
                     }
                 ]
             });
@@ -279,7 +237,6 @@
             //CanvasJS spline chart to show orders from Jan 2015 to Dec 2015
             var ordersSplineChart = new CanvasJS.Chart("orders-spline-chart", {
                 animationEnabled: true,
-                exportEnabled: true,
                 theme: "theme2",
                 toolTip: {
                     borderThickness: 0,
@@ -317,63 +274,10 @@
             });
 
             ordersSplineChart.render();
-
-            // CanvasJS bar chart secondery axis
-            var chart = new CanvasJS.Chart("Rapport-Heures-pieces", {
-                exportEnabled: true,
-                animationEnabled: true,
-                title:{
-                    text: ""
-                },
-                subtitles: [{
-                    text: ""
-                }], 
-                axisX: {
-                    title: "Semaines"
-                },
-                axisY: {
-                    title: "Pièces",
-                    titleFontColor: "#4F81BC",
-                    lineColor: "#4F81BC",
-                    labelFontColor: "#4F81BC",
-                    tickColor: "#4F81BC"
-                },
-                axisY2: {
-                    title: "Heures",
-                    titleFontColor: "#C0504E",
-                    lineColor: "#C0504E",
-                    labelFontColor: "#C0504E",
-                    tickColor: "#C0504E"
-                },
-                toolTip: {
-                    shared: true
-                },
-                legend: {
-                    cursor: "pointer",
-                    itemclick: toggleDataSeries
-                },
-                data: [{
-                    type: "column",
-                    name: "Heures Prod",
-                    showInLegend: true,      
-                    //yValueFormatString: "#,##0.# Units",
-                    dataPoints: {{RapportH|raw}}
-                },
-                {
-                    type: "column",
-                    name: "Nbr Pcs",
-                    axisYType: "secondary",
-                    showInLegend: true,
-                    yValueFormatString: "#,##0.# Pièces",
-                    dataPoints: {{RapportPcs|raw}}
-                }]
-            });
-            chart.render();
             
             // CanvasJS bar chart to show country wise annual users percentage
 				var usersCountriesBarChart = new CanvasJS.Chart("users-countries-bar-chart", {
-                    animationEnabled: true,
-                    exportEnabled: true,
+					animationEnabled: true,
 					theme: "theme2",
 					axisX: {
 						labelFontColor: "#848484",
@@ -405,7 +309,16 @@
 							indexLabelFontSize: 18,
 							indexLabelPlacement: "outside",
 							type: "bar",
-							dataPoints: {{ChargeMoy|raw}}
+							dataPoints: [
+								{ y: 2,  indexLabel: "2%",  label: "Etuve2" },
+								{ y: 4,  indexLabel: "4%",  label: "Etuve3" },
+								{ y: 5,  indexLabel: "5%",  label: "Autoclave3" },
+								{ y: 12, indexLabel: "12%", label: "Autoclave2" },
+								{ y: 9,  indexLabel: "9%",  label: "Autoclave6" },
+								{ y: 10, indexLabel: "10%", label: "Autoclave4" },
+								{ y: 14, indexLabel: "14%", label: "Autoclave5" },
+								{ y: 44, indexLabel: "44%", label: "Autoclave1" }
+							]
 						}
 					]
 				});

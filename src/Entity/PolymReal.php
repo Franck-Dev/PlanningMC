@@ -58,6 +58,11 @@ class PolymReal
      */
     private $Programmes;
 
+    /**
+     * @ORM\Column(type="integer")
+     */
+    private $NbrPcs;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -155,6 +160,18 @@ class PolymReal
     public function setProgrammes(ProgMoyens $Programmes): self
     {
         $this->Programmes = $Programmes;
+
+        return $this;
+    }
+
+    public function getNbrPcs(): ?int
+    {
+        return $this->NbrPcs;
+    }
+
+    public function setNbrPcs(int $NbrPcs): self
+    {
+        $this->NbrPcs = $NbrPcs;
 
         return $this;
     }

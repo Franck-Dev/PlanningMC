@@ -47,7 +47,7 @@ class PolymRealRepository extends ServiceEntityRepository
         ;
     }
     */
-    public function findAllPcsByDate ( $date ) : array
+    public function findAllPcsByDates ( $date ) : array
 {
     $entityManager = $this -> getEntityManager ();
 
@@ -57,6 +57,125 @@ class PolymRealRepository extends ServiceEntityRepository
         WHERE p.DebPolym > :date
         GROUP BY p.Programmes'
     ) -> setParameter ( 'date' , $date );
+    // returns an array of Product objects
+    return $query -> execute ();
+}
+// Requette pour répartition des polymérisation sur la journée n-1
+    public function findRepartPcssvtProg ( $dateF,$dateD ) : array
+{
+    $entityManager = $this -> getEntityManager ();
+
+    $query = $entityManager -> createQuery (
+        'SELECT g.Nom , count(p.Programmes), sum(p.NbrPcs)
+        FROM App\Entity\PolymReal p LEFT OUTER JOIN  App\Entity\ProgMoyens g WITH g.id = p.Programmes  
+        WHERE p.DebPolym > :dateD AND p.DebPolym < :dateF
+        GROUP BY p.Programmes'
+    );
+    $query-> setParameter ( 'dateD' , $dateD );
+    $query-> setParameter ('dateF' , $dateF);
+    // returns an array of Product objects
+    return $query -> execute ();
+}
+// Calcul de nombre de pièce par mois
+    public function findAllPcsByDate ( $date ) : array
+{
+    $entityManager = $this -> getEntityManager ();
+
+    $query = $entityManager -> createQuery (
+        'SELECT MONTH(p.DebPolym) as Mois, sum(p.NbrPcs), p.Articles as Dossier
+        FROM App\Entity\PolymReal p LEFT OUTER JOIN  App\Entity\ProgMoyens g WITH g.id = p.Programmes 
+        WHERE p.DebPolym > :date 
+        GROUP BY Mois'
+    ) -> setParameter ( 'date' , $date );
+    // returns an array of Product objects
+    return $query -> execute ();
+}
+// Calcul de nombre total de pcs sur 13 mois
+public function findAllPcs ( $date ) : array
+{
+    $entityManager = $this -> getEntityManager ();
+
+    $query = $entityManager -> createQuery (
+        'SELECT sum(p.NbrPcs)
+        FROM App\Entity\PolymReal p LEFT OUTER JOIN  App\Entity\ProgMoyens g WITH g.id = p.Programmes 
+        WHERE p.DebPolym > :date'
+    ) -> setParameter ( 'date' , $date );
+    // returns an array of Product objects
+    return $query -> execute ();
+}
+// Calcul du TRS machine
+    public function findTRSMachine ( $dateF,$dateD ) : array
+{
+    $entityManager = $this -> getEntityManager ();
+
+    $query = $entityManager -> createQuery (
+        'SELECT SUM(TIMEDIFF(p.FinPolym, p.DebPolym)) as DureePolym , g.Nom , count(p.Programmes), sum(p.NbrPcs)
+        FROM App\Entity\PolymReal p LEFT OUTER JOIN  App\Entity\ProgMoyens g WITH g.id = p.Programmes  
+        WHERE p.DebPolym > :dateD AND p.DebPolym < :dateF
+        GROUP BY p.Programmes'
+    );
+    $query-> setParameter ( 'dateD' , $dateD );
+    $query-> setParameter ('dateF' , $dateF);
+    // returns an array of Product objects
+    return $query -> execute ();
+}
+// Calcul du TRS Global
+public function findTRS ( $dateF,$dateD ) : array
+{
+    $entityManager = $this -> getEntityManager ();
+
+    $query = $entityManager -> createQuery (
+        'SELECT SUM(TIMEDIFF(p.FinPolym, p.DebPolym)) as DureePolym
+        FROM App\Entity\PolymReal p   
+        WHERE p.DebPolym > :dateD AND p.DebPolym < :dateF'
+    );
+    $query-> setParameter ( 'dateD' , $dateD );
+    $query-> setParameter ('dateF' , $dateF);
+    // returns an array of Product objects
+    return $query -> execute ();
+}
+// Calcul de la charge réalisée pour toutes les machine sur la semaine
+public function findCharSem ( $dateF,$dateD  ) : array
+{
+    $entityManager = $this -> getEntityManager ();
+
+    $query = $entityManager -> createQuery (
+        'SELECT SUM(TIMEDIFF(p.FinPolym, p.DebPolym)) as DureTotPolyms, g.Libelle as moyen, sum(p.NbrPcs) as NbrPcs, DAY(p.DebPolym) as jour
+        FROM App\Entity\PolymReal p LEFT OUTER JOIN  App\Entity\Moyens g WITH g.id = p.Moyens
+        WHERE p.DebPolym > :dateD AND p.FinPolym < :dateF
+        GROUP BY p.Moyens');            
+    $query-> setParameter ( 'dateD' , $dateD );
+    $query-> setParameter ('dateF' , $dateF);
+    // returns an array of Product objects
+    return $query -> execute ();
+}
+// Calcul de la charge réalisée par machine sur la semaine
+public function findCharMachSem ( $dateF,$dateD,$Moy  ) : array
+{
+    $entityManager = $this -> getEntityManager ();
+
+    $query = $entityManager -> createQuery (
+        'SELECT SUM(TIMEDIFF(p.FinPolym, p.DebPolym)) as DureTotPolyms, g.Libelle as moyen, sum(p.NbrPcs) as NbrPcs, DAY(p.DebPolym) as jour,MONTH(p.DebPolym) as mois, YEAR(p.DebPolym) as annee
+        FROM App\Entity\PolymReal p LEFT OUTER JOIN  App\Entity\Moyens g WITH g.id = p.Moyens
+        WHERE p.DebPolym > :dateD AND p.FinPolym < :dateF AND g.Libelle = :Mach
+        GROUP BY  jour,p.Moyens');            
+    $query-> setParameter ( 'dateD' , $dateD );
+    $query-> setParameter ('dateF' , $dateF);
+    $query-> setParameter ('Mach' , $Moy);
+    // returns an array of Product objects
+    return $query -> execute ();
+}
+// Calcul de la charge en heures et en nbrs de pièces réalisées par semaine
+public function findRapportPcsH ( $date  ) : array
+{
+    $entityManager = $this -> getEntityManager ();
+
+    $query = $entityManager -> createQuery (
+        'SELECT SUM(TIMEDIFF(p.FinPolym, p.DebPolym)) as DureTotPolyms, sum(p.NbrPcs) as NbrPcs, DATE_FORMAT (p.DebPolym,\'%v\') as semaine
+        FROM App\Entity\PolymReal p 
+        WHERE p.DebPolym > :dateD
+        GROUP BY  semaine');            
+    $query-> setParameter ( 'dateD' , $date );
     // returns an array of Product objects
     return $query -> execute ();
 }

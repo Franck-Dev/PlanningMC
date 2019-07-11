@@ -128,26 +128,215 @@ class PlanningMCController extends Controller
         $Titres=$repo -> findAll();
         
         //Recherche du début de l'année avec n+1 mois pour effectuer les calcul des indicateurs         
-        $DateEncours = date("l", strtotime('first day of January '.date('Y') )); 
-        
+        $DateAnCours = date("l", strtotime('first day of January '.date('Y') )); 
+        //Recherche de la date du début de semaine dernière
+        $currentMonthDateTime = new \DateTime();
+        $DateSem = $currentMonthDateTime->modify('first day of this week');
+        //Recherche date de la veille
+        $DateJour = new \DateTime();
+        $hier = $DateJour->modify('yesterday');
+        //$hier = date("l", strtotime('yesterday '.date('Y-m-d H:i') ));
+        //Recherche date du jour
+        $DateJour = new \DateTime();
+        $jour=$DateJour->modify('today');
+        //Recherche date en cours sur les 13 mois pour comparaison du mois en cours
+        $DateEncours = date("Y m d", strtotime('- 13 months'.date('Y') ));
+        //Recherche du début et de la fin de semaine en cours
+        $currentMonthDateTime = new \DateTime();
+        $FinSem = $currentMonthDateTime->modify('sunday this week');
+        $currentMonthDateTime = new \DateTime();
+        $DebSem = $currentMonthDateTime->modify('monday this week');
+        //Recherche de l'année en cours
+        $Annee = date("Y", strtotime('today '.date('Y') ));
+        //Recherche du numéro de semaine en cours
+        $NumSem= date("W", strtotime('today '.date('Y') ));
+
+// Création de la variable pour la répartition des programmes svt format ci-dessous
+        //{ x: new Date("1 Jan 2015"), y: 868800 },
+        //{ x: new Date("1 Feb 2015"), y: 1071550 }, 
         $repo=$this->getDoctrine()->getRepository(PolymReal::class);
         $Polyms=$repo -> findAllPcsByDate($DateEncours);
-        dump($Polyms);
+        //dump($Polyms);
         $data = [];
         $i = 0;
-//        { x: new Date("1 Jan 2015"), y: 868800 },
-//        { x: new Date("1 Feb 2015"), y: 1071550 },
         foreach($Polyms as $polym){ 
-            $data[$i] = ['y'=> $polym[2],'name'=> $polym['Nom'],'indexLabel'=> $polym['Nom'],'legendText'=> $polym['Nom']];
+
+            //$DateMoisenCours=new \datetime( $Annee.'-'.$polym['Mois'].'-01');
+            //$NewFormatDMC=date("Y-m-d\TH:i.v\Z",strtotime($Annee.'-'.$polym['Mois'].'-01'));
+            //$DateMoisenCours='01 '.$NewFormatDMC.' 2019';  
+            $y=intval($polym[1]);
+            //dump(strtotime($DateMoisenCours));
+            $data[$i] = ['x'=> strtotime($Annee.'-'.$polym['Mois'].'-01')*1000, 'y'=> $y];
+            $i = $i + 1;
+            dump($polym['Dossier']);
+            dump(sizeof(explode(';',$polym['Dossier'],4)));
+        }
+        $RepartP= new JsonResponse($data);
+
+//Création des variables pour le rapport charge/nbrs de pièces par semaine svt format ci dessous
+// { label: "New Jersey",  y: 19034.5 },
+//{ label: "Texas", y: 20015 },
+//{ label: "Oregon", y: 25342 },
+//{ label: "Montana",  y: 20088 },
+//{ label: "Massachusetts",  y: 28234 }
+    $Polyms=$repo -> findRapportPcsH($DateEncours);
+    $daty = [];
+    $i = 0;
+    foreach($Polyms as $polym){
+        $y=intval($polym['DureTotPolyms']/10000);
+        $daty[$i] = ['label'=> $polym['semaine'],'y'=> $y];
+        $i = $i + 1;
+    }
+    $daty2 = [];
+    $i = 0;
+    $HProdSem=$y;
+    foreach($Polyms as $polym){
+        $y=intval($polym['NbrPcs']);
+        $daty2[$i] = ['label'=> $polym['semaine'],'y' => $y];
+        $i = $i + 1;
+    }
+    $PProdSem=$y;
+    $RapportPH=round($PProdSem/$HProdSem,2);
+$RapportH= new JsonResponse($daty);
+$RapportPcs= new JsonResponse($daty2);
+        
+// Création de la variable pour la répartition des pièces suivant les programmes lancées
+        //{ y: 47, color: "#c70000", toolTipContent: "United States: " },
+        //{ y: 53, color: "#424242", toolTipContent: null }
+        //dump($jour);
+        $Polyms=$repo -> findRepartPcssvtProg($jour,$hier);
+        //dump($Polyms);
+        $dati = [];
+        $i = 0;
+        foreach($Polyms as $polym){
+            $y=intval($polym[2]);
+            //dump($y);
+            $dati[$i] = ['y'=> $y,'name'=> $polym['Nom']];
             $i = $i + 1;
         }
-        dump($data);
-        $taches= new JsonResponse($data);
-        dump($taches->getContent());
+        $RepartPcs= new JsonResponse($dati);
+        //dump($RepartP->getContent());
+
+// Création de la variable pour le nombre total de pcs sur 13 mois
+        $Polyms=$repo -> findAllPcs ($DateEncours);
+        foreach($Polyms as $polym){
+            $TotPcs=intval($polym[1]);
+            //dump($TotPcs);
+        }
+
+// Création de la variable pour le TRS par moyen svt format 
+        //{ y: 47, color: "#c70000", toolTipContent: "United States: " },
+        //{ y: 53, color: "#424242", toolTipContent: null }
+        //dump($jour);
+        $Polyms=$repo -> findTRSMachine($jour,$hier);
+        //dump($Polyms);
+        $dato = [];
+        $i = 0;
+        foreach($Polyms as $polym){
+            $y=intval($polym[2]);
+            //dump($y);
+            $dato[$i] = ['y'=> $y,'name'=> $polym['Nom']];
+            $i = $i + 1;
+        }
+        $TRS= new JsonResponse($dato);
+        //dump($RepartP->getContent());
+
+// Création de la variable pour le TRS global svt format 
+        //{ y: 47, color: "#c70000", toolTipContent: "United States: " },
+        //{ y: 53, color: "#424242", toolTipContent: null }
+        //dump($jour);
+        $Polyms=$repo -> findTRS($jour,$hier);
+        //dump($Polyms);
+        $dato = [];
+        $i = 0;
+        foreach($Polyms as $polym){
+            $y=intval($polym['DureePolym']/10000);
+            $x=11*24;
+            $dato[$i] = ['y'=> ($y/$x)*100,'color' => "#c70000"];
+            $i = $i + 1;
+            $dato[$i] = ['y'=> 100-($y/$x)*100,'color' => "#424242"];
+            $Ratio=round(($y/$x)*100,1);
+        }
+        $TRS= new JsonResponse($dato);
+
+//Création de la variable charge de chaque machine sur la semaine encours
+        //{   type: "stackedBar",
+        //    name: "Dolouet",
+        //    showInLegend: "true",
+        //    xValueFormatString: "DD, MMM",
+        //    yValueFormatString: "###",
+        //     dataPoints: [
+        //            { x: new Date(2017, 0, 30), y: 56 },
+        //            { x: new Date(2017, 0, 31), y: 45 },
+        //            { x: new Date(2017, 1, 1), y: 71 },
+        //            { x: new Date(2017, 1, 2), y: 41 },
+        //            { x: new Date(2017, 1, 3), y: 60 },
+        //            { x: new Date(2017, 1, 4), y: 75 },
+        //            { x: new Date(2017, 1, 5), y: 98 }
+        //    ]},
+        $Polyms=$repo ->findCharSem($FinSem,$DebSem);
+        $Tablo = [];
+        $i = 0;
+        foreach($Polyms as $polym){
+            $currentMonthDateTime = new \DateTime();
+            $JourDep = $currentMonthDateTime->modify('monday this week');
+            $TboData = [];
+            $j = 0;
+            $PMoy=$repo ->findCharMachSem($FinSem,$DebSem,$polym['moyen']);
+            //dump($PMoy);    //$Annee.'-'.$polym['Mois'].'-01')
+            foreach($PMoy as $pmoy){
+                $y=intval($pmoy['NbrPcs']);
+                $TboData[$j]=['x'=> strtotime($pmoy['annee'].'-'.$pmoy['mois'].'-'.$pmoy['jour'])*1000,'y'=>$y];
+                $j = $j + 1;
+            };
+            //dump($TboData);
+            $Tablo[$i]=['type'=>"stackedBar",'name'=>$polym['moyen'],'showInLegend'=>"true",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboData];
+            $i = $i + 1;
+            //$CharTot=intval($polym['DureTheoPolym']/10000);
+            //dump($Tablo);
+        }
+        $Productivite= new JsonResponse($Tablo);
+ 
+//Création de la variable charge totale sur la semaine
+        $repo=$this->getDoctrine()->getRepository(Planning::class);
+        $Polyms=$repo -> findCharge($FinSem,$DebSem);
+        foreach($Polyms as $polym){
+            $CharTot=intval($polym['DureTheoPolym']/10000);
+        }
+//Création de la variable charge de chaque machine sur la semaine encours
+//{ y: 2,  indexLabel: "2%",  label: "Etuve2" },
+//{ y: 4,  indexLabel: "4%",  label: "Etuve3" },        
+        $Polyms=$repo -> findChargeMach($FinSem,$DebSem);
+        $datu = [];
+        $i = 0;
+        foreach($Polyms as $polym){
+            $y=intval($polym['DureTheoPolym']/10000);
+            $RatioC=round(($y/$CharTot)*100,1);
+            $datu[$i] = ['y'=> $y,'indexLabel'=> $RatioC.'%',  'label' => $polym['Moyen']];
+            $i = $i + 1;
+        }
+        $ChargeMoy= new JsonResponse($datu);
+
         return $this->render('planning_mc/home.html.twig',[
             'controller_name' => 'PlanningMCController',
             'Titres' => $Titres,
-            'Taches' => $taches->getContent()
+            'RapportPcs' => $RapportPcs->getContent(),
+            'Jour' => $hier,
+            'RapportH' => $RapportH->getContent(),
+            'Semaine' => $NumSem,
+            'RepartPcs' => $RepartP->getContent(),
+            'TotPcs' => $TotPcs,
+            'TRS' => $TRS->getcontent(),
+            'PercentTRS' => $Ratio,
+            'Productivite' => $Productivite->getContent(),
+            'CapaMach' => $x,
+            'ChargeMoy' =>$ChargeMoy->getContent(),
+            'CharTot' => $CharTot,
+            'RepartPolyms' => $RepartPcs->getContent(),
+            'PProdSem' => $PProdSem,
+            'HProdSem' => $HProdSem,
+            'RapportPH' => $RapportPH,
+            'FinSem' => $FinSem
         ]);
         
     }
