@@ -2,7 +2,7 @@ security:
     encoders:
         App\Entity\User:
             algorithm: bcrypt
-
+    access_denied_url: home
     # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
     providers:
         in_memory: { memory: ~ }
@@ -27,6 +27,10 @@ security:
                 path: security_logout
                 target: home
 
+            pattern: ^/ 
+
+            user_checker: App\Security\UserChecker # activation du UserChecker
+
             # activate different ways to authenticate
 
             # http_basic: true
@@ -36,9 +40,14 @@ security:
             # https://symfony.com/doc/current/security/form_login_setup.html
 
     role_hierarchy:
-         ROLE_ADMIN:       ROLE_USER
+        #ROLE_ADMIN:       [ROLE_USER] 
+        ROLE_ADMIN:       [ROLE_USER, ROLE_REGLEUR, ROLE_METHODES, ROLE_CE_MOULAGE, ROLE_CE_POLYM, ROLE_PROGRAMMEUR]
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
+        - { path: ^/METHODES, roles: ROLE_METHODES }
+        - { path: ^/ADMIN, roles: ROLE_ADMIN }
+        #- { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        #- { path: ^/security, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }

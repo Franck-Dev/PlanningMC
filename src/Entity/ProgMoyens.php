@@ -84,10 +84,16 @@ class ProgMoyens
      */
     private $couleur;
 
+    /**
+     * @ORM\ManyToMany(targetEntity="App\Entity\Outillages", mappedBy="Programme1")
+     */
+    private $outillages;
+
 
     public function __construct()
     {
         $this->demandes = new ArrayCollection();
+        $this->outillages = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -266,6 +272,34 @@ class ProgMoyens
     public function setCouleur(string $couleur): self
     {
         $this->couleur = $couleur;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Outillages[]
+     */
+    public function getOutillages(): Collection
+    {
+        return $this->outillages;
+    }
+
+    public function addOutillage(Outillages $outillage): self
+    {
+        if (!$this->outillages->contains($outillage)) {
+            $this->outillages[] = $outillage;
+            $outillage->addProgramme1($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOutillage(Outillages $outillage): self
+    {
+        if ($this->outillages->contains($outillage)) {
+            $this->outillages->removeElement($outillage);
+            $outillage->removeProgramme1($this);
+        }
 
         return $this;
     }

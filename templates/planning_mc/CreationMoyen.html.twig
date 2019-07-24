@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% form_theme formMoy 'bootstrap_4_layout.html.twig' %}
+
+{% block title %}APAMC{% endblock %}
+
+{% block body %}
+	<h1>Création des Moyens Pour les Pièces Composites  ! ✅</h1>
+
+    {{form_start(formMoy)}}
+
+    {{form_widget(formMoy)}}
+
+    <button type="submit" class="btn btn-success">Ajouter le moyen</button>
+
+    {{form_end(formMoy)}}
+
+{% endblock %}

@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Persistence\ObjectManager;
 use App\Entity\ProgMoyens;
 use App\Form\CreationProgType;
+use App\Form\CreationMoyensType;
 use App\Entity\CategoryMoyens;
 use App\Entity\Planning;
 use App\Form\PolymFormType;
@@ -29,12 +30,17 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+//use Symfony\Component\HttpFoundation\Session\Session ;
 //use Symfony\Component\Serializer\Serializer;
 
 class PlanningMCController extends Controller
 {
     /**
      * @Route("/PlanningMC", name="Planning")
+     * @Security("has_role('ROLE_REGLEUR')")
+     * @Security("has_role('ROLE_CE_POLYM')")
      */
     public function index()
     {
@@ -49,48 +55,68 @@ class PlanningMCController extends Controller
 
 //Recherche des moyens à afficher sur planning
         $repos=$this->getDoctrine()->getRepository(Moyens::class);
-        $moyens=$repos -> findBy(['Id_Service' => '8']);
+        $moyens=$repos -> findAllMoyensSvtService ( intval('8') );
         $item=$moyens;   
         $data = [];
+        $TbEtat=[];
         $i = 0;
+        $a=0;
         foreach($moyens as $moyen){
-            $data[$i] = ['id'=> $moyen->getId(),  'content'=> $moyen->getLibelle()];
+            if ($moyen['SousTitres']==2){
+                $Etats=$repos -> findBy(['Libelle' => $moyen['Moyen']]);
+                // On rajoute les notions d'activitees au moyen pour créer 2 lignes sur planning
+                foreach($Etats as $etat){
+                    if ($moyen['id']!=$etat->getId()){
+                        $TbEtat[$a]=['id'=>$etat->getId(), 'content'=>$etat->getActivitees()];
+                        $a=$a+1;
+                    }
+                }
+                //dump($TbEtat[$a-1]['id']);
+                $data[$i] = ['id'=> $moyen['id'],  'content'=> $moyen['Moyen'], 'nestedGroups' => [$TbEtat[$a-1]['id']]];
+            }
+            else{
+                $data[$i] = ['id'=> $moyen['id'],  'content'=> $moyen['Moyen']];
+            }
             $i = $i + 1;
 			//On affecte un élément $item à $data
         }
-        //dump($data);
+        $Ssmoyen= new JsonResponse($TbEtat);
         $moyen= new JsonResponse($data);
-
+        //dump($Ssmoyen);
+        //dump($moyen);
 //Chargement d'une variable pour les tâches déjà plannifiées
         $repo=$this->getDoctrine()->getRepository(Planning::class);
         $Taches=$repo -> findAll();
         $data = [];
         $i = 0;
         foreach($Taches as $tache){
-            $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification()]);
-            $data[$i] = ['id'=> $tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $tache->getNumDemande()->getCommentaires()];
+            //On cherche le moyen attribué à la polym suivant la demande et l'activité Plannification
+            $commentaires=$tache->getNumDemande()->getCommentaires()."/".$tache->getNumDemande()->getOutillages();
+            $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification(),'Activitees'=> 'Plannifie']);
+            $data[$i] = ['id'=> $i,'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires];
             $i = $i + 1;
             //dump($MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification()]));
             //dump($MoyUtil[0]->getId());
             //dump($Taches);
             //dump($tache->getNumDemande()->getCycle()->getCouleur());
         }
-        //Implémentation dans la vairaible des polym créées
+        //Implémentation dans la variable des polyms créées
         $repo=$this->getDoctrine()->getRepository(PolymReal::class);
         $Polyms=$repo -> findAll();
         //dump($data);
         foreach($Polyms as $polym){ 
-            $data[$i] = ['id'=> $polym->getId(),'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym()];
+            $data[$i] = ['id'=> $i,'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym()];
             $i = $i + 1;
         }
         $taches= new JsonResponse($data);
-        //dump($taches);
+        
 
         return $this->render('planning_mc/index.html.twig', [
             'controller_name' => 'PlanningMCController',
             'Titres' => $Titres,
             'Taches' => $taches->getcontent(),
             'Moyens' => $moyen->getcontent(),
+            'Ssmoyen' => $Ssmoyen->getcontent(),
             'Items' => $item
         ]);
     }
@@ -208,8 +234,10 @@ $RapportPcs= new JsonResponse($daty2);
         //dump($Polyms);
         $dati = [];
         $i = 0;
+        $NbPolymJour=0;
         foreach($Polyms as $polym){
             $y=intval($polym[2]);
+            $NbPolymJour=$NbPolymJour+intval($polym[1]);
             //dump($y);
             $dati[$i] = ['y'=> $y,'name'=> $polym['Nom']];
             $i = $i + 1;
@@ -303,6 +331,7 @@ $RapportPcs= new JsonResponse($daty2);
         foreach($Polyms as $polym){
             $CharTot=intval($polym['DureTheoPolym']/10000);
         }
+        $TpsOuvParMach=intval(24*7);
 //Création de la variable charge de chaque machine sur la semaine encours
 //{ y: 2,  indexLabel: "2%",  label: "Etuve2" },
 //{ y: 4,  indexLabel: "4%",  label: "Etuve3" },        
@@ -311,7 +340,7 @@ $RapportPcs= new JsonResponse($daty2);
         $i = 0;
         foreach($Polyms as $polym){
             $y=intval($polym['DureTheoPolym']/10000);
-            $RatioC=round(($y/$CharTot)*100,1);
+            $RatioC=round(($y/$TpsOuvParMach)*100,1);
             $datu[$i] = ['y'=> $y,'indexLabel'=> $RatioC.'%',  'label' => $polym['Moyen']];
             $i = $i + 1;
         }
@@ -336,6 +365,7 @@ $RapportPcs= new JsonResponse($daty2);
             'PProdSem' => $PProdSem,
             'HProdSem' => $HProdSem,
             'RapportPH' => $RapportPH,
+            'NbPolymJ' => $NbPolymJour,
             'FinSem' => $FinSem
         ]);
         
@@ -344,11 +374,11 @@ $RapportPcs= new JsonResponse($daty2);
 	/**
      * @Route("/Demandes/Creation", name="Crea_Demandes")
      * @Route("/Demandes/Modification/{id}", name="Modif_Demandes")
+     * @Security("has_role('ROLE_CE_MOULAGE')")
      */
-    public function DemandesCrea( Request $requette,RequestStack $requestStack,ObjectManager $manager,Demandes $demande=null,$datejour=null, user $user=null)
+    public function DemandesCrea( Request $requette,RequestStack $requestStack,ObjectManager $manager,Demandes $demande=null,$datejour=null, userInterface $user=null)
     {
 //Si la demande n'est pas déjà faite(modification), on l'a crée
-    
 dump(new \Datetime($datejour)); 
 
         if(!$demande){
@@ -358,6 +388,7 @@ dump(new \Datetime($datejour));
         }
         else{
             $newdemande=false;
+            //dump($user);
         }
         //dump($app);
             $form = $this -> createFormBuilder($demande)
@@ -380,12 +411,12 @@ dump(new \Datetime($datejour));
                       ->getForm();
 //Si la requette existe c'est une création, sinon une modification
         if($newdemande==false){
-            dump($requette);
+            //dump($requette);
         }
         else{
 //C'est le résultat de la requette du template Demandes pour la création
             $requette=$requestStack->getParentRequest();
-            dump($requette);
+            //dump($requette);
         }
         $form->handleRequest($requette);
 
@@ -395,13 +426,13 @@ dump(new \Datetime($datejour));
             if($form->isSubmitted() && $form->isValid()){
                 if(!$demande->getId()){
                     $demande->setDateCreation(new \datetime());
-                    dump($user);
+                    //dump($user);
                     $demande->setUserCrea($user->getUsername());
                     $mode=true;
                 }
                 else{
                     $demande->setDateModif(new \datetime());
-                    dump($user);
+                    //dump($user);
                     $demande->setUserModif($user->getUsername());
                     $mode=false;
                 }
@@ -412,9 +443,9 @@ dump(new \Datetime($datejour));
                 $requette->getSession()->getFlashbag()->add('success', 'Votre demande a été enregistré.');
 
                 if($mode==false){
-                    dump($demande);
+                    //dump($demande);
                     
-                    return $this->redirectToRoute('home');
+                    return $this->redirectToRoute('Demandes');
                 }
                 else{
                     //return $this->redirectToRoute('Demandes');
@@ -433,23 +464,33 @@ dump(new \Datetime($datejour));
 
     /**
      * @Route("/Demandes", name="Demandes")
+     * @Security("has_role('ROLE_CE_MOULAGE')")
      */
-    public function Demandes(Request $requette, ObjectManager $manager)
+    public function Demandes(Request $requette, ObjectManager $manager,userInterface $user=null)
     {
+        
 //Redirection après remplissage du formulaire 
-        if (!$requette){
-            dump($requette);
+        if (!$requette->get('DatedebPlan')){
+            //Recherche du début et fin de la semaine n+1  pour effectuer les demandes de créneaux         
+            $currentMonthDateTime = new \DateTime();
+            $firstDateTime = $currentMonthDateTime->modify('Monday next week');
+            $currentMonthDateTime = new \DateTime();
+            $lastDateTime = $currentMonthDateTime->modify('Sunday next week');
+            $lastDateTime = $lastDateTime->modify('23 hours');
         }
         else{
-            dump($requette);
+            //$currentMonthDateTime = new \DateTime(strtotime($requette->get('DatedebPlan')));
+            //$sem = date("w", strtotime($requette->get('DatedebPlan').date('Y-m-d') ));
+            //$firstDateTime = $currentMonthDateTime->modify('Monday next week');
+            $firstDateTime=date("Y-m-d",strtotime($requette->get('DatedebPlan')));
+            $currentMonthDateTime = new \DateTime($firstDateTime);
+            $lastDateTime = $currentMonthDateTime->modify('Sunday this week');
+            $lastDateTime = $lastDateTime->modify('23 hours');
         }
-//Recherche du début et fin de la semaine n+1  pour effectuer les demandes de créneaux         
-        $currentMonthDateTime = new \DateTime();
-        $firstDateTime = $currentMonthDateTime->modify('Monday next week');
-        $currentMonthDateTime = new \DateTime();
-        $lastDateTime = $currentMonthDateTime->modify('Sunday next week');
-        $lastDateTime = $lastDateTime->modify('23 hours');
-//Visualisation des demandes en cours par semaine
+
+//Recherche des dates de la semaine encours pour les demandes avec récurrences
+
+//Visualisation des demandes en cours pour la semaine n+1
     $demande=new Demandes();
            
             if(!$demande){
@@ -465,17 +506,33 @@ dump(new \Datetime($datejour));
             //dump($demande); 
 //Chargement de la variable qui récupère tous les moyens suivant un service
         $repos=$this->getDoctrine()->getRepository(Moyens::class);
-        $moyens=$repos -> findBy(['Id_Service' => '8']);
-        $item=array();
+        $moyens=$repos -> findAllMoyensSvtService ( intval('8') );
+        $item=$moyens;   
         $data = [];
+        $TbEtat=[];
         $i = 0;
+        $a=0;
         foreach($moyens as $moyen){
-            $data[$i] = ['id'=> $moyen->getId(),  'content'=> $moyen->getLibelle()];
+            if ($moyen['SousTitres']==2){
+                $Etats=$repos -> findBy(['Libelle' => $moyen['Moyen']]);
+                // On rajoute les notions d'activitees au moyen pour créer 2 lignes sur planning
+                foreach($Etats as $etat){
+                    if ($moyen['id']!=$etat->getId()){
+                        $TbEtat[$a]=['id'=>$etat->getId(), 'content'=>$etat->getActivitees()];
+                        $a=$a+1;
+                    }
+                }
+                //dump($TbEtat[$a-1]['id']);
+                $data[$i] = ['id'=> $moyen['id'],  'content'=> $moyen['Moyen'], 'nestedGroups' => [$TbEtat[$a-1]['id']]];
+            }
+            else{
+                $data[$i] = ['id'=> $moyen['id'],  'content'=> $moyen['Moyen']];
+            }
             $i = $i + 1;
+            //On affecte un élément $item à $data
         }
-        //dump($data);
+        $Ssmoyen= new JsonResponse($TbEtat);
         $moyen= new JsonResponse($data);
-        //dump($moyen);
 //Chargement d'une variable pour la réalisation de la nav-bar du menu et des sous-titres
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
         $Titres=$repo -> findAll();
@@ -485,36 +542,41 @@ dump(new \Datetime($datejour));
     $item=array();
         $data = [];
         $i = 0;
-        foreach($Taches as $tache){            
-            $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification()]);
-            $data[$i] = ['id'=> $tache->getId(),'programmes'=> $tache->getAction(),'statut'=>$tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $tache->getNumDemande()->getCommentaires()];
+        foreach($Taches as $tache){ 
+            $commentaires=$tache->getNumDemande()->getCommentaires()."/".$tache->getNumDemande()->getOutillages();
+            $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification(),'Activitees'=> 'Plannifie']);           
+            $data[$i] = ['id'=> $i,'programmes'=> $tache->getAction(),'statut'=>$tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires];
             $i = $i + 1;
         }
     $repo=$this->getDoctrine()->getRepository(PolymReal::class);
     $Polyms=$repo -> findAll();
-    //dump($data);
         foreach($Polyms as $polym){ 
-            $data[$i] = ['id'=> $polym->getId(),'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym()];
+            $data[$i] = ['id'=> $i,'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym()];
             $i = $i + 1;
         }
-        //dump($data);
         $taches= new JsonResponse($data);
-        //dump($taches);
-        //dump($lastDateTime);
+//récupération des demandes récurrentes de la semaine dernière
+    $repo=$this->getDoctrine()->getRepository(Demandes::class);
+    $DemRec=$repo -> findBy(['Reccurance'=>'1','UserCrea'=>$user->getUsername()]);
+    //$DemRec=$repo ->findDemRecur($lastDateTime,$firstDateTime,$user->getUsername());
+    dump($DemRec);
 //Transfert des variables à la vue
         return $this->render('planning_mc/Demandes.html.twig',[
            'Titres' => $Titres,
            'datedeb' => $firstDateTime,
            'datefin' => $lastDateTime,
            'Cycles'=>$cycles,
-           'moyens' => $moyen->getContent(),
+           'Moyens' => $moyen->getContent(),
+           'Ssmoyen' => $Ssmoyen->getContent(),
            'taches' => $taches->getContent(),
+           'DemRec' => $DemRec,
            'reqet' => $requette
         ]);   
     }
 
     /**
      * @Route("/Demandes/Plannification/{id}", name="Planif_Demandes")
+     * @Security("has_role('ROLE_CE_POLYM')")
      */
     public function DemandesPlanif( Request $requette,RequestStack $requestStack,ObjectManager $manager,Demandes $demande=null,$datejour=null, ValidatorInterface $validator )
     {
@@ -606,6 +668,7 @@ dump(new \Datetime($datejour));
 
 	/**
      * @Route("/Planification", name="Planification")
+     * @Security("has_role('ROLE_CE_POLYM')")
      */
     public function Planification(Demandes $demande=null)
     {
@@ -648,7 +711,7 @@ dump(new \Datetime($datejour));
         $i = 0;
         foreach($Taches as $tache){
             $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification()]);
-            $data[$i] = ['id'=> $tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $tache->getNumDemande()->getCommentaires()];
+            $data[$i] = ['id'=> $i,'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $tache->getNumDemande()->getCommentaires()];
             $i = $i + 1;
             //dump($MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification()]));
             //dump($MoyUtil[0]->getId());
@@ -657,7 +720,7 @@ dump(new \Datetime($datejour));
         $Polyms=$repo -> findAll();
         //dump($data);
         foreach($Polyms as $polym){ 
-            $data[$i] = ['id'=> $polym->getId(),'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym()];
+            $data[$i] = ['id'=> $i,'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym()];
             $i = $i + 1;
         }
         $taches= new JsonResponse($data);
@@ -732,6 +795,7 @@ dump(new \Datetime($datejour));
     }
     /**
      * @Route("/METHODES/PROGRAMMATION", name="PROGRAMMATION")
+     * @Security("has_role('ROLE_PROGRAMMEUR')")
      */
     public function PROGRAMMATION()
     {
@@ -786,8 +850,8 @@ dump(new \Datetime($datejour));
     }
 
     /**
-     * @Route("/Creation", name="Creation")
-     * @Route("/Modification/{id}", name="Modification")
+     * @Route("/METHODES/PE/Creation", name="Creation")
+     * @Route("/METHODES/PE//Modification/{id}", name="Modification")
      */
     public function Creation(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
     {
@@ -828,8 +892,8 @@ dump(new \Datetime($datejour));
     }
 
     /**
-     * @Route("/Consultation", name="Consultation")
-     * @Route("/Consultation/{id}", name="Consul_ProgMoy")
+     * @Route("/METHODES/Consultation", name="Consultation")
+     * @Route("METHODES/Consultation/{id}", name="Consul_ProgMoy")
      */
     public function Consultation(CategoryMoyens $moyen=null)
     {
@@ -863,6 +927,84 @@ dump(new \Datetime($datejour));
             'Titres' => $Titres,
             'Cycles' => $cycles,
             'Moyens' => $moyen,
+        ]);
+    }
+
+    
+     /**
+     * @Route("/OUTILLAGE/Article/Creation", name="CreationO")
+     * @Route("/OUTILLAGE/Article/Modification/{id}", name="ModificationO")
+     */
+    public function CreationO(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
+        {$repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+            $Titres=$repo -> findall();
+            dump($Titres);
+        $form = $this->createForm(CreationProgType::class, $Prog);
+        
+        $form->handleRequest($Requet);
+        
+        return $this->render('planning_mc/CreationOutillages.html.twig',[
+            'Titres' => $Titres,
+            'formProg' => $form->createView(),
+        ]);
+    }
+
+    /**
+     * @Route("/OUTILLAGE/Article/Consultation", name="ConsultationO")
+     * @Route("/OUTILLAGE/Article/Consultation/{id}", name="ConsulO")
+     */
+    public function ConsultationO(CategoryMoyens $moyen=null)
+    {
+
+    }
+
+    /**
+     * @Route("/OUTILLAGE/Article/Demandes", name="DemandesO")
+     */
+    public function DemandesO(Request $requette, ObjectManager $manager)
+    {
+
+    }
+
+    /**
+     * @Route("/ADMIN/Moyen/Creation", name="CreationMoyen")
+     * @Route("/ADMIN/Moyen/Modification/{id}", name="ModificationMoyen")
+     */
+    public function CreationMoyen(Request $Requet,ObjectManager $manager,Moyens $Moyen=null)
+        {
+            if(!$Moyen){
+                $Moyen=new Moyens();
+            }
+            $form = $this->createForm(CreationMoyensType::class, $Moyen);
+            
+            $form->handleRequest($Requet);
+            //dump($form);
+            if($form->isSubmitted() && $form->isValid()){
+                if(!$Moyen->getId()){
+                    //$Moyen->setDateCreation(new \datetime());
+                    
+                }
+                else{
+                    //$Moyen->setDateModif(new \datetime());
+                
+                }
+    
+                $manager->persist($Moyen);
+                $manager->flush();
+                
+    
+                return $this->redirectToRoute('Utilisateurs');
+            }
+            $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+            $Titres=$repo -> findall();
+            //dump($Titres);
+        $form = $this->createForm(CreationMoyensType::class, $Moyen);
+        
+        $form->handleRequest($Requet);
+        
+        return $this->render('planning_mc/CreationMoyen.html.twig',[
+            'Titres' => $Titres,
+            'formMoy' => $form->createView(),
         ]);
     }
     

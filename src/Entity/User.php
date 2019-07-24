@@ -9,10 +9,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
- * @UniqueEntity(
- *  fields={"email"},
- *  message ="Cette adresse est dejà utilise"
- * )
+ * @UniqueEntity(fields={"email"},message ="Cette adresse est deja utilise")
  */
 class User implements UserInterface
 {
@@ -48,13 +45,13 @@ class User implements UserInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Assert\Length(min=8, minMessage="Minimum de 8 caractères")
+     * @Assert\Length(min=8, minMessage="Minimum de 8 caracteres")
      */
 
     private $password;
 
     /**
-     * @Assert\EqualTo(propertyPath="password", message="Le mot de passe doit être identique")
+     * @Assert\EqualTo(propertyPath="password", message="Le mot de passe doit etre identique")
      */
 
     public $confirm_password;
@@ -65,6 +62,21 @@ class User implements UserInterface
 
 
     private $DateCreation;
+
+    /**
+     * @ORM\Column(type="json_array")
+     */
+    private $Roles = [];
+
+    /**
+     * @ORM\Column(name="is_active", type="boolean")
+     */
+    private $isActive;
+      
+    public function __construct()
+    {
+        $this->isActive = true;
+    }
 
     public function getId(): ?int
     {
@@ -150,10 +162,29 @@ class User implements UserInterface
 
     public function getRoles()
     {
-        if (empty($this->roles)) {
+        //dump($this->Roles);
+        if (empty($this->Roles)) {
              return ['ROLE_USER'];
          }
-         return $this->roles;
+         return $this->Roles;
+    }
+
+    public function setRoles(array $Roles): self
+    {
+        $this->Roles = $Roles;
+
+        return $this;
+    }
+
+    public function getIsActive(): ?bool
+    {
+        return $this->isActive;
+    }
+
+    public function setIsActive($isActive)
+    {
+        $this->isActive = $isActive;
+        return $this;
     }
 
 }

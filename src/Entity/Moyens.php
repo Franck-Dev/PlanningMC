@@ -59,6 +59,11 @@ class Moyens
      */
     private $demandes;
 
+    /**
+     * @ORM\Column(type="string", length=20, nullable=true)
+     */
+    private $Activitees;
+
     public function __construct()
     {
         $this->demandes = new ArrayCollection();
@@ -181,6 +186,18 @@ class Moyens
                 $demande->setMoyenUtilise(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getActivitees(): ?string
+    {
+        return $this->Activitees;
+    }
+
+    public function setActivitees(?string $Activitees): self
+    {
+        $this->Activitees = $Activitees;
 
         return $this;
     }

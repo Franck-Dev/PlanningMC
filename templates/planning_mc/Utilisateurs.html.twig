@@ -11,5 +11,18 @@
 
 	<h1>Connexion ou blog ou page perso! ✅</h1>
         <p> Planning perso avec les différents composants du panneau à réaliser et leurs emplacements ou état </p>
+    {% if is_granted('ROLE_ADMIN') %}
+        <li class = "nav-item dropdown" style = "margin-right: 75px;" >
+                <div class = "dropdown-menu" aria-labelledby = "navbarDropdownMenuLink" >
+                        <a class = "dropdown-item" href = #> Moyen </a >
+                </div>
+        <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="{{ path('CreationMoyen') }}" id="Moyen"}>Moyen<span class="caret"></span></a>
+                    <div class="dropdown-menu" aria-labelledby="Moyen">
+                        <a class="dropdown-item" href="{{ path('CreationMoyen') }}">Creation </a>
+                    </div>
+        </li>
+    {% else %}
 
+    {% endif %}
 {% endblock %}

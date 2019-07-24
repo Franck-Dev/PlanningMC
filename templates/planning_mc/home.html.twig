@@ -87,7 +87,7 @@
                 </div>
                 <div class="col-xl-5">
                     <div class="card shadow">
-                        <h4 class="card-header">Charge de la semaine {{Jour| date('W')}} par Moyens (Totale : {{CharTot|raw}} H)<span class="tag tag-success" id="revenue-tag"> {{HProdSem|raw}}H de réalisées</span></h4>
+                        <h4 class="card-header">Charge de la semaine {{Semaine|raw}} par Moyens (Totale : {{CharTot|raw}} H)<span class="tag tag-success" id="revenue-tag"> {{HProdSem|raw}}H de réalisées</span></h4>
                         <div class="card-block">
                             <div id="users-countries-bar-chart"></div>
                         </div>
@@ -98,7 +98,7 @@
         <div class="row m-b-1">
             <div class="col-xl-6">
                 <div class="card shadow">
-                    <h4 class="card-header">Production par programmes du : {{Jour| date('d/m/Y')}}</h4>
+                    <h4 class="card-header">Prod du {{Jour| date('d/m/Y')}} pour {{NbPolymJ|raw}} Progs lancés</h4>
                     <div class="card-block">
                         <div id="products-revenue-pie-chart"></div>
                     </div>
@@ -118,7 +118,7 @@
         <div class="row">
             <div class="col-xl-8">
                 <div class="card shadow">
-                    <h4 class="card-header">Production par moyen de la semaine {{Jour| date('W')}} :  {{PProdSem|raw}} pcs faites / Y à réaliser</h4>
+                    <h4 class="card-header">Production par moyen de la semaine {{Semaine|raw}} :  {{PProdSem|raw}} pcs faites / Y à réaliser</h4>
                     <div class="card-block">
                         <div id="chartContainer"></div>
                     </div>
@@ -126,7 +126,7 @@
             </div>
             <div class="col-xl-4">
                 <div class="card shadow">
-                    <h4 class="card-header">Productivité de la semaine {{Jour| date('W')}} : {{RapportPH|raw}} pcs/H</h4>
+                    <h4 class="card-header">Productivité de la semaine {{Semaine|raw}} : {{RapportPH|raw}} pcs/H</h4>
                     <div class="card-block">
                         <div id="Rapport-Heures-pieces"></div>
                     </div>

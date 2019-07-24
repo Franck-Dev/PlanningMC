@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% form_theme formProg 'bootstrap_4_layout.html.twig' %}
+
+{% block title %}APAMC{% endblock %}
+
+{% block body %}
+	<h1>Création des Outillages des Pièces Composites  ! ✅</h1>
+
+    {{form_start(formProg)}}
+
+    {{form_widget(formProg)}}
+
+    <button type="submit" class="btn btn-success">Ajouter l'Outillage</button>
+
+    {{form_end(formProg)}}
+
+{% endblock %}

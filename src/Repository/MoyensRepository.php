@@ -47,4 +47,17 @@ class MoyensRepository extends ServiceEntityRepository
         ;
     }
     */
+    public function findAllMoyensSvtService ( $IdService ) : array
+{
+    $entityManager = $this -> getEntityManager ();
+
+    $query = $entityManager -> createQuery (
+        'SELECT DISTINCT p.Libelle as Moyen, p.id, count(p.Activitees) as SousTitres
+        FROM App\Entity\Moyens p
+        WHERE p.Id_Service = :service
+        GROUP BY Moyen'
+    ) -> setParameter ( 'service' , $IdService );
+    // returns an array of Product objects
+    return $query -> execute ();
+}
 }

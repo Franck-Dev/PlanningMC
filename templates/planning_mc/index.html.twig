@@ -68,11 +68,17 @@
         var template = Handlebars.compile(source);
         //console.log(template)
         var conteneur = document.getElementById ('visualization');
+        
+        var groupsold = {{Moyens|raw}};
 
-        var groups = {{Moyens|raw}};
+        var groups = new vis.DataSet();
+      
+        groups.add({{Moyens|raw}});
+        groups.add({{Ssmoyen|raw}});
 
         var items = new vis.DataSet ({{Taches|raw}});
-
+        var groupIds = groups.getIds();
+        var randomGroupId = groupIds[Math.floor(Math.random() * groupIds.length)];
         var itemsold = new vis.DataSet ([
             {id: 1, programmes: 'PRP10001', statut: 'PLANNIFIE', start: '2019-02-19 22:00:00', end: '2019-02-20 02:00:00', group: 2, className: 'pink', title: 'Prendre les outillages en salle de moulage'},
             {id: 2, programmes: 'PRP10002', statut: 'VALIDE', start: '2019-02-19 23:00:00', end: '2019-02-20 05:15:00', group: 1, style: 'background-color: red', satut: 'Plannifie', title: ['OT98765','OT123456']},
@@ -88,11 +94,12 @@
             start: new Date(),
             end: new Date(1000*60*60*24*7 + (new Date()).valueOf()),
             orientation: 'top',
+            groupOrder: 'content',
             editable : { 
-                add : true , // ajoute de nouveaux éléments en double tapant  
+                add : false , // ajoute de nouveaux éléments en double tapant  
                 updateTime : true , // déplace les éléments horizontalement  
-                updateGroup : true , // déplace les éléments d'un groupe à un autre  
-                remove : true , // supprime un élément en appuyant sur le bouton de suppression en haut à droite  
+                updateGroup : false , // déplace les éléments d'un groupe à un autre  
+                remove : false , // supprime un élément en appuyant sur le bouton de suppression en haut à droite  
                 overrideItems : false  // autorise ces options à remplacer item.editable
             },
             
