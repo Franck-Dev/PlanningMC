@@ -5,11 +5,14 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Doctrine\Common\Persistence\ObjectManager;
 use App\Entity\User;
 use App\Form\RegistrationType;
+use App\Form\ModifMdPType;
 use App\Entity\ConfSmenu;
 use App\Entity\Moyens;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
@@ -25,11 +28,8 @@ class SecurityController extends AbstractController
         $Titres=$repo -> findAll();
 
         $user= new User();
-
         $form=$this->createForm(RegistrationType::class, $user);
-
         $form->handleRequest($request);
-        //dump($form);
         if($form->isSubmitted() && $form->isValid()){
             $hash=$encoder->encodePassword($user, $user->getPassword());
             //Attribution des rôles suivant les postes (a revoir pour faire une page admin)
@@ -54,7 +54,10 @@ class SecurityController extends AbstractController
                 case "MOULAGE":
                     if($user->getPoste()->getLibelle() == "Maitrise"){
                         $user->setRoles(['ROLE_CE_MOULAGE']);
-                    }else{
+                    }elseif($user->getPoste()->getLibelle() == "Responsable"){
+                        $user->setRoles(['ROLE_CE_MOULAGE']);
+                    }  
+                    else{
                         $user->setRoles(['ROLE_USER']);
                     }
                     break;
@@ -84,7 +87,7 @@ class SecurityController extends AbstractController
             // get the login error if there is one
             $error = $authenticationUtils->getLastAuthenticationError();
             $Titres =[];
-            dump($error);
+            //dump($error);
         return $this->render('security/login.html.twig',[
             'error' => $authenticationUtils->getLastAuthenticationError(),
             'last_user' => $authenticationUtils->getLastUsername(),
@@ -103,4 +106,45 @@ class SecurityController extends AbstractController
         ]);
     }
 
+    /**
+     * * @Route("/inscription/Modification", name="Modif_Inscription")
+    */
+    Public function ModifMdP(request $request, ObjectManager $manager, user $user=null, UserPasswordEncoderInterface $encoder, ValidatorInterface $validator){
+
+        $Titres=[];
+        //Si le formulaire est rempli
+        if($request->get('modif_md_p')){
+            //On va chercher dans la base l'utilisateur en question
+            $user= new User();
+            $repo=$this->getDoctrine()->getRepository(User::class);
+            $items=$repo -> findBy(['email' => $request->get('modif_md_p')['email']]);
+            $user=$items[0];
+            //On l'empile dans le formulaire
+            $form=$this->createForm(ModifMdPType::class, $user);
+            //On force la validation (pas terrible, /!\ a changer)
+            $form->submit($form->getName());
+            $errors = $validator -> validate ($form);
+        }
+        //Sinon on génère le formulaire vide
+        else{
+            $form=$this->createForm(ModifMdPType::class, $user);
+        }
+        //dump($request);
+        //dump($request->get('modif_md_p')['password']);
+        if($form->isSubmitted()){
+            $hash=$encoder->encodePassword($user, $request->get('modif_md_p')['password']);
+            //dump($hash);
+            $user->setIsActive('0');
+            $user->setPassword($hash);
+            $manager->persist($user);
+            $manager->flush($user);
+            
+            return $this->redirectToRoute('security_login');
+        }
+
+        return $this->render('security/ModificationMdP.html.twig',[
+            'form' => $form->createView(),
+            'Titres' => $Titres
+        ]);
+    }
 }

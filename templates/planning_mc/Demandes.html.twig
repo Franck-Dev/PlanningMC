@@ -36,7 +36,21 @@
 				<div class="card-body">
 					<div class="input-group">
 						<form action="{{ path('Demandes')}}" method="POST" onclick=Changeheure()>
-							<input type="datetime-local" id="datejourplanif" name="DatedebPlan" value={{datedeb|date('Y-m-d')}}>
+							<input type="date" id="datejourplanif" name="DatedebPlan" value={{datedeb|date('Y-m-d')}}>
+							<select id='UserCE' name='UtilisateursCE'>
+								{% set a = 0 %}
+									{% for useCE in utilisateurs %}
+										{% if (app.user.username == useCE.username) %}
+											<option value='{{ useCE.username }}' selected>{{ useCE.username  }}</option>
+											{% set a = 1 %}
+										{% else %}
+											<option value='{{ useCE.username }}'>{{ useCE.username  }}</option>
+										{% endif %}						
+									{% endfor %}
+									{% if a == 0 %}
+										<option value='{{ app.user.username }}' selected>{{ app.user.username }}</option>
+    								{% endif %}   
+							</select>
 							<button type="submit" class="btn btn-success" value="Submit"style="border-radius:40px;background-color:blue;color:white">Valider</button> {#<pre></pre> {{ render(controller('App\\Controller\\PlanningMCController::DemandesCrea',{'datejour': datejourplanif}))}}></pre>#} 
 						</form>
 					</div>
@@ -47,24 +61,26 @@
 				<div class="card-body">
 						<ul class= "list-group list-group-flush" >
 						{% for Demandes in DemRec %}
-							{% if Demandes.DatePropose > datedeb  %}
+							{% if Demandes.DatePropose|date('Y-m-d') >= datedeb|date_modify('-7 days')|date('Y-m-d') and Demandes.DatePropose|date('Y-m-d') < datedeb|date_modify('-0 days')|date('Y-m-d') %}
 								<li class= "list-group-item" >  
 									<table class="table">
-										<td>{{Demandes.cycle.nom}}</td>
-										<td><input id={{Demandes.id}} type="checkbox" value={{ Demandes.reccurance ? 'OUI' : 'NON'}} ></td>
-										<td><input id={{Demandes.id}} type="datetime" value={{Demandes.planning.DebutDate|date('Y-m-d')}}></td>
-										<td><button type="button" class="btn btn-info btn-block">
-											<a href="" data-toggle="modal" data-target="#exampleModal" data-id={{ Demandes.id }}>
-											<span>CREER</span></a>
-										</button>
-										</td>
+											<td>{{Demandes.cycle.nom}}</td>
+											<td><input type="checkbox" name='{{Demandes.id}}' value={{ Demandes.reccurance }} ></td>
+											<td><input type="date" id='{{Demandes.id}}' value={{Demandes.planning.DebutDate|date('Y-m-d')}}></td>
+											<td><form action="{{ path('Crea_Demandes')}}" method="POST" id="DemRecu">
+													<input type="hidden" name='Demandes' value="{{Demandes.id}}" />
+													<input type="hidden" name='DatePla' value="{{Demandes.planning.DebutDate|date('Y-m-d')}}" />	
+													<input type="hidden" name='HeurePla' value="{{Demandes.planning.DebutDate|date('H:m:s')}}" />
+													<input type="hidden" name='IdPla' value="{{Demandes.planning.id}}" />	
+													<button type="submit" class="btn btn-success" value="Submit"><span>CREER</span></button>
+												</form>
+											</td>
+										</form>
 									</table>
 								</li>
 							{% else %}
-								{{dump(datedeb|date_modify('-7 days'))}};
-							{% endif %}
-							
 
+							{% endif %}
 						{% endfor %}	
 					</ul>
 				</div>
@@ -141,7 +157,9 @@
 						<td>{{ cycle.dateCreation ? cycle.dateCreation|date('d/m/Y H:i:s') : '' }}</td>
 						<td>{{ cycle.dateModif ? cycle.dateModif|date('d/m/Y H:i:s') : '' }}</td>
 						<td>
-							<a href="{{ path('Modif_Demandes', {'id': cycle.id}) }}">Modifier</a>
+							{% if app.user.username == cycle.UserCrea %}
+								<a href="{{ path('Modif_Demandes', {'id': cycle.id}) }}">Modifier</a>
+							{% endif %}
 						</td>
 					</tr>
 					</tbody>
@@ -207,7 +225,7 @@ console.log(options.end);
 
 function Changeheure()
 {
-	var DateDebPlanif=document.getElementById("datejourplanif").value;
+
 }
 </script>
 {% endblock %}

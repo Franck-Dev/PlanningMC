@@ -47,4 +47,17 @@ class UserRepository extends ServiceEntityRepository
         ;
     }
     */
+    public function findByRole($role)//par exemple $role ="ROLE_CE_MOULAGE"
+{
+    $qb = $this->_em->createQueryBuilder();
+    $qb->select('u')
+    ->from($this->_entityName, 'u')
+    ->where('u.Roles LIKE :roles')
+    ->andwhere('u.isActive = :enabled')
+    ->setParameter('roles', '%"'.$role.'"%')
+    ->setParameter('enabled', true)
+    ;
+    return $qb->getQuery()->getResult();
+}
+
 }

@@ -379,56 +379,108 @@ $RapportPcs= new JsonResponse($daty2);
     public function DemandesCrea( Request $requette,RequestStack $requestStack,ObjectManager $manager,Demandes $demande=null,$datejour=null, userInterface $user=null)
     {
 //Si la demande n'est pas déjà faite(modification), on l'a crée
-dump(new \Datetime($datejour)); 
-
+        //dump($demande);    
         if(!$demande){
-            $demande = new Demandes();
-            $demande->setDatepropose(new \Datetime($datejour));
-            $newdemande=true; 
+            //dump($requette);
+            if($requette->get('Demandes')){
+                //Récupération des données de la polym plannifié
+                $repo=$this->getDoctrine()->getRepository(Planning::class);
+                $Plan=$repo -> findBy(['id'=> $requette->get('IdPla')]);
+                //récupération des données de la demande réccurante
+                $repo=$this->getDoctrine()->getRepository(Demandes::class);
+                $Dem=$repo -> findBy(['id'=> $requette->get('Demandes')]);
+                //On marque cette récurrence comme validé
+                //dump($Dem[0]);
+                $demande=$Dem[0];
+                $demande->SetRecurValide(1);
+                $manager = $this->getDoctrine()->getManager();
+                $manager->persist($demande);
+                $manager->flush();
+                //On créé la nouvelle demande avec les données de la récurrante
+                $demande = new Demandes();
+                $date=$requette->get('DatePla');
+                $DateSemAv = date("Y-m-d",strtotime(date("Y-m-d", strtotime($date)) . " +7 day"));
+                $HeurPolym=$requette->get('HeurePla');
+                $demande->setDatepropose(new \Datetime($DateSemAv));
+                $demande->setHeurePropose(new \Datetime($HeurPolym));
+                $demande->setCycle($Dem[0]->getCycle());
+                $demande->setOutillages($Dem[0]->getOutillages());
+                $demande->setMoyenUtilise($Dem[0]->getMoyenUtilise());
+                $demande->setCommentaires($Dem[0]->getCommentaires());
+                $newdemande=false;
+            }
+            else{
+                $demande = new Demandes();
+                $demande->setDatepropose(new \Datetime($datejour));
+                $newdemande=true; 
+                //dump($demande);
+            }
         }
         else{
             $newdemande=false;
             //dump($user);
         }
-        //dump($app);
-            $form = $this -> createFormBuilder($demande)
+            //Dans la construction du form, on vérifie si la demande est déjà validée lors d'une modif
+            if($demande->getPlannifie()==true){
+                $form = $this -> createFormBuilder($demande)
                       -> add('cycle', EntityType::class, [
                           'class' => ProgMoyens::class,
                           'choice_label' => 'nom',
+                          'disabled' => 'true'
                       ])
-                      -> add('date_propose', DateType::class)
-                      -> add('heure_propose', TimeType::class)
+                      -> add('date_propose', DateType::class, ['disabled' => 'true'])
+                      -> add('heure_propose', TimeType::class, ['disabled' => 'true'])
                       -> add('outillages')
                       -> add('commentaires')
-                      -> add('plannifie',ChoiceType::class, [
-                            'choices'  => [
-                            'NON' => false]])
                       -> add('Reccurance',ChoiceType::class, [
                         'label'    => 'si besoin de figer cette polymérisation suivant une réccurance',
                         'choices'  => [
                             'NON' => false,
                             'OUI' => true]])
                       ->getForm();
-//Si la requette existe c'est une création, sinon une modification
+                }
+                else{
+                    $form = $this -> createFormBuilder($demande)
+                      -> add('cycle', EntityType::class, [
+                          'class' => ProgMoyens::class,
+                          'choice_label' => 'nom'
+                      ])
+                      -> add('date_propose', DateType::class)
+                      -> add('heure_propose', TimeType::class)
+                      -> add('outillages')
+                      -> add('commentaires')
+                      -> add('Reccurance',ChoiceType::class, [
+                        'label'    => 'si besoin de figer cette polymérisation suivant une réccurance',
+                        'choices'  => [
+                            'NON' => false,
+                            'OUI' => true]])
+                      ->getForm();
+                }
+//Si la demande existe c'est une modification , sinon une création
         if($newdemande==false){
             //dump($requette);
         }
         else{
 //C'est le résultat de la requette du template Demandes pour la création
-            $requette=$requestStack->getParentRequest();
-            //dump($requette);
+            if($requestStack->getParentRequest()){
+                $requette=$requestStack->getParentRequest();
+                $mode=true;
+            }
+            else{
+                $mode=false;
+            }
         }
         $form->handleRequest($requette);
-
         if ($requette->isMethod('POST')) {
         //$form->submit($requette->request->get($form->getName()));
 //On vérifie la validité des données avant de persister en base
             if($form->isSubmitted() && $form->isValid()){
                 if(!$demande->getId()){
                     $demande->setDateCreation(new \datetime());
-                    //dump($user);
+                    $demande->setPlannifie(0);
+                    $demande->setRecurValide(0);
                     $demande->setUserCrea($user->getUsername());
-                    $mode=true;
+                    
                 }
                 else{
                     $demande->setDateModif(new \datetime());
@@ -555,11 +607,19 @@ dump(new \Datetime($datejour));
             $i = $i + 1;
         }
         $taches= new JsonResponse($data);
-//récupération des demandes récurrentes de la semaine dernière
+//récupération des demandes récurrantes de la semaine dernière
+
     $repo=$this->getDoctrine()->getRepository(Demandes::class);
-    $DemRec=$repo -> findBy(['Reccurance'=>'1','UserCrea'=>$user->getUsername()]);
+    if(!$requette->get('UtilisateursCE')){
+        $DemRec=$repo -> findBy(['Reccurance'=>'1','UserCrea'=>$user->getUsername(),'Plannifie'=>'1','RecurValide'=>'0']);
+    }
+    else{
+        $DemRec=$repo -> findBy(['Reccurance'=>'1','UserCrea'=>$requette->get('UtilisateursCE'),'Plannifie'=>'1','RecurValide'=>'0']);
+    }
     //$DemRec=$repo ->findDemRecur($lastDateTime,$firstDateTime,$user->getUsername());
-    dump($DemRec);
+//Récupération des CE du moulage pour listing
+    $repo=$this->getDoctrine()->getRepository(User::class);    
+    $utilisateurs=$repo -> findByRole('ROLE_CE_MOULAGE');
 //Transfert des variables à la vue
         return $this->render('planning_mc/Demandes.html.twig',[
            'Titres' => $Titres,
@@ -570,6 +630,7 @@ dump(new \Datetime($datejour));
            'Ssmoyen' => $Ssmoyen->getContent(),
            'taches' => $taches->getContent(),
            'DemRec' => $DemRec,
+           'utilisateurs' => $utilisateurs,
            'reqet' => $requette
         ]);   
     }
@@ -593,7 +654,7 @@ dump(new \Datetime($datejour));
         $moyen = $this->getDoctrine()
             ->getRepository(Moyens::class)
             ->findBy(['Libelle' => $requette->get('Moyen'.$demande->getId('id'))]);
-            dump($moyen);
+            //dump($moyen);
 //Récupération du numéro d'action (içi le cycle)
         $action->setAction($cycles[0]->getNom($demande->getCycle('id')));
         $action->setNumDemande($demande);
@@ -620,7 +681,7 @@ dump(new \Datetime($datejour));
         //$form->handleRequest($requette);
         $form->submit($form->getName());
         $errors = $validator -> validate ($form); 
-        dump($errors);      
+        //dump($errors);      
 //On vérifie la validité des données avant de persister en base
         if ( $form -> isSubmitted () ) {
             //dump($demande[500]);
@@ -633,25 +694,25 @@ dump(new \Datetime($datejour));
                 $mode=false;
             }
             $manager = $this->getDoctrine()->getManager();
-            dump($demande);
+            //dump($demande);
             if(!$demande->getPlanning()){
                 $manager->persist($action);
                 $manager->flush();
-                dump($action);
+                //dump($action);
                 $manager->persist($demande);
                 $manager->flush();
             }
             else{
-                dump($action);
+                //dump($action);
                 $manager->remove($demande->getPlanning());
                 $manager->flush();
             }
-                dump($demande);
+                //dump($demande);
             
             $requette->getSession()->getFlashbag()->add('success', 'Votre polym a été enregistré.');
                 
             if($mode==false){
-                dump($demande);
+                //dump($demande);
                     
                 return $this->redirectToRoute('Planification');
             }
@@ -670,23 +731,34 @@ dump(new \Datetime($datejour));
      * @Route("/Planification", name="Planification")
      * @Security("has_role('ROLE_CE_POLYM')")
      */
-    public function Planification(Demandes $demande=null)
+    public function Planification(request $requette,Demandes $demande=null)
     {
 //Chargement d'une variable pour toutes les demandes créées
         $test = $this->getDoctrine()
             ->getRepository(demandes::class)
             ->findAll();
 //Recherche du début de semaine et fin de semaine
+    if(!$requette->get('DatedebPlan')){
         $currentMonthDateTime = new \DateTime();
         $firstDateTime = $currentMonthDateTime->modify('Monday next week');
         $currentMonthDateTime = new \DateTime();
         $lastDateTime = $currentMonthDateTime->modify('Sunday next week');
         $lastDateTime = $lastDateTime->modify('23 hours');
+    }
+    else{
+        //$currentMonthDateTime = new \DateTime(strtotime($requette->get('DatedebPlan')));
+        //$sem = date("w", strtotime($requette->get('DatedebPlan').date('Y-m-d') ));
+        //$firstDateTime = $currentMonthDateTime->modify('Monday next week');
+        $firstDateTime=date("Y-m-d",strtotime($requette->get('DatedebPlan')));
+        $currentMonthDateTime = new \DateTime($firstDateTime);
+        $lastDateTime = $currentMonthDateTime->modify('Sunday this week');
+        $lastDateTime = $lastDateTime->modify('23 hours');
+    }
         //dump($firstDateTime);
         //dump($lastDateTime);
 //Recherche des moyens à afficher sur planning
         $repos=$this->getDoctrine()->getRepository(Moyens::class);
-        $moyens=$repos -> findBy(['Id_Service' => '8']);
+        $moyens=$repos -> findBy(['Id_Service' => '8','Activitees' => 'Plannifie']);
         $item=$moyens;
         //$serializer = new Serializer();
         //$jsonContent = $serializer->serialize($moyen, 'json');
@@ -883,7 +955,7 @@ dump(new \Datetime($datejour));
         $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
 
         $Titres=$repo -> findAll();
-        dump($Titres);
+        //dump($Titres);
         return $this->render('planning_mc/Creation.html.twig',[
             'Titres' => $Titres,
             'formProg' => $form->createView(),

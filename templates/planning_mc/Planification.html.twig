@@ -18,7 +18,6 @@
             border: 2px solid blue;
             border-radius: 4px;
             background-color: #f1f1f1;
-            width: 100%;
             font-size: 2.0vh;
             font-size: 2vmin;
           }
@@ -42,7 +41,19 @@
 	</style>
 {%endblock%}
 {% block body %}
-    <h1>Listing des Demandes de créneaux de polymérisation ! ✅</h1>
+<div class="row">
+	<div class="col-md-10">
+        <h1>Listing des Demandes de créneaux de polymérisation en date du :</h1>
+    </div>
+    <div class="col-md-2">
+        <div class="input-group">
+            <form action="{{ path('Planification')}}" method="POST">
+                <input type="date" id="datejourplanif" name="DatedebPlan" value={{datedeb|date('Y-m-d')}}>
+                <button type="submit" class="btn btn-success" value="Submit"style="border-radius:40px;background-color:blue;color:white">Valider</button>
+            </form>
+        </div>
+    </div>
+</div>
  {#<pre>{{dump(items)}}</pre>#}  
  {#<pre> {{ dump(app.request.attributes.get("demande")) }} </pre>#}    
     <div class="table-responsive">
@@ -111,14 +122,14 @@
                             <td><input id={{nominputS}} type="text" value={{ test.plannifie ? 'OUI' : 'NON'}} readonly></td>
                             <td><input id={{nominputS}} type="checkbox" value={{ test.reccurance ? 'OUI' : 'NON'}} ></td>
                             <td>{% if (test.plannifie == 0) %}
-                                    <select id={{nomselectM}}>
+                                    <select id='{{nomselectM}}'>
                                         {% for numero in items %}
                                             <option value={ numero.libelle }>{{ numero.libelle }}</option>
                                         {% endfor %}   
                                     </select><br>
                                     {{ test.moyenutilise }}
                                 {% else %}
-                                <input id={{nomselectM}} type="text" value={{ test.moyenutilise.libelle }} readonly>
+                                    <input id='{{nomselectM}}' type="text" value={{ test.moyenutilise.libelle }} readonly>
                                 {% endif %}
                             </td>
                             <td>
@@ -130,13 +141,13 @@
                                     {% if (test.plannifie == 0) %}
                                         <button type="submit" class="btn btn-success" value="Submit" style="border-radius:40px;background-color:blue;color:white">Valider</button>
                                     {% else %}
-                                    <button type="submit" class="btn btn-success" value="Submit" style="border-radius:40px;background-color:red;color:white">Modifier</button>
+                                        <button type="submit" class="btn btn-success" value="Submit" style="border-radius:40px;background-color:red;color:white">Modifier</button>
                                     {% endif %}
                                 </form>
                             </td>
                         </tr>
-                    {%endfor%}
-                {%endfor%}
+                    {% endfor %}
+                {% endfor %}
                 </tbody>
             </table>
                 <h1>Prévisualisation des créneaux de polymérisations ✅</h1>

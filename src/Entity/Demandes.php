@@ -92,6 +92,11 @@ class Demandes
      */
     private $UserModif;
 
+    /**
+     * @ORM\Column(type="boolean", nullable=true)
+     */
+    private $RecurValide;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -284,6 +289,18 @@ class Demandes
     public function setUserModif(?String $UserModif): self
     {
         $this->UserModif = $UserModif;
+
+        return $this;
+    }
+
+    public function getRecurValide(): ?bool
+    {
+        return $this->RecurValide;
+    }
+
+    public function setRecurValide(?bool $RecurValide): self
+    {
+        $this->RecurValide = $RecurValide;
 
         return $this;
     }

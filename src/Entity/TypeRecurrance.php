@@ -26,6 +26,11 @@ class TypeRecurrance
      */
     private $Description;
 
+    /**
+     * @ORM\Column(type="integer")
+     */
+    private $NbrJourCycle;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -51,6 +56,18 @@ class TypeRecurrance
     public function setDescription(?string $Description): self
     {
         $this->Description = $Description;
+
+        return $this;
+    }
+
+    public function getNbrJourCycle(): ?int
+    {
+        return $this->NbrJourCycle;
+    }
+
+    public function setNbrJourCycle(int $NbrJourCycle): self
+    {
+        $this->NbrJourCycle = $NbrJourCycle;
 
         return $this;
     }
