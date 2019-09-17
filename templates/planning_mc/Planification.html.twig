@@ -222,6 +222,10 @@ var options = {
                 remove : true , // supprime un élément en appuyant sur le bouton de suppression en haut à droite  
                 overrideItems : false  // autorise ces options à remplacer item.editable
             },
+            onUpdate: function (item, callback) { 
+                //prettyPromptItemUpdate('Données de polymérisation', 'Edition', item, groups, timeline, callback); 
+                item.content = prompt('Edit items text:', item.content);
+            }
         };
 var timeline = new vis.Timeline (conteneur, items, groups, options);
 //console.log(options.end);

@@ -813,6 +813,34 @@ $RapportPcs= new JsonResponse($daty2);
             'items' => $item
         ]);
     }
+
+     /**
+     * @Route("/Plannification/Modification", name="Modif_Polym_Pla")
+     * @Security("has_role('ROLE_REGLEUR')")
+     */
+    public function ModifPolymPla(Request $request)
+    {
+        //Si c'est le retour de la requette AJAX, on récupère les données
+        if($request->isXmlHttpRequest()) {
+
+            $idPolymPla = $request->request->get('id');
+            //$action->setFinDate(new \Datetime($requette->get('Hfin')));
+            //dump($idPolymPla);//die();
+            if($idPolymPla) {
+                $mr = $this->getDoctrine()->getRepository(Planning::class);
+                $maga = $mr->find($idPolymPla);
+                //dump($maga);//die();
+                $manager = $this->getDoctrine()->getManager();
+                $manager->persist($demande);
+                $manager->flush();
+
+            return new JsonResponse("Requete enregistrée");
+            }
+            return new Response("Pas d'id");
+        }
+        return new Response("Ce n'est pas une requête Ajax");
+    }
+
 	/**
      * @Route("/Utilisateurs", name="Utilisateurs")
      */

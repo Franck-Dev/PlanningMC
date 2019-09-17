@@ -41,6 +41,7 @@
     <script src="{{ asset('build/vis.js') }}"></script>
     <script src="{{ asset('build/handlebars.min.js') }}"></script>
     <script src="{{ asset('build/prototype.js') }}"></script>
+    <script src="{{ asset('build/jquery.min.js') }}"></script>
     <script src="{{ asset('build/sweetalert.min.js') }}"></script>
     <script id="item-template" type="text/x-handlebars-template">
             <table class="infos">
@@ -103,8 +104,21 @@
                 overrideItems : false  // autorise ces options à remplacer item.editable
             },
             
-            onUpdate: function (item, callback) { 
-                prettyPromptItemUpdate('Données de polymérisation', 'Edition', item, groups, timeline, callback); 
+            onMove: function (item, callback) { 
+                //console.log(groups._data[groups._data[item.group].nestedInGroup].content);
+                //prettyPromptItemUpdate('Données de polymérisation', 'Edition', item, groups, timeline, callback); 
+                //item.content = prompt('Edit items text:', item.content);
+                $(document).ready(function () {
+                    console.log(item);
+                    $.ajax({
+                        method: "POST",
+                        data: {id: 110, datedeb: item.start, datefin: item.end, moyen: item.group, cycle: item.programmes},
+                        url: "{{ path('Modif_Polym_Pla') }}",
+                        success: function(dat){
+                            console.log(dat);
+                        }
+                    });
+                });
             }, 
 
             tooltip: {
@@ -113,9 +127,21 @@
         };
 
         var timeline = new vis.Timeline (conteneur, items, groups, options);
+
+        //document.getElementById('visualization').onclick = function (event) {
+            //var props = timeline.getEventProperties(event)
+            //console.log(props);
+            //var html = htmlForSweetAlert(event); 
+            //swal({ 
+                //title: title, 
+                //text: text, 
+                //content: html, 
+                //icon: "success"  
+            //});
+        //}
         
         items.on('*', function (event, properties) {
-            logEvent(event, properties);
+            //logEvent(event, properties);
         });
 
         function logEvent(event, properties) {
@@ -132,9 +158,10 @@
                 title: title, 
                 text: text, 
                 content: html, 
-                //icon: "success"  
+                icon: "success"  
             });
         } 
+
         function htmlForSweetAlert(item) { 
             var form = document.createElement('FORM'); 
             form.setAttribute("role", "form"); 
@@ -164,7 +191,7 @@
             inputResources.id = "inputResources"; 
             inputResources.setAttribute("class", "form-control"); 
             inputResources.setAttribute("type", "text"); 
-            inputResources.setAttribute("value", groups[item.group].content) 
+            inputResources.setAttribute("value", groups._data[groups._data[item.group].nestedInGroup].content) 
         
             var divStatut = document.createElement('DIV'); 
             divStatut.setAttribute("class", "col-sm-4"); 

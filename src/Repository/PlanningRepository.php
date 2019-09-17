@@ -36,7 +36,7 @@ class PlanningRepository extends ServiceEntityRepository
     }
     */
 
-    /*
+    
     public function findOneBySomeField($value): ?Planning
     {
         return $this->createQueryBuilder('p')
@@ -46,7 +46,7 @@ class PlanningRepository extends ServiceEntityRepository
             ->getOneOrNullResult()
         ;
     }
-    */
+    
     public function getDays(\DateTime $firstDateTime, \DateTime $lastDateTime): ?Planning
     {
         return $this->createQueryBuilder('c')
