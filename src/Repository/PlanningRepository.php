@@ -37,11 +37,13 @@ class PlanningRepository extends ServiceEntityRepository
     */
 
     
-    public function findOneBySomeField($value): ?Planning
+    public function findOneBySomeField(\DateTime $datedeb, \DateTime $datefin, $moyen): ?Planning
     {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
+        return $this->createQueryBuilder('c')
+            ->andWhere('c.DebutDate = :datedeb AND c.FinDate = :datefin AND c.Identification = :moyen ')
+            ->setParameter('datedeb', $datedeb)
+            ->setParameter('datefin', $datefin)
+            ->setParameter('moyen', $moyen)
             ->getQuery()
             ->getOneOrNullResult()
         ;

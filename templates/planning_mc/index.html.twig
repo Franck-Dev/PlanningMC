@@ -109,10 +109,11 @@
                 //prettyPromptItemUpdate('Données de polymérisation', 'Edition', item, groups, timeline, callback); 
                 //item.content = prompt('Edit items text:', item.content);
                 $(document).ready(function () {
+                    console.log(items._data[item.id]);
                     console.log(item);
                     $.ajax({
                         method: "POST",
-                        data: {id: 110, datedeb: item.start, datefin: item.end, moyen: item.group, cycle: item.programmes},
+                        data: {id: item.id, olddatedeb: items._data[item.id].start, olddatefin: items._data[item.id].end, moyen: item.group, cycle: item.programmes, newdatedeb: item.start, newdatefin: item.end},
                         url: "{{ path('Modif_Polym_Pla') }}",
                         success: function(dat){
                             console.log(dat);
@@ -140,7 +141,9 @@
             //});
         //}
         
-        items.on('*', function (event, properties) {
+        timeline.on('click', function (event, properties) {
+            //var olddatedeb=event.time;
+            //console.log(olddatedeb);
             //logEvent(event, properties);
         });
 

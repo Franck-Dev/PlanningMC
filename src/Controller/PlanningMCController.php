@@ -823,18 +823,27 @@ $RapportPcs= new JsonResponse($daty2);
         //Si c'est le retour de la requette AJAX, on récupère les données
         if($request->isXmlHttpRequest()) {
 
+            //Récupération des données de la requette
             $idPolymPla = $request->request->get('id');
-            //$action->setFinDate(new \Datetime($requette->get('Hfin')));
+            $olddebdate=new \Datetime($request->request->get('olddebdate'));
+            $oldfindate=new \Datetime($request->request->get('oldfindate'));
+            $idmoyen=$request->request->get('moyen');
+            $newdebdate=new \Datetime($request->request->get('newdebdate'));
+            $newfindate=new \Datetime($request->request->get('newfindate'));
+            //Récupération de la désignation du moyen suivant id
+            $basemoy = $this->getDoctrine()->getRepository(Moyens::class);
+            $moyen = $basemoy->findBy(['id' => $idmoyen]);
             //dump($idPolymPla);//die();
             if($idPolymPla) {
                 $mr = $this->getDoctrine()->getRepository(Planning::class);
-                $maga = $mr->find($idPolymPla);
-                //dump($maga);//die();
-                $manager = $this->getDoctrine()->getManager();
-                $manager->persist($demande);
-                $manager->flush();
+                $maga = $mr->findOneBySomeField($olddebdate,$oldfindate,$moyen[0]->getLibelle($idmoyen));
 
-            return new JsonResponse("Requete enregistrée");
+                dump($maga);//die();
+                //$manager = $this->getDoctrine()->getManager();
+                //$manager->persist($demande);
+                //$manager->flush();
+                
+            return new JsonResponse($maga[0]);
             }
             return new Response("Pas d'id");
         }
