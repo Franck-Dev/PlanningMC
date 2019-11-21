@@ -8,31 +8,115 @@
         table {
             width: 100%;
             font-size: 2vmin;
-       }
+        }
         .sweetalert-lg {
             width: 600px;
+        }
+        .gris{
+            background: rgb(106, 160, 182);
+        }
+        .progress-wrapper {
+            background: white;
+            width: 100%;
+            height: 18px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 50%;
+            width: 90%;
+            position: absolute;
+            left: 0px;
+            top: 5px;
+            background: #63ed63;
+        }
+
+        .progress-label {
+            position: absolute;
+            z-index: 1;
+        }
+
+        .modal, .modal-header { 
+            z-index: 10000;
+            opacity:    1;
+            width: 400px;
+            height: 700px;
+            position: absolute;
+            margin: 10% auto;
+            background: blue;
+        }
+        #visualization{
+            height: 100%;
+        }
+        #item-popup{
+            height: auto;
+        }
+        .button{
+            display:    block;
+            width:  100%;
+        }
+        .button_menu{
+            display: flex;
+            flex-flow: row wrap;
+        }
+        .button_menu .btn_valid{
+            border-radius:  10px;
+            position:   absolute;
+            text-align: center;
+            right:  0px;
+            vertical-align: middle;
+            background-image:radial-gradient( blue,green);
+            color:  white;
+            text-decoration:    none;  
+            width:  100px;
+            min-width:  7%;
+            height: 30px;
         }
     </style>
 {%endblock%}    
 {% block body %}
-    {% for tache in Taches %}
-        {{ tache.id }}
-        {{ tache.Identification }}
-        {{ tache.Action}}
-        {{ tache.DebutDate ? tache.DebutDate|date('H:i:s') : '' }}
-        {{ tache.FinDate ? tache.FinDate|date('H:i:s') : '' }}
-        {{ tache.TpsChargement ? tache.TpsChargement|date('H:i:s') : '' }}
-        {{ tache.TpsDechargement ? tache.TpsDechargement|date('H:i:s') : '' }}
-        {{ tache.Statut }}
-        {{ tache.datecreation  ? tache.datecreation|date('Y/m/d H:i:s') : '' }}
-        {{ tache.datemodif ? tache.datemodif|date('Y/m/d H:i:s') : '' }}
-    {% endfor %}
+
+    <div class="input" id="DatePlanif">
+        <input type="hidden" id="JourPlannif" value="">
+    </div>
     <div id="visualization">
         <h2>Planning de la semaine </h2>
-        <input type="button" id="jour" value="Aujourd'hui">
-        <input type="button" id="semaine-1" value="Semaine dernière">
-        <input type="button" id="semaine" value="Semaine en cours">
-        <input type="button" id="semaine+1" value="Semaine suivante">
+        <div class="button_menu">
+            <input type="button" id="jour" value="Aujourd'hui">
+            <input type="button" id="semaine-1" value="Semaine dernière">
+            <input type="button" id="semaine" value="Semaine en cours">
+            <input type="button" id="semaine+1" value="Semaine suivante">
+            {% if is_granted('ROLE_PLANIF') %}
+                <a href="{{ path('CreaPolymRecur', {'user': app.user}) }}" class="btn_valid">Plannification</a>
+            {% endif %}
+        </div>
+           <!-- Modal -->  
+            <div id="Modale" class="modal" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        {% if is_granted('ROLE_CE_POLYM') %}
+                            <div id="Modale" class="modal-body"></div>
+                            {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolym',{'user': app.user}) )}}
+                            <button type="button" class="success" value="Valider">
+                                    <span aria-hidden="true"></span>
+                            </button>
+                        {% elseif is_granted('ROLE_REGLEUR') %}
+                            <div id="Modale" class="modal-body"></div>
+                            
+                            <button type="button" class="success" value="Modifier">
+                                    <span aria-hidden="true"></span>
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
     </div>
     <p></p>
     <div id="log"></div>
@@ -43,17 +127,17 @@
     <script src="{{ asset('build/prototype.js') }}"></script>
     <script src="{{ asset('build/jquery.min.js') }}"></script>
     <script src="{{ asset('build/sweetalert.min.js') }}"></script>
-    <script id="item-template" type="text/x-handlebars-template">
-            <table class="infos">
+    <script id="item-template" type="text/x-handlebars-template"> 
+            <table class="table-condensed" style="height: 10px">
                 <tr>
-                    <td colspan="3" class="programmes">{% verbatim %}{{programmes}}{% endverbatim %}</td>
+                    <td colspan="3" class="programmes" style="font-size: 0.7em">{% verbatim %}{{programmes}}{% endverbatim %}</td>
                     <th><img src="{{asset('build/images/{{statut}}.png')}}" width="31" height="20" alt="{% verbatim %}{{icone}}{% endverbatim %}"></th>
-                    <td colspan="3" class="statut">{% verbatim %}{{statut}}{% endverbatim %}</td>
+                    <td colspan="3" class="statut" style="font-size: 0.7em">{% verbatim %}{{statut}}{% endverbatim %}</td>
                 </tr>
             </table>
     </script>
     <script id="item-popup" type="text/x-handlebars-template">
-            <table class="infos">
+            <table class="infos" style="height: 20px;">
                 <tr>
                     <td colspan="3" class="programmes">{% verbatim %}{{programmes}}{% endverbatim %}</td>
                     <td colspan="3" class="statut">{% verbatim %}{{statut}}{% endverbatim %}</td>
@@ -67,7 +151,7 @@
         // create a handlebars template
         var source = document.getElementById('item-template').innerHTML;
         var template = Handlebars.compile(source);
-        //console.log(template)
+        console.log(source)
         var conteneur = document.getElementById ('visualization');
         
         var groupsold = {{Moyens|raw}};
@@ -94,10 +178,20 @@
             stack: true,
             start: new Date(),
             end: new Date(1000*60*60*24*7 + (new Date()).valueOf()),
+            maxHeight: 1000,
+            verticalScroll: true,
+			zoomKey: "ctrlKey",
             orientation: 'top',
             groupOrder: 'content',
+            visibleFrameTemplate: function(item) {
+                if (item.visibleFrameTemplate) {
+                    return item.visibleFrameTemplate;
+                }
+                var percentage = item.value * 100 + '%';
+                return '<div class="progress-wrapper"><div class="progress" style="width:' + percentage + '" background="red"></div><label class="progress-label">' + percentage + '<label></div>';
+            },
             editable : { 
-                add : false , // ajoute de nouveaux éléments en double tapant  
+                add : true , // ajoute de nouveaux éléments en double tapant  
                 updateTime : true , // déplace les éléments horizontalement  
                 updateGroup : false , // déplace les éléments d'un groupe à un autre  
                 remove : false , // supprime un élément en appuyant sur le bouton de suppression en haut à droite  
@@ -109,11 +203,15 @@
                 //prettyPromptItemUpdate('Données de polymérisation', 'Edition', item, groups, timeline, callback); 
                 //item.content = prompt('Edit items text:', item.content);
                 $(document).ready(function () {
-                    console.log(items._data[item.id]);
-                    console.log(item);
+                    //console.log(items._data[item.id]);
+                    //console.log(item.start);
+                    //Conversion de la date pour prise en compte dans controlleur
+                    var DateDeb = (item.start).toISOString().slice(0,24);
+                    var DateFin = (item.end).toISOString().slice(0,24);
+                    //console.log(DateDeb);
                     $.ajax({
                         method: "POST",
-                        data: {id: item.id, olddatedeb: items._data[item.id].start, olddatefin: items._data[item.id].end, moyen: item.group, cycle: item.programmes, newdatedeb: item.start, newdatefin: item.end},
+                        data: {id: item.id, olddatedeb: items._data[item.id].start, olddatefin: items._data[item.id].end, moyen: item.group, cycle: item.programmes, newdatedeb: DateDeb, newdatefin: DateFin},
                         url: "{{ path('Modif_Polym_Pla') }}",
                         success: function(dat){
                             console.log(dat);
@@ -122,6 +220,67 @@
                 });
             }, 
 
+            onUpdate: function(item,callback){
+                var html = htmlForSweetAlert(item);
+                swal({ 
+                    title: "Modification des paramètres", 
+                    text: item.programmes, 
+                    icon: 'success',
+                    buttons: {
+                        cancel: {
+                            text: "ANNULER",
+                            value: null,
+                            visible: true,
+                            className: "",
+                            closeModal: true,
+                        },
+                        confirm: {
+                            text: "OK",
+                            value: true,
+                            visible: true,
+                            className: "",
+                            closeModal: true
+                        }
+}                   ,
+                    content: html
+                });
+                console.log(html.selectStatut);
+                item.statut=prompt('Statut',item.statut);
+                callback(item);
+                alert('PAUSE');
+                if (html.selectStatut[html.selectStatut.selectedIndex].text!="") {
+                    console.log(item.statut);
+                    item.statut=html.selectStatut[html.selectStatut.selectedIndex].text;
+                    callback(item); // send back adjusted item
+                    console.log(item.statut);
+                  }
+                  else {
+                    callback(null); // cancel updating the item
+                  }
+                console.log(swal.getState('content'));
+            },
+
+            onAdd: function (item, callback) {
+                var DateDeb = (item.start).toISOString().slice(0,24);//On garde que la date, et pas l"heure
+                var HeureDeb="1970-01-01"+(item.start).toISOString().slice(10,24);
+                $(document).ready(function () {
+                    $.ajax({
+                        method: "POST",
+                        data: {DateDeb: DateDeb ,Hdeb: HeureDeb, Moyen: item.group},
+                        url: "{{ path('Polym_Edit') }}",
+                        beforeSend : function() { // traitements JS à faire AVANT l'envoi AJAX
+                         //Mettre à jour la date dans l'input pour l'url
+                        },
+                        success: function(data){
+                            console.log(data);                           
+                            $('#Modale').html(data); // affichage des résultats dans la modal
+                            $('#Modale').show();
+                        }
+                    });
+                });
+                    
+            },
+
             tooltip: {
                 followMouse: true
             }
@@ -129,9 +288,10 @@
 
         var timeline = new vis.Timeline (conteneur, items, groups, options);
 
-        //document.getElementById('visualization').onclick = function (event) {
+        document.getElementById('visualization').onclick = function (event) {
             //var props = timeline.getEventProperties(event)
             //console.log(props);
+            //console.log(event);
             //var html = htmlForSweetAlert(event); 
             //swal({ 
                 //title: title, 
@@ -139,7 +299,7 @@
                 //content: html, 
                 //icon: "success"  
             //});
-        //}
+        }
         
         timeline.on('click', function (event, properties) {
             //var olddatedeb=event.time;
@@ -166,6 +326,7 @@
         } 
 
         function htmlForSweetAlert(item) { 
+            //console.log(item);
             var form = document.createElement('FORM'); 
             form.setAttribute("role", "form"); 
             form.setAttribute("class", "form-vertical"); 
@@ -194,37 +355,38 @@
             inputResources.id = "inputResources"; 
             inputResources.setAttribute("class", "form-control"); 
             inputResources.setAttribute("type", "text"); 
-            inputResources.setAttribute("value", groups._data[groups._data[item.group].nestedInGroup].content) 
-        
-            var divStatut = document.createElement('DIV'); 
-            divStatut.setAttribute("class", "col-sm-4"); 
-            var labelStatut = document.createElement('LABEL'); 
-            labelStatut.innerHTML = translate(locale, "statut", "resources"); 
-            labelStatut.setAttribute("for", "inputStatut"); 
-            labelStatut.setAttribute("class", "col-form-label") 
-            var inputStatut = document.createElement('INPUT'); 
-            inputStatut.id = "inputStatut"; 
-            inputStatut.setAttribute("class", "form-control"); 
-            inputStatut.setAttribute("type", "text"); 
-            inputStatut.setAttribute("value", item.statut)
+            //inputResources.setAttribute("value", groups._data[groups._data[item.group].nestedInGroup].content) 
+            inputResources.setAttribute("value", item.group)
 
-            // var divPause = document.createElement('DIV'); 
-            // divPause.setAttribute("class", "col-sm-4"); 
-            // var labelPause = document.createElement('LABEL'); 
-            // labelPause.innerHTML = "break"; 
-            // labelPause.setAttribute("for", "selectPause"); 
-            // labelPause.setAttribute("class", "col-form-label") 
-            // var selectPause = document.createElement('SELECT'); 
-            // selectPause.id = "selectPause"; 
-            // selectPause.setAttribute("class", "form-control"); 
-            // var array = ["", "BREAK"]; 
-            // for (var i = 0; i < array.length; i++) { 
-            //     var option = document.createElement("option"); 
-            //     option.value = array[i]; 
-            //     option.text = array[i]; 
-            //     selectPause.appendChild(option); 
-            // }; 
-            // selectPause.value = item["break"]; 
+            //var divStatut = document.createElement('DIV'); 
+            //divStatut.setAttribute("class", "col-sm-4"); 
+            //var labelStatut = document.createElement('LABEL'); 
+            //labelStatut.innerHTML = translate(locale, "statut", "State"); 
+            //labelStatut.setAttribute("for", "inputStatut"); 
+            //labelStatut.setAttribute("class", "col-form-label") 
+            //var inputStatut = document.createElement('INPUT'); 
+            //inputStatut.id = "inputStatut"; 
+            //inputStatut.setAttribute("class", "form-control"); 
+            //inputStatut.setAttribute("type", "text"); 
+
+            
+            var divStatut = document.createElement('DIV'); 
+             divStatut.setAttribute("class", "col-sm-4"); 
+             var labelStatut = document.createElement('LABEL'); 
+             labelStatut.innerHTML = "Statut"; 
+             labelStatut.setAttribute("for", "selectStatut"); 
+             labelStatut.setAttribute("class", "col-form-label") 
+             var selectStatut = document.createElement('SELECT'); 
+             selectStatut.id = "selectStatut"; 
+             selectStatut.setAttribute("class", "form-control"); 
+             var array = ["PLANNIFIE", "TERMINE", "RETARD", "ANNULER", "REMPLACER"]; 
+            for (var i = 0; i < array.length; i++) { 
+                var option = document.createElement("option"); 
+                option.value = array[i]; 
+                option.text = array[i]; 
+                selectStatut.appendChild(option); 
+            }; 
+             selectStatut.value = item.statut; 
         
             /* row 2 */ 
             var divForm_row02 = document.createElement('DIV'); 
@@ -276,16 +438,16 @@
             divResources.appendChild(inputResources); 
             inputResources.parentNode.insertBefore(labelResources, inputResources); 
         
-            divStatut.appendChild(inputStatut); 
-            inputStatut.parentNode.insertBefore(labelStatut, inputStatut);
+            //divStatut.appendChild(inputStatut); 
+            //inputStatut.parentNode.insertBefore(labelStatut, inputStatut);
         
-            // divPause.appendChild(selectPause); 
-            // selectPause.parentNode.insertBefore(labelPause, selectPause); 
+             divStatut.appendChild(selectStatut); 
+             selectStatut.parentNode.insertBefore(labelStatut, selectStatut); 
         
             divForm_row01.appendChild(divTitle); 
             divForm_row01.appendChild(divResources); 
-            divForm_row01.appendChild(divStatut);
-            // divForm_row01.appendChild(divPause); 
+            //divForm_row01.appendChild(divStatut);
+            divForm_row01.appendChild(divStatut); 
         
             /* ROW 02 */ 
         
@@ -304,7 +466,19 @@
         
             form.appendChild(divForm_row01); 
             form.appendChild(divForm_row02); 
-            return form; 
+
+            //form.addEventListener("submit", function (event) {
+            // Chaque fois que l'utilisateur tente d'envoyer les données
+            // on vérifie que le champ email est valide.
+            //if (!selectStatut.value) {
+ 
+                // Et on empêche l'envoi des données du formulaire
+                //event.preventDefault();
+            //}
+            return form;
+            //}, false);
+
+             
         } 
         function translate(locale, fr, en) { 
             return locale === "fr" ? fr : en; 
@@ -323,6 +497,38 @@
         timeline.setWindow(new Date(1000*60*60*24*7 + (new Date()).valueOf()), new Date(1000*60*60*24*14 + (new Date()).valueOf()));
         }
     </script>
+<div class="sweet-overlay" tabindex="-1" style="opacity: -0.02; display: none;"></div><div class="sweet-alert hideSweetAlert" data-custom-class="" data-has-cancel-button="true" data-has-confirm-button="true" data-allow-outside-click="false" data-has-done-function="true" data-animation="pop" data-timer="null" style="display: none; margin-top: -200px; opacity: -0.01;"><div class="sa-icon sa-error" style="display: none;">
+      <span class="sa-x-mark">
+        <span class="sa-line sa-left"></span>
+        <span class="sa-line sa-right"></span>
+      </span>
+    </div><div class="sa-icon sa-warning" style="display: block;">
+      <span class="sa-body"></span>
+      <span class="sa-dot"></span>
+    </div><div class="sa-icon sa-info" style="display: none;"></div><div class="sa-icon sa-success" style="display: none;">
+      <span class="sa-line sa-tip"></span>
+      <span class="sa-line sa-long"></span>
+
+      <div class="sa-placeholder"></div>
+      <div class="sa-fix"></div>
+    </div><div class="sa-icon sa-custom" style="display: none;"></div><h2>Move item</h2>
+    <p style="display: block;">Do you really want to move the item to<br>start: Tue Apr 23 2013 00:00:00 GMT+0200 (heure d’été d’Europe centrale)<br>end: undefined?</p>
+    <fieldset>
+      <input type="text" tabindex="3" placeholder="">
+      <div class="sa-input-error"></div>
+    </fieldset><div class="sa-error-container">
+      <div class="icon">!</div>
+      <p>Not valid!</p>
+    </div><div class="sa-button-container">
+      <button class="cancel" tabindex="2" style="display: inline-block;">Cancel</button>
+      <div class="sa-confirm-button-container">
+        <button class="confirm" tabindex="1" style="display: inline-block; background-color: rgb(221, 107, 85); box-shadow: rgba(221, 107, 85, 0.8) 0px 0px 2px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px inset;">OK</button><div class="la-ball-fall">
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+      </div>
+    </div></div>
 {% endblock %}
 {% block mesJavascripts %}
 

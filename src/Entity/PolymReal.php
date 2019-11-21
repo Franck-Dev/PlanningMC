@@ -63,6 +63,16 @@ class PolymReal
      */
     private $NbrPcs;
 
+    /**
+     * @ORM\Column(type="smallint", nullable=true)
+     */
+    private $PourcVolCharge;
+
+    /**
+     * @ORM\Column(type="datetime", nullable=true)
+     */
+    private $Retard;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -172,6 +182,30 @@ class PolymReal
     public function setNbrPcs(int $NbrPcs): self
     {
         $this->NbrPcs = $NbrPcs;
+
+        return $this;
+    }
+
+    public function getPourcVolCharge(): ?int
+    {
+        return $this->PourcVolCharge;
+    }
+
+    public function setPourcVolCharge(?int $PourcVolCharge): self
+    {
+        $this->PourcVolCharge = $PourcVolCharge;
+
+        return $this;
+    }
+
+    public function getRetard(): ?\DateTimeInterface
+    {
+        return $this->Retard;
+    }
+
+    public function setRetard(?\DateTimeInterface $Retard): self
+    {
+        $this->Retard = $Retard;
 
         return $this;
     }

@@ -25,10 +25,6 @@ class PlanifDemandeType extends AbstractType
             ->add('Moyen', EntityType::class, array(
                 'class' =>Moyens::class,
                 'choice_label' => 'libelle',))
-            -> add('plannifie',ChoiceType::class, [
-                'choices'  => [
-                'NON' => false,
-                'OUI' => true]])
         ;
     }
 

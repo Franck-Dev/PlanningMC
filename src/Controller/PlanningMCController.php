@@ -32,18 +32,19 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+use Doctrine\ORM\EntityRepository;
 //use Symfony\Component\HttpFoundation\Session\Session ;
 //use Symfony\Component\Serializer\Serializer;
 
 class PlanningMCController extends Controller
 {
     /**
-     * @Route("/PlanningMC", name="Planning")
-     * @Security("has_role('ROLE_REGLEUR')")
-     * @Security("has_role('ROLE_CE_POLYM')")
+     * @Route("/Planning", name="Planning")
+     * @Security("is_granted('ROLE_REGLEUR')")
      */
     public function index()
     {
+        
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
 
         $Titres=[];
@@ -62,6 +63,7 @@ class PlanningMCController extends Controller
         $i = 0;
         $a=0;
         foreach($moyens as $moyen){
+            // Si le moyen à 2 sous fonctions (ex: "plannifié et réalisé")
             if ($moyen['SousTitres']==2){
                 $Etats=$repos -> findBy(['Libelle' => $moyen['Moyen']]);
                 // On rajoute les notions d'activitees au moyen pour créer 2 lignes sur planning
@@ -72,7 +74,7 @@ class PlanningMCController extends Controller
                     }
                 }
                 //dump($TbEtat[$a-1]['id']);
-                $data[$i] = ['id'=> $moyen['id'],  'content'=> $moyen['Moyen'], 'nestedGroups' => [$TbEtat[$a-1]['id']]];
+                $data[$i] = ['id'=> $moyen['id'],  'content'=> $moyen['Moyen'], 'className'=> 'gris', 'nestedGroups' => [$TbEtat[$a-1]['id']]];
             }
             else{
                 $data[$i] = ['id'=> $moyen['id'],  'content'=> $moyen['Moyen']];
@@ -89,13 +91,21 @@ class PlanningMCController extends Controller
         $Taches=$repo -> findAll();
         $data = [];
         $i = 0;
+        //On créé le pourcentage de volumetrie en test, a changer par le réel avec nb outillage
+        $Pourc=10;
         foreach($Taches as $tache){
             //On cherche le moyen attribué à la polym suivant la demande et l'activité Plannification
             $commentaires=$tache->getNumDemande()->getCommentaires()."/".$tache->getNumDemande()->getOutillages();
             $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification(),'Activitees'=> 'Plannifie']);
-            $data[$i] = ['id'=> $i,'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires];
+            if($Pourc<75){
+                $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires,'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%; background:red"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
+            }
+            else{
+                $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires, 'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
+            }
+            
             $i = $i + 1;
-            //dump($MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification()]));
+            //dump($MoyUtil=$repos -> )findBy(['Libelle' => $tache->getIdentification()]));
             //dump($MoyUtil[0]->getId());
             //dump($Taches);
             //dump($tache->getNumDemande()->getCycle()->getCouleur());
@@ -103,16 +113,27 @@ class PlanningMCController extends Controller
         //Implémentation dans la variable des polyms créées
         $repo=$this->getDoctrine()->getRepository(PolymReal::class);
         $Polyms=$repo -> findAll();
-        //dump($data);
+        //dump($Polyms);
         foreach($Polyms as $polym){ 
-            $data[$i] = ['id'=> $i,'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym()];
+            if(!$polym->getPourcVolCharge()){
+                $Pourc==10;
+            }               
+            else{
+                $Pourc=$polym->getPourcVolCharge();
+            }    
+            if($Pourc<75){
+                $data[$i] = ['id'=>  '2'.$polym->getId(),'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym(),'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%; background:red"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
+            }
+            else{
+                $data[$i] = ['id'=>  '2'.$polym->getId(),'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym(),'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
+            }
             $i = $i + 1;
         }
         $taches= new JsonResponse($data);
-        
+        //dump($taches);
 
         return $this->render('planning_mc/index.html.twig', [
-            'controller_name' => 'PlanningMCController',
+            'controller_name' => 'Moyen Chaud',
             'Titres' => $Titres,
             'Taches' => $taches->getcontent(),
             'Moyens' => $moyen->getcontent(),
@@ -120,30 +141,340 @@ class PlanningMCController extends Controller
             'Items' => $item
         ]);
     }
+     /**
+     * @Route("/PlanningMC/Creation_Polym/", name="CreaPolymRecur")
+     */
+    public function CreaPolymRecur(Request $request,RequestStack $requestStack, userInterface $user=null)
+    {
+            
+            //Chargement des dates de la semanine -1
+            $currentMonthDateTime = new \DateTime();
+            $firstDateTime = $currentMonthDateTime->modify('Monday this week');
+            $currentMonthDateTime = new \DateTime();
+            $lastDateTime = $currentMonthDateTime->modify('Sunday this week');
+            $lastDateTime = $lastDateTime->modify('23 hours');
+
+            //Récupération des polyms récurrentes de la semaine -1    
+            $repo=$this->getDoctrine()->getRepository(Demandes::class);
+            $DemRec=$repo ->findDemRecur($lastDateTime,$firstDateTime);
+            //$DemRec=$repo -> findBy(['Reccurance'=>'1','UserCrea'=>$user->getUsername(),'Plannifie'=>'1','RecurValide'=>'0']);
+
+            //On va créer la demande et la polym à semaine +1 de chaque polym recur de la semaine -1
+            foreach($DemRec as $dem){
+                //Création de la demande
+                $demande = new Demandes();
+                $demande=clone $dem;
+                $NewDate=date_modify($demande->getDatePropose(),'+ 7days');
+                $demande->setDatePropose($NewDate);
+
+                $manager = $this->getDoctrine()->getManager();
+                $manager->persist($demande);
+                $manager->flush();
+            //Récupération de l'ID de la demande pour plannifier la polym en suivant
+            $DemVal = $demande->getId();
+            //On créé la polym si une demande a été réalisé
+                if ($DemVal){
+                    $Planning=new Planning();
+                    //dump($demande);
+                //récupération des données de la demande pour les reporter dans la polym
+                    //Formatage des dates de début
+                    $heure=$demande->getHeurePropose()->format('H');
+                    $minute=$demande->getHeurePropose()->format('i');
+                    $seconde=$demande->getHeurePropose()->format('s');
+                    $DebDate=$demande->getDatePropose()->format('Y-m-d');
+                    $date = new \DateTime($DebDate);
+                    $date->setTime($heure,$minute,$seconde);
+                    $Planning->setDebutDate($date);
+                    //dump($Planning);
+                    //Formatage de la date de fin, en récupérant la durée du cycle
+                    $dated=clone($date);
+                    $DureCycH=$demande->getCycle()->getDuree()->format('H');
+                    $DureCycH="+".$DureCycH."Hours";
+                    $DateFinH=date_modify($dated,$DureCycH);
+                    $DureCycM=$demande->getCycle()->getDuree()->format('i');
+                    $DureCycM="+".$DureCycM."Minutes";
+                    $DateFin=date_modify($DateFinH,$DureCycM);
+                    $Planning->setFinDate($DateFin);
+                    //dump($Planning);
+                    $Planning->setIdentification($demande->getMoyenUtilise()->getLibelle());
+                    $Planning->setAction($demande->getCycle()->getNom());
+                    $Planning->setNumDemande($demande);
+                    $Planning->setStatut("PLANNIFIE");
+                    //dump($Planning);
+
+                    $manager = $this->getDoctrine()->getManager();
+                    $manager->persist($Planning);
+                    $manager->flush();
+                }
+            }
+            return $this->redirectToRoute('Planning');
+    } 
+     /**
+     * @Route("/PlanningMC/Creation/", name="CreaDemPolym")
+     */
+    public function CreaDemPolym(Request $request,RequestStack $requestStack, userInterface $user=null)
+    {
+        if($requestStack->getParentRequest()){
+            $request=$requestStack->getParentRequest();
+            if ($request->isMethod('POST')) {
+                $demande = new Demandes();
+                //$demande->setDatePropose($request->get('DatePropose'));
+                $TabDem=$request->request->get('form');
+               
+                //Récupération de l'objet cycle
+                $Cyc = $this->getDoctrine()
+                    ->getRepository(ProgMoyens::class)
+                    ->findBy(['id' =>$TabDem['cycle']]);
+                $demande->setCycle($Cyc[0]);
+
+                //Récupération de l'objet moyen
+                $Moy = $this->getDoctrine()
+                    ->getRepository(Moyens::class)
+                    ->findBy(['id' =>$TabDem['moyen_utilise']]);
+                $demande->setMoyenUtilise($Moy[0]);
+                
+                //Formatage de la date
+                $DatFor=$TabDem['date_propose'];
+                $lastDate=date("Y-m-d H:m:s",strtotime($DatFor['year'].'-'.$DatFor["month"]."-".$DatFor["day"]));
+                $newfindate = new \DateTime($lastDate);
+                $demande->setDatePropose($newfindate);
+                
+                //Formatage de l'heure
+                $HeurFor=$TabDem['heure_propose'];
+                $lastTime=date("H:m:s",strtotime($HeurFor['hour'].':'.$HeurFor["minute"].":00"));
+                $newfinheure = new \DateTime($lastTime);
+                $demande->setHeurePropose($newfinheure);
+
+                //Récupération des données outillages et commentaires
+                $demande->setOutillages($TabDem["outillages"]);
+                $demande->setCommentaires($TabDem["commentaires"]);
+
+                $demande->setReccurance($TabDem["Reccurance"]);
+
+                $demande->setDateCreation(new \datetime());
+                $demande->setPlannifie(1);
+                $demande->setRecurValide($TabDem["Reccurance"]);
+                $demande->setUserCrea($user->getUsername());
+                
+                    $manager = $this->getDoctrine()->getManager();
+                    $manager->persist($demande);
+                    $manager->flush();
+
+                //Récupération de l'ID de la demande pour plannifier la polym en suivant
+                $DemVal = $demande->getId();
+                //On créé la polym si une demande a été réalisé
+                if ($DemVal){
+                    $Planning=new Planning();
+                    //dump($demande);
+                //récupération des données de la demande pour les reporter dans la polym
+                    //Formatage des dates de début
+                    $heure=$demande->getHeurePropose()->format('H');
+                    $minute=$demande->getHeurePropose()->format('i');
+                    $seconde=$demande->getHeurePropose()->format('s');
+                    $DebDate=$demande->getDatePropose()->format('Y-m-d');
+                    $date = new \DateTime($DebDate);
+                    $date->setTime($heure,$minute,$seconde);
+                    $Planning->setDebutDate($date);
+                    //dump($Planning);
+                    //Formatage de la date de fin, en récupérant la durée du cycle
+                    $dated=clone($date);
+                    $DureCycH=$demande->getCycle()->getDuree()->format('H');
+                    $DureCycH="+".$DureCycH."Hours";
+                    $DateFinH=date_modify($dated,$DureCycH);
+                    $DureCycM=$demande->getCycle()->getDuree()->format('i');
+                    $DureCycM="+".$DureCycM."Minutes";
+                    $DateFin=date_modify($DateFinH,$DureCycM);
+                    $Planning->setFinDate($DateFin);
+                    //dump($Planning);
+                    $Planning->setIdentification($demande->getMoyenUtilise()->getLibelle());
+                    $Planning->setAction($demande->getCycle()->getNom());
+                    $Planning->setNumDemande($demande);
+                    $Planning->setStatut("PLANNIFIE");
+                    //dump($Planning);
+
+                    $manager = $this->getDoctrine()->getManager();
+                    $manager->persist($Planning);
+                    $manager->flush();
+                    //dump($Planning);
+                    //return $this->redirectToRoute('Planning');
+                }            
+            }
+        }
+            
+            return new JsonResponse(['Message'=>"Vous n'avez pas les droits pour créer une polym",'Code'=>404]);        
+    }
+
+     /**
+     * @Route("/PlanningMC/Creation/{id}", name="Polym_Crea", condition="request.isXmlHttpRequest()")
+     */
+    public function creapolym(Request $request,Demandes $demande=null)
+    {
+
+    $Planning = new Planning();
+    $moyen = new Moyens();
+
+        //On verifie si c'est une création ou une modification
+        if($demande->getPlannifie()===false) {
+            //Si c'est une création
+            //Récupération de l'ID moyen suivant nom
+            $moyen = $this->getDoctrine()
+                ->getRepository(Moyens::class)
+                ->findBy(['Libelle' => $request->get('Moyen')]);
+            //dump($moyen);
+            if (!$moyen){
+                $demande->setMoyenUtilise(NULL);
+            }
+            else{
+                $demande->setMoyenUtilise($moyen[0]);
+            }       
+            //Récupération de l'heure de début de l'action
+            $demande->setDatePropose(new \Datetime($request->get('Hdeb')));
+            //Récupération de l'heure de fin de l'action
+            $demande->setDateHeureFin(new \Datetime($request->get('Hfin')));
+            //Récupération du statut
+            $demande->setPlannifie($request->get('Statut'));
+            //Récupération des données de la requette
+            $debdate=new \Datetime($request->request->get('Hdeb'));
+            $findate=new \Datetime($request->request->get('Hfin'));
+            $moyen=$request->request->get('Moyen');
+            $cycle=$request->request->get('Cycle');
+            //dump($demande);
+                $Planning->setDebutDate($debdate);
+                $Planning->setFinDate($findate);
+                $Planning->setIdentification($moyen);
+                $Planning->setAction($cycle);
+                //dump($request->get('id'));
+                $Planning->setNumDemande($demande);
+                $Planning->setStatut("PLANNIFIE");
+                //Création du numéro de réccurence dans la table de ce dernier si besoin
+                if($request->get('Reccurance')==true){
+                    
+                    $StatRecur=true;
+                }
+                else{
+                    $StatRecur=false;
+                }
+                //Création dans les tables appropriés
+                $manager = $this->getDoctrine()->getManager();
+                $manager->persist($Planning);
+                $manager->flush();
+                $manager->persist($demande);
+                $manager->flush();
+
+                //Récupération de l'ID moyen suivant nom
+                $Planning = $this->getDoctrine()
+                ->getRepository(Planning::class)
+                ->findBy(['NumDemande' => $request->get('id')]);
+                
+            return new JsonResponse(['StatRecur'=> $StatRecur, 'Message'=>"Création de l'item n°".$Planning[0]->getId()." effectuée avec succès",'Code'=>200]);
+        }
+        else{
+            //C'est une modification
+            $demande->setMoyenUtilise(NULL);
+            $demande->setPlannifie($request->get('Statut'));
+            $manager = $this->getDoctrine()->getManager();
+            $manager->remove($demande->getPlanning());
+            $manager->flush();
+            
+            return new JsonResponse(['StatRecur'=> $StatRecur,'Message'=>"Modification de l'item n°".$request->get('id')." effectuée avec succès",'Code'=>200]);
+        }
+        
+    }
 
     /**
-     * @Route("//PlanningMC", name="Polym_Edit", condition="request.isXmlHttpRequest()")
+     * @Route("/Planning/", name="Polym_Edit", condition="request.isXmlHttpRequest()")
+     * @Security("has_role('ROLE_REGLEUR')")
      */
     public function editpolym(Request $request)
     {
-        $Planning = new Planning();
+        $demande = new Demandes();
+        //Récupération du libelle du moyen
+
+        //Récupération des données de la requette
+        $demande->setDatePropose(new \Datetime($request->get('DateDeb')));
         
-        $form = $this->createForm(PolymFormType::class, $Planning, array(
-            'action' => $this->generateUrl($request->get('_route'))
-        ))
-        ->handleRequest($request);
- 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $this->getDoctrine()->getManager()->persist($Planning);
-            $this->getDoctrine()->getManager()->flush();
-            return new Response('success');
-        }
-        
-        return $this->render('planning_mc/editpolym.html.twig', [
-            'form' => $form->createView(),
+        $lastDateTime=date("Y-m-d H:m:s",strtotime($request->get('Hdeb')));
+        $newfindate = new \DateTime($lastDateTime);
+
+        $demande->setHeurePropose($newfindate);
+        //Récupération de l'objet moyen
+        $Moy = $this->getDoctrine()
+        ->getRepository(Moyens::class)
+        ->findBy(['id' =>$request->get('Moyen')]);
+        $demande->setMoyenUtilise($Moy[0]);
+
+
+       $form = $this -> createFormBuilder($demande)
+                      ->add('moyen_utilise', EntityType::class, array(
+                        'class' =>Moyens::class,
+                        'query_builder' => function ( EntityRepository $er ) {
+                            return $er -> createQueryBuilder ( 'u' )
+                            ->Where('u.Id_Service = 8')
+                            ->andWhere('u.Activitees = :val')
+                            ->setParameter('val', "Plannifie" );
+                        },
+                        'choice_label' => 'libelle',))
+                    -> add('cycle', EntityType::class, [
+                          'class' => ProgMoyens::class,
+                          'choice_label' => 'nom'
+                      ])
+                      -> add('date_propose', DateType::class)
+                      -> add('heure_propose', TimeType::class)
+                      -> add('outillages')
+                      -> add('commentaires')
+                      -> add('Reccurance',ChoiceType::class, [
+                        'label'    => 'si besoin de figer cette polymérisation suivant une réccurance',
+                        'choices'  => [
+                            'NON' => false,
+                            'OUI' => true]])
+                      ->getForm();
+        $form->handleRequest($request);
+        //dump($form);
+        //Pas de menu pour la fenêtre modale, juste le retour à l'accueil
+        $Titres=[];
+        return $this->render('planning_mc/editpolym.html.twig',[
+            'controller_name' => 'Moyen Chaud',
+           'Titres' => $Titres,
+           'form' => $form->createView()
         ]);
     }
 
+/**
+     * @Route("/Indicateur/", name="Maj_Indicateur", condition="request.isXmlHttpRequest()")
+     * @Security("has_role('ROLE_PLANIF')")
+     */
+    public function MaJIndicateur(Request $request)
+    {
+        //Création des indicateurs
+        //Création de la variable charge totale sur la semaine
+        //Recherche du début et de la fin de semaine à plannifier
+        $currentMonthDateTime = new \DateTime();
+        $FinSem = $currentMonthDateTime->modify('sunday next week');
+        $currentMonthDateTime = new \DateTime();
+        $DebSem = $currentMonthDateTime->modify('monday next week');
+
+       $repo=$this->getDoctrine()->getRepository(Planning::class);
+       $Polyms=$repo -> findCharge($FinSem,$DebSem);
+       foreach($Polyms as $polym){
+           $CharTot=intval($polym['DureTheoPolym']/10000);
+       }
+       $TpsOuvParMach=intval(24*7);
+       //dump($TpsOuvParMach);
+       //Création de la variable charge de chaque machine sur la semaine encours
+       $Polyms=$repo -> findChargeMach($FinSem,$DebSem);
+       $datu = [];
+       $i = 0;
+       //dump($Polyms);
+       foreach($Polyms as $polym){
+           $y=intval($polym['DureTheoPolym']/10000);
+           $RatioC=round(($y/$TpsOuvParMach)*100,1);
+           $datu[$i] = ['y'=> $y,'indexLabel'=> $RatioC.'%',  'label' => $polym['Moyen']];
+           $i = $i + 1;
+       }
+       $ChargeMoy= new JsonResponse($datu);
+       //dump($datu);
+       return new JsonResponse(['TabVal'=>$datu]);
+    }
 
 	/**
      * @Route("/", name="home")
@@ -176,6 +507,9 @@ class PlanningMCController extends Controller
         $Annee = date("Y", strtotime('today '.date('Y') ));
         //Recherche du numéro de semaine en cours
         $NumSem= date("W", strtotime('today '.date('Y') ));
+        $SemDer=date("W", strtotime('- 1 week '.date('Y') ));
+        //Tps de capacité machine en 3x8 VSD SD
+        $TpsOuv=intval(24*7*11);
 
 // Création de la variable pour la répartition des programmes svt format ci-dessous
         //{ x: new Date("1 Jan 2015"), y: 868800 },
@@ -194,8 +528,8 @@ class PlanningMCController extends Controller
             //dump(strtotime($DateMoisenCours));
             $data[$i] = ['x'=> strtotime($Annee.'-'.$polym['Mois'].'-01')*1000, 'y'=> $y];
             $i = $i + 1;
-            dump($polym['Dossier']);
-            dump(sizeof(explode(';',$polym['Dossier'],4)));
+            //dump($polym['Dossier']);
+            //dump(sizeof(explode(';',$polym['Dossier'],4)));
         }
         $RepartP= new JsonResponse($data);
 
@@ -276,16 +610,23 @@ $RapportPcs= new JsonResponse($daty2);
         $Polyms=$repo -> findTRS($jour,$hier);
         //dump($Polyms);
         $dato = [];
+        $datix = [];
         $i = 0;
         foreach($Polyms as $polym){
             $y=intval($polym['DureePolym']/10000);
             $x=11*24;
+            $z=$polym['PourVol'];
             $dato[$i] = ['y'=> ($y/$x)*100,'color' => "#c70000"];
+            $datix[$i]= ['y'=> $z,'color' => "#c70000"];
             $i = $i + 1;
             $dato[$i] = ['y'=> 100-($y/$x)*100,'color' => "#424242"];
-            $Ratio=round(($y/$x)*100,1);
+            $datix[$i]= ['y'=> 100-$z,'color' => "#424242"];
+            $RatioP=round(($y/$x)*100,1);
+            $RatioV=round(($polym['PourVol']),1);
+            
         }
         $TRS= new JsonResponse($dato);
+        $VolCharg= new JsonResponse($datix);
 
 //Création de la variable charge de chaque machine sur la semaine encours
         //{   type: "stackedBar",
@@ -317,21 +658,117 @@ $RapportPcs= new JsonResponse($daty2);
                 $TboData[$j]=['x'=> strtotime($pmoy['annee'].'-'.$pmoy['mois'].'-'.$pmoy['jour'])*1000,'y'=>$y];
                 $j = $j + 1;
             };
-            //dump($TboData);
             $Tablo[$i]=['type'=>"stackedBar",'name'=>$polym['moyen'],'showInLegend'=>"true",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboData];
             $i = $i + 1;
             //$CharTot=intval($polym['DureTheoPolym']/10000);
-            //dump($Tablo);
         }
         $Productivite= new JsonResponse($Tablo);
- 
+        
+//Création de la variable TRS moyen et nbr de polym par semaine,
+       
+        $SemAvant = date("Y-m-d", strtotime('- 10 weeks'.date('Y') ));
+        $SemAvant=new \datetime($SemAvant);
+        $Polyms=$repo ->findCharJourSem($SemAvant);
+        $daty = [];
+        $daty2 = [];
+
+        $i = 0;
+        foreach($Polyms as $polym){
+            $y=intval($polym['DureTotPolyms']/10000);
+            $daty[$i] = ['label'=> $polym['semaine'],'y'=> ($y/$TpsOuv)*100];
+            $y2=intval($polym['NbrProg']);
+            $daty2[$i] = ['label'=> $polym['semaine'],'y' => $y2];
+            $i = $i + 1;
+        }
+        $HProdSem=$y;
+        $RapportTRSem= new JsonResponse($daty);
+        $RapportProgSem= new JsonResponse($daty2);
+
+//Création de la variable TRS et Nbr Polym par jour
+         /* data: [{
+            type: "stackedColumn",
+            showInLegend: true,
+            color: "#696661",
+            name: "Q1",
+            dataPoints: [
+                { y: 6.75, x: new Date(2010,0) },
+                { y: 8.57, x: new Date(2011,0) },
+                { y: 10.64, x: new Date(2012,0) },
+                { y: 13.97, x: new Date(2013,0) },
+                { y: 15.42, x: new Date(2014,0) },
+                { y: 17.26, x: new Date(2015,0) },
+                { y: 20.26, x: new Date(2016,0) }
+            ]
+            },
+            {        
+                type: "stackedColumn",
+                showInLegend: true,
+                name: "Q2",
+                color: "#EDCA93",
+                dataPoints: [
+                    { y: 6.82, x: new Date(2010,0) },
+                    { y: 9.02, x: new Date(2011,0) },
+                    { y: 11.80, x: new Date(2012,0) },
+                    { y: 14.11, x: new Date(2013,0) },
+                    { y: 15.96, x: new Date(2014,0) },
+                    { y: 17.73, x: new Date(2015,0) },
+                    { y: 21.5, x: new Date(2016,0) }
+                ]
+            }, */
+        /* foreach($Polyms as $polym){
+            $color=$i % 2 ? '#1e90ff':'#DDDDDD';
+            $SemEncours= $polym['semaine'];
+
+            //Récupérer une date de début et fin de semaine à partir du n° de semaine
+            $currentWeek = new \DateTime($polym['annee'].'-'.$polym['mois'].'-'.$polym['jour']);
+            dump($currentWeek);
+            $DebSem = $currentWeek->modify('monday this week');
+            $FinSem=$currentWeek->modify('sunday this week');
+            dump($FinSem);
+            dump($DebSem);
+            $TboData = [];
+            $j = 0;
+            $PMoy=$repo ->findCharJourSem($FinSem,$DebSem);
+            dump($PMoy);    //$Annee.'-'.$polym['Mois'].'-01')
+            foreach($PMoy as $pmoy){
+                $y=intval($pmoy['DureTotPolyms']);
+                $TboData[$j]=['y'=>$y,'x'=> strtotime($pmoy['annee'].'-'.$pmoy['mois'].'-'.$pmoy['jour'])*1000];
+                $j = $j + 1;
+            };
+            //dump($TboData);
+            $Tablo[$i]=['type'=>"stackedColumn",'name'=>$polym['jour'],'showInLegend'=>"true",'name'=>$polym['semaine'],'color'=> $color,'dataPoints'=>$TboData];
+            $i = $i + 1;
+            //$CharTot=intval($polym['DureTheoPolym']/10000);
+            //dump($Tablo);
+        }*/
+        $JourAvant = date("Y-m-d", strtotime('- 15 days'.date('Y') ));
+        $JourAvant=new \datetime($JourAvant);
+        $Polyms=$repo ->findTRSJour($DateJour,$JourAvant);
+        $datuy = [];
+        $datuy1 = [];
+        $datuy2 = [];
+        $i = 0;
+        $x=11*24;
+        foreach($Polyms as $polym){
+            $y=intval($polym['DureePolym']/10000);
+            $datuy[$i] = ['x'=> strtotime($polym['annee'].'-'.$polym['mois'].'-'.$polym['jour'])*1000,'y'=> ($y/$x)*100];
+            $y1=intval($polym['PourVol']);
+            $datuy1[$i] = ['x'=> strtotime($polym['annee'].'-'.$polym['mois'].'-'.$polym['jour'])*1000,'y' => $y1];
+            $y2=intval($polym['NbrProg']);
+            $datuy2[$i] = ['x'=> strtotime($polym['annee'].'-'.$polym['mois'].'-'.$polym['jour'])*1000,'y' => $y2];
+            $i = $i + 1;
+        }
+        $TRSem= new JsonResponse($datuy); 
+        $TxSem= new JsonResponse($datuy1);
+        $ProgSem= new JsonResponse($datuy2);
+
 //Création de la variable charge totale sur la semaine
         $repo=$this->getDoctrine()->getRepository(Planning::class);
         $Polyms=$repo -> findCharge($FinSem,$DebSem);
         foreach($Polyms as $polym){
             $CharTot=intval($polym['DureTheoPolym']/10000);
         }
-        $TpsOuvParMach=intval(24*7);
+        
 //Création de la variable charge de chaque machine sur la semaine encours
 //{ y: 2,  indexLabel: "2%",  label: "Etuve2" },
 //{ y: 4,  indexLabel: "4%",  label: "Etuve3" },        
@@ -340,11 +777,12 @@ $RapportPcs= new JsonResponse($daty2);
         $i = 0;
         foreach($Polyms as $polym){
             $y=intval($polym['DureTheoPolym']/10000);
-            $RatioC=round(($y/$TpsOuvParMach)*100,1);
+            $RatioC=round(($y/$CharTot)*100,1);
             $datu[$i] = ['y'=> $y,'indexLabel'=> $RatioC.'%',  'label' => $polym['Moyen']];
             $i = $i + 1;
         }
         $ChargeMoy= new JsonResponse($datu);
+
 
         return $this->render('planning_mc/home.html.twig',[
             'controller_name' => 'PlanningMCController',
@@ -356,15 +794,24 @@ $RapportPcs= new JsonResponse($daty2);
             'RepartPcs' => $RepartP->getContent(),
             'TotPcs' => $TotPcs,
             'TRS' => $TRS->getcontent(),
-            'PercentTRS' => $Ratio,
+            'VolCharg' => $VolCharg->getcontent(),
+            'SemDer' => $SemDer,
+            'TRSem' => $TRSem->getcontent(),
+            'PercentTRS' => $RatioP,
+            'TxSem' => $TxSem->getcontent(),
+            //'VolSem' => $VolSem->getcontent(),
+            'PercentVol' => $RatioV,
             'Productivite' => $Productivite->getContent(),
             'CapaMach' => $x,
             'ChargeMoy' =>$ChargeMoy->getContent(),
             'CharTot' => $CharTot,
             'RepartPolyms' => $RepartPcs->getContent(),
             'PProdSem' => $PProdSem,
+            'RapportTRSem' => $RapportTRSem->getcontent(),
             'HProdSem' => $HProdSem,
+            'RapportNbrProg' => $RapportProgSem->getcontent(),
             'RapportPH' => $RapportPH,
+            'ProgSem' => $ProgSem->getcontent(),
             'NbPolymJ' => $NbPolymJour,
             'FinSem' => $FinSem
         ]);
@@ -374,7 +821,6 @@ $RapportPcs= new JsonResponse($daty2);
 	/**
      * @Route("/Demandes/Creation", name="Crea_Demandes")
      * @Route("/Demandes/Modification/{id}", name="Modif_Demandes")
-     * @Security("has_role('ROLE_CE_MOULAGE')")
      */
     public function DemandesCrea( Request $requette,RequestStack $requestStack,ObjectManager $manager,Demandes $demande=null,$datejour=null, userInterface $user=null)
     {
@@ -420,7 +866,7 @@ $RapportPcs= new JsonResponse($daty2);
             $newdemande=false;
             //dump($user);
         }
-            //Dans la construction du form, on vérifie si la demande est déjà validée lors d'une modif
+            //Dans la construction du form, on vérifie si la demande est déjà validée lors d'une modif et on bloque des éléments
             if($demande->getPlannifie()==true){
                 $form = $this -> createFormBuilder($demande)
                       -> add('cycle', EntityType::class, [
@@ -438,8 +884,8 @@ $RapportPcs= new JsonResponse($daty2);
                             'NON' => false,
                             'OUI' => true]])
                       ->getForm();
-                }
-                else{
+            }
+            else{
                     $form = $this -> createFormBuilder($demande)
                       -> add('cycle', EntityType::class, [
                           'class' => ProgMoyens::class,
@@ -455,7 +901,7 @@ $RapportPcs= new JsonResponse($daty2);
                             'NON' => false,
                             'OUI' => true]])
                       ->getForm();
-                }
+            }
 //Si la demande existe c'est une modification , sinon une création
         if($newdemande==false){
             //dump($requette);
@@ -492,7 +938,7 @@ $RapportPcs= new JsonResponse($daty2);
                 $manager->persist($demande);
                 $manager->flush();
                 
-                $requette->getSession()->getFlashbag()->add('success', 'Votre demande a été enregistré.');
+                $requette->getSession()->getFlashbag()->add('success', 'Votre demande a bien été enregistré.');
 
                 if($mode==false){
                     //dump($demande);
@@ -516,12 +962,11 @@ $RapportPcs= new JsonResponse($daty2);
 
     /**
      * @Route("/Demandes", name="Demandes")
-     * @Security("has_role('ROLE_CE_MOULAGE')")
      */
     public function Demandes(Request $requette, ObjectManager $manager,userInterface $user=null)
     {
         
-//Redirection après remplissage du formulaire 
+//Recherche des dates de la semaine encours pour les demandes avec récurrences
         if (!$requette->get('DatedebPlan')){
             //Recherche du début et fin de la semaine n+1  pour effectuer les demandes de créneaux         
             $currentMonthDateTime = new \DateTime();
@@ -540,9 +985,7 @@ $RapportPcs= new JsonResponse($daty2);
             $lastDateTime = $lastDateTime->modify('23 hours');
         }
 
-//Recherche des dates de la semaine encours pour les demandes avec récurrences
-
-//Visualisation des demandes en cours pour la semaine n+1
+//Visualisation des demandes en cours
     $demande=new Demandes();
            
             if(!$demande){
@@ -556,7 +999,7 @@ $RapportPcs= new JsonResponse($daty2);
                 ->findAll();
             }
             //dump($demande); 
-//Chargement de la variable qui récupère tous les moyens suivant un service
+//Chargement de la variable qui récupère tous les moyens suivant un service, içi 8 (a modifier pour variable)
         $repos=$this->getDoctrine()->getRepository(Moyens::class);
         $moyens=$repos -> findAllMoyensSvtService ( intval('8') );
         $item=$moyens;   
@@ -581,7 +1024,6 @@ $RapportPcs= new JsonResponse($daty2);
                 $data[$i] = ['id'=> $moyen['id'],  'content'=> $moyen['Moyen']];
             }
             $i = $i + 1;
-            //On affecte un élément $item à $data
         }
         $Ssmoyen= new JsonResponse($TbEtat);
         $moyen= new JsonResponse($data);
@@ -637,9 +1079,9 @@ $RapportPcs= new JsonResponse($daty2);
 
     /**
      * @Route("/Demandes/Plannification/{id}", name="Planif_Demandes")
-     * @Security("has_role('ROLE_CE_POLYM')")
+     * @Security("has_role('ROLE_PLANIF')")
      */
-    public function DemandesPlanif( Request $requette,RequestStack $requestStack,ObjectManager $manager,Demandes $demande=null,$datejour=null, ValidatorInterface $validator )
+    public function DemandesPlanif( Request $requette,ObjectManager $manager,Demandes $demande=null, ValidatorInterface $validator )
     {
         $action= new Planning();
         $cycles= new ProgMoyens();
@@ -723,16 +1165,44 @@ $RapportPcs= new JsonResponse($daty2);
         $Titres=[];
 
         return $this->render('planning_mc/CreationPolyms.html.twig',[
-           'Titres' => $Titres
+            'Titres' => $Titres
         ]);
     }
 
 	/**
      * @Route("/Planification", name="Planification")
-     * @Security("has_role('ROLE_CE_POLYM')")
+     * @Security("has_role('ROLE_PLANIF')")
      */
     public function Planification(request $requette,Demandes $demande=null)
     {
+//Création des indicateurs
+    //Création de la variable charge totale sur la semaine
+        //Recherche du début et de la fin de semaine à plannifier
+        $currentMonthDateTime = new \DateTime();
+        $FinSem = $currentMonthDateTime->modify('sunday next week');
+        $currentMonthDateTime = new \DateTime();
+        $DebSem = $currentMonthDateTime->modify('monday next week');
+
+       $repo=$this->getDoctrine()->getRepository(Planning::class);
+       $Polyms=$repo -> findCharge($FinSem,$DebSem);
+       foreach($Polyms as $polym){
+           $CharTot=intval($polym['DureTheoPolym']/10000);
+       }
+       $TpsOuvParMach=intval(24*7);
+        
+       //Création de la variable charge de chaque machine sur la semaine encours
+       $Polyms=$repo -> findChargeMach($FinSem,$DebSem);
+       $datu = [];
+       $i = 0;
+       foreach($Polyms as $polym){
+           $y=intval($polym['DureTheoPolym']/10000);
+           $RatioC=round(($y/$TpsOuvParMach)*100,1);
+           $datu[$i] = ['y'=> $y,'indexLabel'=> $RatioC.'%',  'label' => $polym['Moyen']];
+           $i = $i + 1;
+       }
+       $ChargeMoy= new JsonResponse($datu);
+        
+
 //Chargement d'une variable pour toutes les demandes créées
         $test = $this->getDoctrine()
             ->getRepository(demandes::class)
@@ -762,18 +1232,19 @@ $RapportPcs= new JsonResponse($daty2);
         $item=$moyens;
         //$serializer = new Serializer();
         //$jsonContent = $serializer->serialize($moyen, 'json');
-        //dump($moyens);
+        dump($moyens);
         
         $data = [];
         $i = 0;
         foreach($moyens as $moyen){
-            $data[$i] = ['id'=> $moyen->getId(),  'content'=> $moyen->getLibelle()];
+            $color=$i % 2 ? '#1e90ff':'#DDDDDD';
+            $data[$i] = ['id'=> $moyen->getId(),  'content'=> $moyen->getLibelle(), 'style'=> 'background:'.$color];
             $i = $i + 1;
 			//On affecte un élément $item à $data
         }
         //dump($data);
         $moyen= new JsonResponse($data);
-        //dump($moyen);
+        dump($moyen);
 //Chargement d'une variable pour les tâches déjà plannifiées
         $repo=$this->getDoctrine()->getRepository(Planning::class);
         $Taches=$repo -> findAll();
@@ -801,7 +1272,7 @@ $RapportPcs= new JsonResponse($daty2);
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
 
         $Titres=$repo -> findAll();
-        //$form = $this->createForm(PlanifDemandeType::class, $demande);
+
 //Envoie au template Plannification
         return $this->render('planning_mc/Planification.html.twig',[
             'Titres' => $Titres,
@@ -810,41 +1281,54 @@ $RapportPcs= new JsonResponse($daty2);
             'datefin' => $lastDateTime,
             'taches' => $taches->getContent(),
             'moyens' => $moyen->getContent(),
-            'items' => $item
+            'items' => $item,
+            'ChargeMoy' =>$ChargeMoy->getContent(),
+            'CharTot' => $CharTot
         ]);
     }
 
      /**
      * @Route("/Plannification/Modification", name="Modif_Polym_Pla")
-     * @Security("has_role('ROLE_REGLEUR')")
+     * @Security("has_role('ROLE_PLANIF')")
      */
-    public function ModifPolymPla(Request $request)
+    public function ModifPolymPla(Request $request, Planning $Polyms=null)
     {
         //Si c'est le retour de la requette AJAX, on récupère les données
         if($request->isXmlHttpRequest()) {
 
             //Récupération des données de la requette
-            $idPolymPla = $request->request->get('id');
-            $olddebdate=new \Datetime($request->request->get('olddebdate'));
-            $oldfindate=new \Datetime($request->request->get('oldfindate'));
+            $PolymPla = $request->request->get('id');
+            // Récupère l'id de la polym en enlevant le premier digit
+            $idPolymPla=substr($PolymPla,1);
+            $olddebdate=new \Datetime($request->request->get('olddatedeb'));
+            $oldfindate=new \Datetime($request->request->get('olddatefin'));
             $idmoyen=$request->request->get('moyen');
-            $newdebdate=new \Datetime($request->request->get('newdebdate'));
-            $newfindate=new \Datetime($request->request->get('newfindate'));
+            $firstDateTime=date("Y-m-d H:m",strtotime($request->request->get('newdatedeb')));
+            $newdebdate = new \DateTime($firstDateTime);
+            $lastDateTime=date("Y-m-d H:m",strtotime($request->request->get('newdatefin')));
+            $newfindate = new \DateTime($lastDateTime);
             //Récupération de la désignation du moyen suivant id
             $basemoy = $this->getDoctrine()->getRepository(Moyens::class);
             $moyen = $basemoy->findBy(['id' => $idmoyen]);
             //dump($idPolymPla);//die();
             if($idPolymPla) {
+                dump($newdebdate);
                 $mr = $this->getDoctrine()->getRepository(Planning::class);
-                $maga = $mr->findOneBySomeField($olddebdate,$oldfindate,$moyen[0]->getLibelle($idmoyen));
-
+                //$maga = $mr->findOneBySomeField($olddebdate,$oldfindate,$moyen[0]->getLibelle($idmoyen));
+                $maga=$mr->findBy(['id' => $idPolymPla]);
+                $old=$request->request->get('olddatedeb');
+                //$new=date("Y-m-d H:m",strtotime($request->request->get('newdatedeb')));
                 dump($maga);//die();
-                //$manager = $this->getDoctrine()->getManager();
-                //$manager->persist($demande);
-                //$manager->flush();
+                $maga[0]->setDebutDate($newdebdate);
+                $maga[0]->setFinDate($newfindate);
+                dump($maga);//die();
+                $manager = $this->getDoctrine()->getManager();
+                $manager->persist($maga[0]);
+                $manager->flush();
                 
-            return new JsonResponse($maga[0]);
-            }
+            return new JsonResponse("Modification de l'item n°".$idPolymPla." effectuée avec succès");
+
+        }
             return new Response("Pas d'id");
         }
         return new Response("Ce n'est pas une requête Ajax");

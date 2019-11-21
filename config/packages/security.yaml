@@ -40,14 +40,14 @@ security:
             # https://symfony.com/doc/current/security/form_login_setup.html
 
     role_hierarchy:
-        #ROLE_ADMIN:       [ROLE_USER] 
         ROLE_ADMIN:       [ROLE_USER, ROLE_REGLEUR, ROLE_METHODES, ROLE_CE_MOULAGE, ROLE_CE_POLYM, ROLE_PROGRAMMEUR]
+        ROLE_CE_POLYM:    [ROLE_PLANIF, ROLE_REGLEUR]
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:
         - { path: ^/METHODES, roles: ROLE_METHODES }
         - { path: ^/ADMIN, roles: ROLE_ADMIN }
-        #- { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/Demandes, roles: ROLE_CE_MOULAGE }
         #- { path: ^/security, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         # - { path: ^/admin, roles: ROLE_ADMIN }
         # - { path: ^/profile, roles: ROLE_USER }

@@ -11,8 +11,13 @@
         font-size: 16px;
         line-height: 1.5;
     }
-    
-    h1,h2,h3,h4,h5,h6 {
+    h1{
+        text-align:    center;
+        font-weight: 600;
+        width: 100%;
+    }
+
+    h2,h3,h4,h5,h6 {
         font-weight: 400;	
     }
     
@@ -42,7 +47,7 @@
     }
     
     .card-block {
-        border: 1px solid #cccccc;	
+        border: 1px solid #cccccc;
     }
     
     .shadow {
@@ -50,81 +55,76 @@
                                 0 1px 18px 0 rgba(0, 0, 0, 0.12),
                                 0 3px 5px -1px rgba(0, 0, 0, 0.2);
     }
-    
-    #revenue-column-chart, #products-revenue-pie-chart, #orders-spline-chart,#sales-doughnut-chart-us,#users-countries-bar-chart,#chartContainer {
+    #chartVolCharg,#sales-doughnut-chart-us{
+        height: 300px;
+        width: 50%;
+}    
+    .multicharts{
+        display:    flex;
+    }
+    #revenue-column-chart,#chartTRSVolJours,#Rapport-Heures-pieces, #products-revenue-pie-chart, #orders-spline-chart,#ChartProgMoy,#chartContainer {
         height: 300px;
         width: 100%;
     }			
 </style>
 
-<div class="example-wrapper">
+<!-- <div class="example-wrapper"> -->
 
-<h1> Bienvenue sur l'application de l'UAP PE de l'Usine de Tarbes Composite ✅</h1>
+<h1 style="background-image:Url({{ asset('build/images/LOGO_DAHER.png') }})"> Bienvenue sur l'application de l'UAP PE de l'Usine de Tarbes Composite ✅</h1>
 
-</div>
-<div class="container">
-        <h2 id="header">
-            <strong>Indicateurs Polymérisation</strong>
-            <small class="text-muted">Jan {{Jour| date('Y')}} - Dec {{Jour| date('Y')}}</small>
-        </h2>
-        
-        <div class="row m-b-1">
-            <div class="col-xl-4">
-                <div class="card shadow">
-                    <h4 class="card-header">Quantité Produite au {{Jour| date('d/m/Y')}} : {{TotPcs|raw}} <span class="tag tag-success" id="revenue-tag">pcs</span></h4>
-                    <div class="card-block">
-                        <div id="revenue-column-chart"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xl-3">
-                    <div class="card shadow">
-                        <h4 class="card-header">TRS du : {{Jour| date('d/m/Y')}} <span class="tag tag-success" id="revenue-tag">(Capa: {{CapaMach|raw}}H)</span></h4>
-                        <div class="card-block">
-                            <div id="sales-doughnut-chart-us"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-5">
-                    <div class="card shadow">
-                        <h4 class="card-header">Charge de la semaine {{Semaine|raw}} par Moyens (Totale : {{CharTot|raw}} H)<span class="tag tag-success" id="revenue-tag"> {{HProdSem|raw}}H de réalisées</span></h4>
-                        <div class="card-block">
-                            <div id="users-countries-bar-chart"></div>
-                        </div>
-                    </div>
-                </div>
-        </div> <!-- row -->
-        <hr></hr>
+<!-- </div> -->
+<div class="container-fluid">
+    <h2 id="header">
+        <strong>Indicateurs Découpe</strong>
+        <small class="text-muted">Jan {{Jour| date('Y')}} - Dec {{Jour| date('Y')}}</small>
+    </h2>
+    <h2 id="header">
+        <strong>Indicateurs Moulage</strong>
+        <small class="text-muted">Jan {{Jour| date('Y')}} - Dec {{Jour| date('Y')}}</small>
+    </h2>
         <div class="row m-b-1">
             <div class="col-xl-6">
                 <div class="card shadow">
-                    <h4 class="card-header">Prod du {{Jour| date('d/m/Y')}} pour {{NbPolymJ|raw}} Progs lancés</h4>
-                    <div class="card-block">
-                        <div id="products-revenue-pie-chart"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-6">
-                <div class="card shadow">
-                    <h4 class="card-header">OTD Moulage</h4>
+                <h4 class="card-header">OTD Moulage</h4>
                     <div class="card-block">
                         <div id="orders-spline-chart"></div>
                     </div>
                 </div>
             </div>
-        </div> <!-- row -->
-        <hr></hr>
-        <div class="row">
-            <div class="col-xl-8">
+            <div class="col-xl-3">
                 <div class="card shadow">
-                    <h4 class="card-header">Production par moyen de la semaine {{Semaine|raw}} :  {{PProdSem|raw}} pcs faites / Y à réaliser</h4>
+                <h4 class="card-header">Qté Produite au {{Jour| date('d/m/Y')}} : {{TotPcs|raw}} <span class="tag tag-success" id="revenue-tag">pcs</span></h4>
                     <div class="card-block">
-                        <div id="chartContainer"></div>
+                        <div id="revenue-column-chart"></div>
                     </div>
                 </div>
             </div>
-            <div class="col-xl-4">
+        </div>
+    <h2 id="header">
+        <strong>Indicateurs Polymérisation</strong>
+        <small class="text-muted">Jan {{Jour| date('Y')}} - Dec {{Jour| date('Y')}}</small>
+    </h2>  
+        <div class="row m-b-1"> 
+                <div class="col-xl-5">
+                    <div class="card shadow">
+                        <h4 class="card-header">Répartition nbr pièces semaine {{Semaine|raw}} par Moyens</h4>
+                        <div class="card-block">
+                            <div id="ChartProgMoy"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3">
+                    <div class="card shadow">
+                        <h4 class="card-header">TRS et Taux remplissage du : {{Jour| date('d/m/Y')}} <span class="tag tag-success" id="revenue-tag">(Capa: {{CapaMach|raw}}H)</span></h4>
+                        <div class="card-block" class="multicharts">
+                            <div class="row m-b-1">
+                            <div class="col-xl-6" id="sales-doughnut-chart-us"></div>
+                            <div class="col-xl-6" id="chartVolCharg"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-4">
                 <div class="card shadow">
                     <h4 class="card-header">Productivité de la semaine {{Semaine|raw}} : {{RapportPH|raw}} pcs/H</h4>
                     <div class="card-block">
@@ -132,6 +132,28 @@
                     </div>
                 </div>
             </div>
+        </div> <!-- row -->
+        <hr></hr>
+        <div class="row m-b-1">
+            <div class="col-xl-6">
+                <div class="card shadow">
+                    <h4 class="card-header">TRS et Nbr Polym sur la semaine {{SemDer|raw}}</h4>
+                    <div class="card-block">
+                        <div id="chartTRSVolJours"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6">
+                <div class="card shadow">
+                    <h4 class="card-header">TRS moyen et nbr de polym par semaine</h4>
+                    <div class="card-block">
+                        <div id="chartContainer"></div>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- row -->
+        <div class="row">
+            
         </div><!-- row -->
         <hr></hr>
     </div> <!-- container -->
@@ -153,7 +175,9 @@
                 theme: "theme2",
                 axisX: {
                     labelFontSize: 14,
-                    valueFormatString: "MM YYYY"
+                    valueFormatString: "MM YYYY",
+                    interval: 1,
+                    intervalType: "month"
                 },
                 axisY: {
                     labelFontSize: 14,
@@ -182,7 +206,7 @@
                     theme: "theme2",
                     title: {
                             fontColor: "#848484",
-                            fontSize: 70,
+                            fontSize: 50,
                             horizontalAlign: "center",
                             text: {{PercentTRS|raw}}+"%",
                             verticalAlign: "center"
@@ -197,7 +221,7 @@
                             {
                                     explodeOnClick: false,
                                     innerRadius: "76%",
-                                    radius: "90%",
+                                    radius: "70%",
                                     startAngle: 270,
                                     type: "doughnut",
                                     dataPoints: {{TRS|raw}}
@@ -206,9 +230,40 @@
                 });
                 
                 salesDoughnutChartUS.render();
+
+                var chartVolCharg = new CanvasJS.Chart("chartVolCharg", { 
+                    animationEnabled: true,
+                    exportEnabled: true,
+                    theme: "theme2",
+                    title: {
+                            fontColor: "#848484",
+                            fontSize: 50,
+                            horizontalAlign: "center",
+                            text: {{PercentVol|raw}}+"%",
+                            verticalAlign: "center"
+                    },
+                    toolTip: {
+                            backgroundColor: "#ffffff",
+                            borderThickness: 0,
+                            cornerRadius: 0,
+                            fontColor: "#424242"
+                    },
+                    data: [
+                            {
+                                    explodeOnClick: false,
+                                    innerRadius: "76%",
+                                    radius: "70%",
+                                    startAngle: 270,
+                                    type: "doughnut",
+                                    dataPoints: {{VolCharg|raw}}
+                            }
+                    ]
+                });
+                
+                chartVolCharg.render();
                     
              //Graphique sur la répartition des pcs svt programmes et machine
-             var chart = new CanvasJS.Chart("chartContainer", {
+             var chart = new CanvasJS.Chart("ChartProgMoy", {
                     animationEnabled: true,
                     exportEnabled: true,
                     title:{
@@ -216,7 +271,9 @@
                     },
                     axisX: {
                             valueFormatString: "DDD",
-                            labelFontSize: 24
+                            labelFontSize: 24,
+                            interval: 1,
+                            intervalType: "day"
                             //maximum: new date("14 Jul 2019")//{{FinSem|date('Y-m-d\\TH:i:sP')}}
                     },
                     axisY: {
@@ -244,7 +301,7 @@
                     chart.render();
 }
             //CanvasJS pie chart to show product wise annual revenue for 2015
-            var productsRevenuePieChart = new CanvasJS.Chart("products-revenue-pie-chart", {
+            /* var productsRevenuePieChart = new CanvasJS.Chart("products-revenue-pie-chart", {
                 animationEnabled: true,
                 exportEnabled: true,
                 theme: "theme2",
@@ -274,7 +331,7 @@
                 ]
             });
             
-            productsRevenuePieChart.render();
+            productsRevenuePieChart.render(); */
             
             //CanvasJS spline chart to show orders from Jan 2015 to Dec 2015
             var ordersSplineChart = new CanvasJS.Chart("orders-spline-chart", {
@@ -287,7 +344,7 @@
                 },
                 axisX: {
                     labelFontSize: 14,
-                    maximum: new Date("31 Dec 2015"),
+                    maximum: new Date("31 Dec 2019"),
                     valueFormatString: "MMM YYYY"
                 },
                 axisY: {
@@ -299,18 +356,18 @@
                     {
                         type: "spline",
                         dataPoints: [
-                            { x: new Date("1 Jan 2015"), y: 17376 },
-                            { x: new Date("1 Feb 2015"), y: 21431 },
-                            { x: new Date("1 Mar 2015"), y: 25724 },
-                            { x: new Date("1 Apr 2015"), y: 22138 },
-                            { x: new Date("1 May 2015"), y: 20676 },
-                            { x: new Date("1 Jun 2015"), y: 25429 },
-                            { x: new Date("1 Jul 2015"), y: 29160 },
-                            { x: new Date("1 Aug 2015"), y: 23317 },
-                            { x: new Date("1 Sep 2015"), y: 31883 },
-                            { x: new Date("1 Oct 2015"), y: 30034 },
-                            { x: new Date("1 Nov 2015"), y: 31768 },
-                            { x: new Date("1 Dec 2015"), y: 41215 }
+                            { x: new Date("1 Jan 2019"), y: 17376 },
+                            { x: new Date("1 Feb 2019"), y: 21431 },
+                            { x: new Date("1 Mar 2019"), y: 25724 },
+                            { x: new Date("1 Apr 2019"), y: 22138 },
+                            { x: new Date("1 May 2019"), y: 20676 },
+                            { x: new Date("1 Jun 2019"), y: 25429 },
+                            { x: new Date("1 Jul 2019"), y: 29160 },
+                            { x: new Date("1 Aug 2019"), y: 23317 },
+                            { x: new Date("1 Sep 2019"), y: 31883 },
+                            { x: new Date("1 Oct 2019"), y: 30034 },
+                            { x: new Date("1 Nov 2019"), y: 31768 },
+                            { x: new Date("1 Dec 2019"), y: 41215 }
                         ]
                     }
                 ]
@@ -332,14 +389,14 @@
                     title: "Semaines"
                 },
                 axisY: {
-                    title: "Pièces",
+                    title: "Heures",
                     titleFontColor: "#4F81BC",
                     lineColor: "#4F81BC",
                     labelFontColor: "#4F81BC",
                     tickColor: "#4F81BC"
                 },
                 axisY2: {
-                    title: "Heures",
+                    title: "Pièces",
                     titleFontColor: "#C0504E",
                     lineColor: "#C0504E",
                     labelFontColor: "#C0504E",
@@ -370,8 +427,8 @@
             });
             chart.render();
             
-            // CanvasJS bar chart to show country wise annual users percentage
-				var usersCountriesBarChart = new CanvasJS.Chart("users-countries-bar-chart", {
+            // CanvasJS bar chart to show country wise annual users percentage charge par moyen
+				/* var usersCountriesBarChart = new CanvasJS.Chart("users-countries-bar-chart", {
                     animationEnabled: true,
                     exportEnabled: true,
 					theme: "theme2",
@@ -409,7 +466,222 @@
 						}
 					]
 				});
-            usersCountriesBarChart.render();
+            usersCountriesBarChart.render(); */
+
+            //canvasjs barchart vertical Nbr Polym and line TRS
+            var chart = new CanvasJS.Chart("chartContainer", {
+                /* animationEnabled: true,
+                title:{
+                    text: "TRS Moyen Chaud",
+                    fontFamily: "arial black",
+                    fontColor: "#695A42"
+                },
+                axisX: {
+                    interval: 1,
+                    intervalType: "week"
+                },
+                axisY:{
+                    valueFormatString:"$#0bn",
+                    gridColor: "#B6B1A8",
+                    tickColor: "#B6B1A8"
+                },
+                toolTip: {
+                    shared: true,
+                    content: toolTipContent
+                },
+                data: [{
+                    type: "stackedColumn",
+                    showInLegend: true,
+                    color: "#696661",
+                    name: "Q1",
+                    dataPoints: [
+                        { y: 6.75, x: new Date(2010,0) },
+                        { y: 8.57, x: new Date(2011,0) },
+                        { y: 10.64, x: new Date(2012,0) },
+                        { y: 13.97, x: new Date(2013,0) },
+                        { y: 15.42, x: new Date(2014,0) },
+                        { y: 17.26, x: new Date(2015,0) },
+                        { y: 20.26, x: new Date(2016,0) }
+                    ]
+                    },
+                    {        
+                        type: "stackedColumn",
+                        showInLegend: true,
+                        name: "Q2",
+                        color: "#EDCA93",
+                        dataPoints: [
+                            { y: 6.82, x: new Date(2010,0) },
+                            { y: 9.02, x: new Date(2011,0) },
+                            { y: 11.80, x: new Date(2012,0) },
+                            { y: 14.11, x: new Date(2013,0) },
+                            { y: 15.96, x: new Date(2014,0) },
+                            { y: 17.73, x: new Date(2015,0) },
+                            { y: 21.5, x: new Date(2016,0) }
+                        ]
+                    },
+                    {        
+                        type: "stackedColumn",
+                        showInLegend: true,
+                        name: "Q3",
+                        color: "#695A42",
+                        dataPoints: [
+                            { y: 7.28, x: new Date(2010,0) },
+                            { y: 9.72, x: new Date(2011,0) },
+                            { y: 13.30, x: new Date(2012,0) },
+                            { y: 14.9, x: new Date(2013,0) },
+                            { y: 18.10, x: new Date(2014,0) },
+                            { y: 18.68, x: new Date(2015,0) },
+                            { y: 22.45, x: new Date(2016,0) }
+                        ]
+                    },
+                    {        
+                        type: "stackedColumn",
+                        showInLegend: true,
+                        name: "Q4",
+                        color: "#B6B1A8",
+                        dataPoints: [
+                            { y: 8.44, x: new Date(2010,0) },
+                            { y: 10.58, x: new Date(2011,0) },
+                            { y: 14.41, x: new Date(2012,0) },
+                            { y: 16.86, x: new Date(2013,0) },
+                            { y: 10.64, x: new Date(2014,0) },
+                            { y: 21.32, x: new Date(2015,0) },
+                            { y: 26.06, x: new Date(2016,0) }
+                        ]
+                }]
+            });
+            chart.render();
+            
+            function toolTipContent(e) {
+                var str = "";
+                var total = 0;
+                var str2, str3;
+                for (var i = 0; i < e.entries.length; i++){
+                    var  str1 = "<span style= \"color:"+e.entries[i].dataSeries.color + "\"> "+e.entries[i].dataSeries.name+"</span>: $<strong>"+e.entries[i].dataPoint.y+"</strong>bn<br/>";
+                    total = e.entries[i].dataPoint.y + total;
+                    str = str.concat(str1);
+                }
+                str2 = "<span style = \"color:DodgerBlue;\"><strong>"+(e.entries[0].dataPoint.x).getFullYear()+"</strong></span><br/>";
+                total = Math.round(total * 100) / 100;
+                str3 = "<span style = \"color:Tomato\">Total:</span><strong> $"+total+"</strong>bn<br/>";
+                return (str2.concat(str)).concat(str3);
+            } */
+             exportEnabled: true,
+                animationEnabled: true,
+                title:{
+                    text: ""
+                },
+                subtitles: [{
+                    text: ""
+                }], 
+                axisX: {
+                    title: "Semaines"
+                },
+                axisY: {
+                    title: "Quantité",
+                    titleFontColor: "#4F81BC",
+                    lineColor: "#4F81BC",
+                    labelFontColor: "#4F81BC",
+                    tickColor: "#4F81BC"
+                },
+                axisY2: {
+                    title: "%",
+                    titleFontColor: "#C0504E",
+                    lineColor: "#C0504E",
+                    labelFontColor: "#C0504E",
+                    tickColor: "#C0504E"
+                },
+                toolTip: {
+                    shared: true
+                },
+                legend: {
+                    cursor: "pointer",
+                    itemclick: toggleDataSeries
+                },
+                data: [{
+                    type: "column",
+                    name: "Nbr Polym",
+                    showInLegend: true,    
+                    yValueFormatString: "#,##0.# Polyms",
+                    dataPoints: {{RapportNbrProg|raw}}
+                },
+                {
+                    type: "line",
+                    name: "TRS",
+                    axisYType: "secondary",
+                    showInLegend: true,
+                    yValueFormatString: "#.#"/100,
+                    dataPoints: {{RapportTRSem|raw}}
+                }]
+            });
+            chart.render();
+
+            //canvasjs barchart vertical Nbr Polym and line TRS
+            var chart = new CanvasJS.Chart("chartTRSVolJours", {
+                exportEnabled: true,
+                animationEnabled: true,
+                title:{
+                    text: ""
+                },
+                subtitles: [{
+                    text: ""
+                }], 
+                axisX: {
+                    title: "Jours",
+                    valueFormatString: "DDD DD/MM/YY",
+                    interval: 1,
+                    intervalType: "day"
+
+                },
+                axisY: {
+                    title: "Quantité",
+                    titleFontColor: "#4F81BC",
+                    lineColor: "#4F81BC",
+                    labelFontColor: "#4F81BC",
+                    tickColor: "#4F81BC"
+                },
+                axisY2: {
+                    title: "%",
+                    titleFontColor: "#C0504E",
+                    lineColor: "#C0504E",
+                    labelFontColor: "#C0504E",
+                    tickColor: "#C0504E"
+                },
+                toolTip: {
+                    shared: true
+                },
+                legend: {
+                    cursor: "pointer",
+                    itemclick: toggleDataSeries
+                },
+                data: [{
+                    type: "column",
+                    name: "Nbr Polym",
+                    showInLegend: true,
+                    xValueType: "dateTime",      
+                    yValueFormatString: "#,##0.# Polyms",
+                    dataPoints: {{ProgSem|raw}}
+                },
+                {
+                    type: "line",
+                    name: "TRS",
+                    axisYType: "secondary",
+                    xValueType: "dateTime", 
+                    showInLegend: true,
+                    yValueFormatString: "#.#"/100,
+                    dataPoints: {{TRSem|raw}}
+                },
+                {
+                    type: "line",
+                    name: "Taux remplissage",
+                    axisYType: "secondary",
+                    xValueType: "dateTime",
+                    showInLegend: true,
+                    yValueFormatString: "#.#"/100,
+                    dataPoints: {{TxSem|raw}}
+                }]
+            });
+            chart.render();
         });
 </script>
 {% endblock %}

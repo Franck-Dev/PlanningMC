@@ -48,17 +48,17 @@ class DemandesRepository extends ServiceEntityRepository
     }
     */
     // Calcul de la Charge Totale
-    public function findDemRecur( $dateF,$dateD,$Prop  ) : array
+    public function findDemRecur( $dateF,$dateD ) : array
     {
         $entityManager = $this -> getEntityManager ();
 
         $query = $entityManager -> createQuery (
-            'SELECT g.Nom,d.id
+            'SELECT d
             FROM App\Entity\Demandes d LEFT OUTER JOIN  App\Entity\ProgMoyens g WITH g.id = d.Cycle   
-            WHERE d.DatePropose > :dateD AND d.DateHeureFin < :dateF AND d.UserCrea = :UserProp');            
+            WHERE d.DatePropose > :dateD AND d.DatePropose < :dateF  AND d.RecurValide = :Reccurance');            
         $query-> setParameter ( 'dateD' , $dateD);
         $query-> setParameter ('dateF' , $dateF);
-        $query-> setParameter ('UserProp' , $Prop);
+        $query-> setParameter ('Reccurance' , '1');
         // returns an array of Product objects
         return $query -> execute ();
     }

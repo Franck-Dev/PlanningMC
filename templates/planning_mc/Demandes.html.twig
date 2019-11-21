@@ -19,7 +19,11 @@
 		.btn.btn-info.btn-block{
 			background-color: #1dd60c;
 		}
-		
+		.vis-item {
+			border-color: blue;
+		}
+		.recurring.vis-item.vis-range { border-radius: 15px; }
+		.vis-background .vis-group:nth-child(even){background-color:#f7f8fa; }
 	</style>
 {%endblock%}
 
@@ -30,7 +34,7 @@
 			<div id="visualization"></div>
 		</div>
 		<div class="col-md-4">
-			<!-- Search Widget -->
+			<!-- Widgets pour polym réccurante -->
 			<div class="card my-4">
 				<h5 class="card-header">Date début plannification</h5>
 				<div class="card-body">
@@ -218,7 +222,9 @@ var options = {
 			template:template,
             stack: true,
             start: '{{datedeb|date('Y-m-d\\TH:i:sP') }}',
-            end: '{{datefin|date('Y-m-d\\TH:i:sP') }}',
+			end: '{{datefin|date('Y-m-d\\TH:i:sP') }}',
+            verticalScroll: true,
+			zoomKey: "ctrlKey",
             orientation: 'top'};
 var timeline = new vis.Timeline (conteneur, items, groups, options);
 
