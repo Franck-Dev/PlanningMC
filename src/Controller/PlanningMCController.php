@@ -19,6 +19,8 @@ use App\Entity\Demandes;
 use App\Entity\Moyens;
 use App\Entity\User;
 use App\Entity\PolymReal;
+use App\Entity\RecurrancePolym;
+use App\Entity\TypeRecurrance;
 use App\Repository\DefaultRepositoryFactory;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
@@ -315,7 +317,8 @@ class PlanningMCController extends Controller
 
         //On verifie si c'est une création ou une modification
         if($demande->getPlannifie()===false) {
-            //Si c'est une création
+            //C'est une création
+            //dump($request);
             //Récupération de l'ID moyen suivant nom
             $moyen = $this->getDoctrine()
                 ->getRepository(Moyens::class)
@@ -346,13 +349,53 @@ class PlanningMCController extends Controller
                 //dump($request->get('id'));
                 $Planning->setNumDemande($demande);
                 $Planning->setStatut("PLANNIFIE");
+                //On verifie si la récurrance existée avant la modif
+                $RecurD = $this->getDoctrine()
+                    ->getRepository(RecurrancePolym::class)
+                    ->findBy(['NumDemande' => $demande->getid()]);
+                if(!$RecurD){
                 //Création du numéro de réccurence dans la table de ce dernier si besoin
-                if($request->get('Reccurance')==true){
-                    
-                    $StatRecur=true;
+                dump($request->get('Reccurance'));
+                    if($request->get('Reccurance')=="true"){
+                        $recurP = new RecurrancePolym();
+                        //Récupération du type de récurrence(à modifier pour automatisation)
+                        $TypRecur = $this->getDoctrine()
+                        ->getRepository(TypeRecurrance::class)
+                        ->findBy(['Type' => 'HEBDO']);
+                        dump($TypRecur);
+                        $recurP->setTypeRecurrance($TypRecur[0]);
+                        $recurP->setNumDemande($demande);
+                        $recurP->setDateFinrecurrance(new \Datetime("9999-12-30"));
+
+                        $manager = $this->getDoctrine()->getManager();
+                        $manager->persist($recurP);
+                        $manager->flush();
+                        $StatRecur=true;
+                    }
+                    else{
+                        $StatRecur=false;
+                    }
                 }
                 else{
-                    $StatRecur=false;
+                    $recurP = new RecurrancePolym($RecurD);
+                    dump($recurP);
+                    $manager = $this->getDoctrine()->getManager();
+                    $manager->remove($RecurD->getNumDemande());
+                    $manager->flush();
+
+                    $recurP = new RecurrancePolym();
+                    $TypRecur = $this->getDoctrine()
+                        ->getRepository(TypeRecurrance::class)
+                        ->findBy(['Type' => 'HEBDO']);
+                    $recurP->setTypeRecurrance($TypRecur[0]);
+                    $recurP->setNumDemande($demande);
+                    $recurP->setDateFinrecurrance(new \Datetime("9999-12-30"));
+
+                    $manager = $this->getDoctrine()->getManager();
+                    $manager->persist($recurP);
+                    $manager->flush();
+                    $StatRecur=true;
+                    
                 }
                 //Création dans les tables appropriés
                 $manager = $this->getDoctrine()->getManager();
@@ -372,6 +415,32 @@ class PlanningMCController extends Controller
             //C'est une modification
             $demande->setMoyenUtilise(NULL);
             $demande->setPlannifie($request->get('Statut'));
+            //On verifie si la récurrance existée avant la modif
+            $RecurD = $this->getDoctrine()
+            ->getRepository(RecurrancePolym::class)
+            ->findBy(['NumDemande' => $demande->getid()]);
+                //Donne s'il y a une recurrance ou pas            
+                if($request->get('Reccurance')=="true"){
+                    dump($RecurD);
+                    if($RecurD){
+                        $RecurDel= new RecurrancePolym($RecurD[0]);
+                        $RecurDel=$RecurD[0];
+                        dump($RecurDel);
+                        
+                        $manager = $this->getDoctrine()->getManager();
+                        $manager->remove($RecurDel->getNumDemande());
+                        $manager->flush();
+                        $StatRecur=false;
+                    }
+                    else{
+                        $StatRecur=false;
+                    }
+                }
+                else{
+                    $StatRecur=false;
+                }
+            dump($StatRecur);
+            
             $manager = $this->getDoctrine()->getManager();
             $manager->remove($demande->getPlanning());
             $manager->flush();

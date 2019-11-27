@@ -17,13 +17,13 @@ class RecurrancePolym
     private $id;
 
     /**
-     * @ORM\OneToOne(targetEntity="App\Entity\Demandes", inversedBy="recurrancePolym", cascade={"persist", "remove"})
+     * @ORM\OneToOne(targetEntity="App\Entity\Demandes", cascade={"persist", "remove"})
      * @ORM\JoinColumn(nullable=false)
      */
     private $NumDemande;
 
     /**
-     * @ORM\OneToOne(targetEntity="App\Entity\TypeRecurrance", cascade={"persist", "remove"})
+     * @ORM\OneToOne(targetEntity="App\Entity\TypeRecurrance", cascade={"persist"})
      * @ORM\JoinColumn(nullable=false)
      */
     private $TypeRecurrance;

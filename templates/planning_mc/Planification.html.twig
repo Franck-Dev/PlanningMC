@@ -436,11 +436,15 @@ else{
                                     Idx[7].innerHTML="<input  id=\"Choixmoyen"+x+"\" type=\"text\" value="+document.getElementById("Choixmoyen"+x).options[document.getElementById('Choixmoyen'+x).selectedIndex].text+">";
                                     //Modification du bouton "Enregistrer" en "Modifier"
                                     Idx[8].innerHTML="<b ref=\"\" id=\"btn-success\" class=\"btn btn-success\" style=\"border-radius:40px;background-color:red;color:white\" onclick=\"modification('"+x+"','1','"+url+"')\">Modifier</b>\n<input type=\"hidden\" name=\"UrlId"+x+"\" value=\""+url+"\">\n<input type=\"hidden\" name=\"Cycle"+x+"\" value=\""+cycle+"\">\n<input type=\"hidden\" name=\"Hde"+x+"\">\n<input type=\"hidden\" name=\"Hfin"+x+"\">\n<input type=\"hidden\" name=\"Statut"+x+"\">\n<input type=\"hidden\" name=\"Moyen"+x+"\">\n";
-                                    if(StatRecur==true){
-
+                                    console.log(dat);
+                                    console.log(Idx[6].lastElementChild);
+                                    if(dat.StatRecur==true){
+                                        Idx[6].lastElementChild.checked=true;
+                                        Idx[6].lastElementChild.disabled=true;
                                     }
                                     else{
-
+                                        Idx[6].lastElementChild.checked=false;
+                                        Idx[6].lastElementChild.disabled=true;
                                     }
                                 }
                             });
@@ -463,6 +467,13 @@ function modification(x,StatPlan,Url){
     document.querySelector('[name=Moyen'+x+']').value = null; 
     //var url=document.querySelector('[name=UrlId'+x+']').value;
     var url=Url;
+    //Si la case "valide" est cochée, je créé la réccurance avec l'ID
+    if(document.getElementById("Recur"+x).checked==true){
+        var recurrance=true;
+    }
+    else{
+        var recurrance=false;
+    }
     //Création de la liste des moyen pour le select
     //console.log({{moyens|raw}}[0].id);
     var Moy="<select id=\"Choixmoyen"+x+"\">";
@@ -476,7 +487,7 @@ function modification(x,StatPlan,Url){
     $(document).ready(function () {
         $.ajax({
                 method: "POST",
-                data: {Moyen: "", Statut: document.querySelector('[name=Statut'+x+']').value},
+                data: {Moyen: "", Statut: document.querySelector('[name=Statut'+x+']').value,Reccurance: recurrance},
                 url: url,
                 success: function(dat){
                            //console.log(dat.Code);
@@ -493,6 +504,10 @@ function modification(x,StatPlan,Url){
                                     Idx[7].innerHTML=Moy;
                                     //Modification du bouton "Enregistrer" en "Modifier"
                                     Idx[8].innerHTML="<b ref=\"\" id=\"btn-success\" class=\"btn btn-success\" style=\"border-radius:40px;background-color:blue;color:white\" onclick=\"validation('"+x+"','0','"+url+"')\">Enregistrer</b>\n<input type=\"hidden\" name=\"UrlId"+x+"\" value=\""+url+"\">\n<input type=\"hidden\" name=\"CycleId"+x+"\" value=\""+cycle+"\">\n<input type=\"hidden\" name=\"Hdeb"+x+"\">\n<input type=\"hidden\" name=\"Hfin"+x+"\">\n<input type=\"hidden\" name=\"Statut"+x+"\">\n<input type=\"hidden\" name=\"Moyen"+x+"\">\n";
+                                    Idx[6].lastElementChild.checked=false;
+                                    Idx[6].lastElementChild.disabled=false;
+                                    console.log(dat);
+                                    console.log(Idx[6].lastElementChild);
                                 }
                             });
                            }
@@ -519,6 +534,7 @@ function ValidJour(jour){
 
                 validation(item.id,"1",UrlId);
                 Btn.checked=false;
+                console.log(Btn);
             }
         }
     });        
