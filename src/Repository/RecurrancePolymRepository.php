@@ -47,4 +47,19 @@ class RecurrancePolymRepository extends ServiceEntityRepository
         ;
     }
     */
+    // Récupération de la liste des 
+    public function findRecur( $dateF,$dateD ) : array
+    {
+        $entityManager = $this -> getEntityManager ();
+
+        $query = $entityManager -> createQuery (
+            'SELECT d
+            FROM App\Entity\RecurrancePolym d LEFT OUTER JOIN  App\Entity\Planning g WITH g.id = d.NumPlanning  
+            WHERE d.DateFinrecurrance > :dateD AND d.DateFinrecurrance < :dateF  AND g.Statut = :Statut');            
+        $query-> setParameter ( 'dateD' , $dateD);
+        $query-> setParameter ('dateF' , $dateF);
+        $query-> setParameter ('Statut' , 'PLANNIFIE');
+        // returns an array of Product objects
+        return $query -> execute ();
+    }
 }

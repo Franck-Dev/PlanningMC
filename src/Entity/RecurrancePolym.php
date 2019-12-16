@@ -17,10 +17,10 @@ class RecurrancePolym
     private $id;
 
     /**
-     * @ORM\OneToOne(targetEntity="App\Entity\Demandes", cascade={"persist", "remove"})
+     * @ORM\OneToOne(targetEntity="App\Entity\Planning", cascade={"persist", "remove"})
      * @ORM\JoinColumn(nullable=false)
      */
-    private $NumDemande;
+    private $NumPlanning;
 
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\TypeRecurrance", cascade={"persist"})
@@ -33,19 +33,24 @@ class RecurrancePolym
      */
     private $DateFinrecurrance;
 
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     */
+    private $NumHeritage;
+
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getNumDemande(): ?Demandes
+    public function getNumPlanning(): ?Planning
     {
-        return $this->NumDemande;
+        return $this->NumPlanning;
     }
 
-    public function setNumDemande(Demandes $NumDemande): self
+    public function setNumPlanning(Planning $NumPlanning): self
     {
-        $this->NumDemande = $NumDemande;
+        $this->NumPlanning = $NumPlanning;
 
         return $this;
     }
@@ -70,6 +75,18 @@ class RecurrancePolym
     public function setDateFinrecurrance(\DateTimeInterface $DateFinrecurrance): self
     {
         $this->DateFinrecurrance = $DateFinrecurrance;
+
+        return $this;
+    }
+
+    public function getNumHeritage(): ?int
+    {
+        return $this->NumHeritage;
+    }
+
+    public function setNumHeritage(?int $NumHeritage): self
+    {
+        $this->NumHeritage = $NumHeritage;
 
         return $this;
     }

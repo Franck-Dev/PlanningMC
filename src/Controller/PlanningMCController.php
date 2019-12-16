@@ -146,67 +146,98 @@ class PlanningMCController extends Controller
      /**
      * @Route("/PlanningMC/Creation_Polym/", name="CreaPolymRecur")
      */
-    public function CreaPolymRecur(Request $request,RequestStack $requestStack, userInterface $user=null)
+    public function CreaPolymRecur()
     {
             
             //Chargement des dates de la semanine -1
             $currentMonthDateTime = new \DateTime();
-            $firstDateTime = $currentMonthDateTime->modify('Monday this week');
+            $firstDateTime = $currentMonthDateTime->modify('Monday next week');
             $currentMonthDateTime = new \DateTime();
-            $lastDateTime = $currentMonthDateTime->modify('Sunday this week');
+            $lastDateTime = $currentMonthDateTime->modify('Sunday next week');
             $lastDateTime = $lastDateTime->modify('23 hours');
 
-            //Récupération des polyms récurrentes de la semaine -1    
-            $repo=$this->getDoctrine()->getRepository(Demandes::class);
-            $DemRec=$repo ->findDemRecur($lastDateTime,$firstDateTime);
+            //Récupération des polyms récurrantes de la semaine -1    
+            //$repo=$this->getDoctrine()->getRepository(Demandes::class);
+            //$DemRec=$repo ->findDemRecur($lastDateTime,$firstDateTime);
             //$DemRec=$repo -> findBy(['Reccurance'=>'1','UserCrea'=>$user->getUsername(),'Plannifie'=>'1','RecurValide'=>'0']);
-
+            $repo=$this->getDoctrine()->getRepository(RecurrancePolym::class);
+            $ListRec=$repo ->findRecur($lastDateTime,$firstDateTime);
+            dump($ListRec);
             //On va créer la demande et la polym à semaine +1 de chaque polym recur de la semaine -1
-            foreach($DemRec as $dem){
-                //Création de la demande
-                $demande = new Demandes();
-                $demande=clone $dem;
-                $NewDate=date_modify($demande->getDatePropose(),'+ 7days');
-                $demande->setDatePropose($NewDate);
-
-                $manager = $this->getDoctrine()->getManager();
-                $manager->persist($demande);
-                $manager->flush();
-            //Récupération de l'ID de la demande pour plannifier la polym en suivant
-            $DemVal = $demande->getId();
-            //On créé la polym si une demande a été réalisé
-                if ($DemVal){
-                    $Planning=new Planning();
-                    //dump($demande);
-                //récupération des données de la demande pour les reporter dans la polym
-                    //Formatage des dates de début
-                    $heure=$demande->getHeurePropose()->format('H');
-                    $minute=$demande->getHeurePropose()->format('i');
-                    $seconde=$demande->getHeurePropose()->format('s');
-                    $DebDate=$demande->getDatePropose()->format('Y-m-d');
-                    $date = new \DateTime($DebDate);
-                    $date->setTime($heure,$minute,$seconde);
-                    $Planning->setDebutDate($date);
-                    //dump($Planning);
-                    //Formatage de la date de fin, en récupérant la durée du cycle
-                    $dated=clone($date);
-                    $DureCycH=$demande->getCycle()->getDuree()->format('H');
-                    $DureCycH="+".$DureCycH."Hours";
-                    $DateFinH=date_modify($dated,$DureCycH);
-                    $DureCycM=$demande->getCycle()->getDuree()->format('i');
-                    $DureCycM="+".$DureCycM."Minutes";
-                    $DateFin=date_modify($DateFinH,$DureCycM);
-                    $Planning->setFinDate($DateFin);
-                    //dump($Planning);
-                    $Planning->setIdentification($demande->getMoyenUtilise()->getLibelle());
-                    $Planning->setAction($demande->getCycle()->getNom());
-                    $Planning->setNumDemande($demande);
-                    $Planning->setStatut("PLANNIFIE");
-                    //dump($Planning);
+            foreach($ListRec as $dem){
+                dump($dem->getNumHeritage());
+                if(!$dem->getNumHeritage()){
+                    //Création de la demande
+                    $demande = new Demandes();
+                    $demande=clone $dem->getNumPlanning()->getNumDemande();
+                    //$NewDate=date_modify($demande->getDatePropose(),'+ 7days');
+                    //$demande->setDatePropose($NewDate);
+                    $demande->setDatePropose($dem->getDateFinrecurrance());
 
                     $manager = $this->getDoctrine()->getManager();
-                    $manager->persist($Planning);
+                    $manager->persist($demande);
                     $manager->flush();
+                //Récupération de l'ID de la demande pour plannifier la polym en suivant
+                $DemVal = $demande->getId();
+                //On créé la polym si une demande a été réalisé
+                    if ($DemVal){
+                        $Planning=new Planning();
+                        //dump($demande);
+                    //récupération des données de la demande pour les reporter dans la polym
+                        //Formatage des dates de début
+                        $heure=$demande->getHeurePropose()->format('H');
+                        $minute=$demande->getHeurePropose()->format('i');
+                        $seconde=$demande->getHeurePropose()->format('s');
+                        $DebDate=$demande->getDatePropose()->format('Y-m-d');
+                        $date = new \DateTime($DebDate);
+                        $date->setTime($heure,$minute,$seconde);
+                        $Planning->setDebutDate($date);
+                        //dump($Planning);
+                        //Formatage de la date de fin, en récupérant la durée du cycle
+                        $dated=clone($date);
+                        $DureCycH=$demande->getCycle()->getDuree()->format('H');
+                        $DureCycH="+".$DureCycH."Hours";
+                        $DateFinH=date_modify($dated,$DureCycH);
+                        $DureCycM=$demande->getCycle()->getDuree()->format('i');
+                        $DureCycM="+".$DureCycM."Minutes";
+                        $DateFin=date_modify($DateFinH,$DureCycM);
+                        $Planning->setFinDate($DateFin);
+                        //dump($Planning);
+                        $Planning->setIdentification($demande->getMoyenUtilise()->getLibelle());
+                        $Planning->setAction($demande->getCycle()->getNom());
+                        $Planning->setNumDemande($demande);
+                        $Planning->setStatut("PLANNIFIE");
+                        
+                        //Intégration en base
+                        $manager = $this->getDoctrine()->getManager();
+                        $manager->persist($Planning);
+                        $manager->flush();
+
+                        //Création de la donnée récurrance
+                        $Recur = new RecurrancePolym();
+                        $Recur->setTypeRecurrance($dem->getTypeRecurrance());
+                        //Récupération des données du type de récurrance
+                        $repo=$this->getDoctrine()->getRepository(TypeRecurrance::class);
+                        $Dur=$repo ->findBy(['id' =>$dem->getTypeRecurrance()]);
+                        dump($Dur);
+                        $DurRec='+ '.$Dur[0]->getNbrJourCycle().'Days';
+                        $NewDateRecur=date_modify($dem->getDateFinrecurrance(),$DurRec);
+                        
+                        $Recur->setDateFinrecurrance($NewDateRecur);
+                        $Recur->setNumPlanning($Planning);
+
+                        $manager = $this->getDoctrine()->getManager();
+                        $manager->persist($Recur);
+                        $manager->flush();
+
+                        //Archivage de la récurrance valider par retour du n° de la récurrance enfant
+                        $repo=$this->getDoctrine()->getRepository(RecurrancePolym::class);
+                        $Recurrepo=$repo ->find($dem->getid());
+                        $Recurrepo->setNumHeritage($Recur->getid());
+                        $manager = $this->getDoctrine()->getManager();
+                        //$manager->persist($ModifDem);
+                        $manager->flush();
+                    }
                 }
             }
             return $this->redirectToRoute('Planning');
@@ -299,6 +330,28 @@ class PlanningMCController extends Controller
                     $manager->flush();
                     //dump($Planning);
                     //return $this->redirectToRoute('Planning');
+                    //Si polym avec un recurrance, création de cette dernière
+                    dump($demande->getRecurValide());
+                    if($demande->getRecurValide() == "true"){
+                        $recur= new RecurrancePolym;
+
+                        //Récupération du type de récurrence(à modifier pour automatisation)
+                        $TypRecur = $this->getDoctrine()
+                        ->getRepository(TypeRecurrance::class)
+                        ->findBy(['Type' => 'HEBDO']);
+
+                        $recur->setTypeRecurrance($TypRecur[0]);
+                        $recur->setNumPlanning($Planning);
+                        //récupération du nombre de jour et création de la variable
+                        $DureRecTyp=$TypRecur[0]->getNbrJourCycle();
+                        $varCycle='+ '.$DureRecTyp.'days';
+                        $NewDate=date_modify($Planning->getDebutDate(),$varCycle);
+                        $recur->setDateFinrecurrance($NewDate);
+                        dump($recur);
+                        $manager = $this->getDoctrine()->getManager();
+                        $manager->persist($recur);
+                        $manager->flush();
+                    }
                 }            
             }
         }
@@ -341,46 +394,53 @@ class PlanningMCController extends Controller
             $findate=new \Datetime($request->request->get('Hfin'));
             $moyen=$request->request->get('Moyen');
             $cycle=$request->request->get('Cycle');
-            //dump($demande);
+                //Intégration des données dans l'objet
                 $Planning->setDebutDate($debdate);
                 $Planning->setFinDate($findate);
                 $Planning->setIdentification($moyen);
                 $Planning->setAction($cycle);
-                //dump($request->get('id'));
                 $Planning->setNumDemande($demande);
                 $Planning->setStatut("PLANNIFIE");
-                //On verifie si la récurrance existée avant la modif
+                //Création dans la table appropriée
+                $manager = $this->getDoctrine()->getManager();
+                $manager->persist($Planning);
+                $manager->flush();
+                //On verifie si la récurrance existe pour modification si oui
                 $RecurD = $this->getDoctrine()
                     ->getRepository(RecurrancePolym::class)
-                    ->findBy(['NumDemande' => $demande->getid()]);
+                    ->findBy(['NumPlanning' => $Planning->getid()]);
                 if(!$RecurD){
-                //Création du numéro de réccurence dans la table de ce dernier si besoin
-                dump($request->get('Reccurance'));
+                //Création du numéro de Recurrance dans la table de ce dernier si besoin
                     if($request->get('Reccurance')=="true"){
                         $recurP = new RecurrancePolym();
                         //Récupération du type de récurrence(à modifier pour automatisation)
                         $TypRecur = $this->getDoctrine()
                         ->getRepository(TypeRecurrance::class)
                         ->findBy(['Type' => 'HEBDO']);
-                        dump($TypRecur);
+
                         $recurP->setTypeRecurrance($TypRecur[0]);
-                        $recurP->setNumDemande($demande);
-                        $recurP->setDateFinrecurrance(new \Datetime("9999-12-30"));
+                        $recurP->setNumPlanning($Planning);
+                        //récupération du nombre de jour et création de la variable
+                        $DureRecTyp=$TypRecur[0]->getNbrJourCycle();
+                        $varCycle='+ '.$DureRecTyp.'days';
+                        $NewDate=date_modify($Planning->getDebutDate(),$varCycle);
+                        $recurP->setDateFinrecurrance($NewDate);
 
                         $manager = $this->getDoctrine()->getManager();
                         $manager->persist($recurP);
                         $manager->flush();
+                        $demande->SetRecurValide(1);
                         $StatRecur=true;
                     }
                     else{
+                        $demande->SetRecurValide(0);
                         $StatRecur=false;
                     }
                 }
                 else{
                     $recurP = new RecurrancePolym($RecurD);
-                    dump($recurP);
                     $manager = $this->getDoctrine()->getManager();
-                    $manager->remove($RecurD->getNumDemande());
+                    $manager->remove($RecurD->getNumPlanning());
                     $manager->flush();
 
                     $recurP = new RecurrancePolym();
@@ -388,19 +448,18 @@ class PlanningMCController extends Controller
                         ->getRepository(TypeRecurrance::class)
                         ->findBy(['Type' => 'HEBDO']);
                     $recurP->setTypeRecurrance($TypRecur[0]);
-                    $recurP->setNumDemande($demande);
+                    $recurP->setNumPlanning($Planning);
                     $recurP->setDateFinrecurrance(new \Datetime("9999-12-30"));
 
                     $manager = $this->getDoctrine()->getManager();
                     $manager->persist($recurP);
                     $manager->flush();
+                    $demande->SetRecurValide(1);
                     $StatRecur=true;
                     
                 }
                 //Création dans les tables appropriés
                 $manager = $this->getDoctrine()->getManager();
-                $manager->persist($Planning);
-                $manager->flush();
                 $manager->persist($demande);
                 $manager->flush();
 
@@ -416,19 +475,18 @@ class PlanningMCController extends Controller
             $demande->setMoyenUtilise(NULL);
             $demande->setPlannifie($request->get('Statut'));
             //On verifie si la récurrance existée avant la modif
+            //dump($demande->getPlanning()->getid());
             $RecurD = $this->getDoctrine()
             ->getRepository(RecurrancePolym::class)
-            ->findBy(['NumDemande' => $demande->getid()]);
+            ->findBy(['NumPlanning' => $demande->getPlanning()->getid()]);
                 //Donne s'il y a une recurrance ou pas            
                 if($request->get('Reccurance')=="true"){
-                    dump($RecurD);
                     if($RecurD){
                         $RecurDel= new RecurrancePolym($RecurD[0]);
                         $RecurDel=$RecurD[0];
-                        dump($RecurDel);
                         
                         $manager = $this->getDoctrine()->getManager();
-                        $manager->remove($RecurDel->getNumDemande());
+                        $manager->remove($RecurDel->getNumPlanning());
                         $manager->flush();
                         $StatRecur=false;
                     }
@@ -436,15 +494,13 @@ class PlanningMCController extends Controller
                         $StatRecur=false;
                     }
                 }
-                else{
+                else{           
+                    $manager = $this->getDoctrine()->getManager();
+                    $manager->remove($demande->getPlanning());
+                    $manager->flush();
                     $StatRecur=false;
-                }
-            dump($StatRecur);
-            
-            $manager = $this->getDoctrine()->getManager();
-            $manager->remove($demande->getPlanning());
-            $manager->flush();
-            
+            }
+
             return new JsonResponse(['StatRecur'=> $StatRecur,'Message'=>"Modification de l'item n°".$request->get('id')." effectuée avec succès",'Code'=>200]);
         }
         
@@ -896,21 +952,22 @@ $RapportPcs= new JsonResponse($daty2);
 //Si la demande n'est pas déjà faite(modification), on l'a crée
         //dump($demande);    
         if(!$demande){
-            //dump($requette);
+            //Création automatique par CE_POLYM
             if($requette->get('Demandes')){
                 //Récupération des données de la polym plannifié
                 $repo=$this->getDoctrine()->getRepository(Planning::class);
                 $Plan=$repo -> findBy(['id'=> $requette->get('IdPla')]);
-                //récupération des données de la demande réccurante
+                //Récupération des données de la demande réccurante
                 $repo=$this->getDoctrine()->getRepository(Demandes::class);
                 $Dem=$repo -> findBy(['id'=> $requette->get('Demandes')]);
-                //On marque cette récurrence comme validé
+                //On marque cette récurrance comme validée
                 //dump($Dem[0]);
                 $demande=$Dem[0];
                 $demande->SetRecurValide(1);
                 $manager = $this->getDoctrine()->getManager();
                 $manager->persist($demande);
                 $manager->flush();
+                dump($demande);
                 //On créé la nouvelle demande avec les données de la récurrante
                 $demande = new Demandes();
                 $date=$requette->get('DatePla');
@@ -1271,7 +1328,6 @@ $RapportPcs= new JsonResponse($daty2);
        }
        $ChargeMoy= new JsonResponse($datu);
         
-
 //Chargement d'une variable pour toutes les demandes créées
         $test = $this->getDoctrine()
             ->getRepository(demandes::class)
@@ -1300,9 +1356,7 @@ $RapportPcs= new JsonResponse($daty2);
         $moyens=$repos -> findBy(['Id_Service' => '8','Activitees' => 'Plannifie']);
         $item=$moyens;
         //$serializer = new Serializer();
-        //$jsonContent = $serializer->serialize($moyen, 'json');
-        dump($moyens);
-        
+        //$jsonContent = $serializer->serialize($moyen, 'json');        
         $data = [];
         $i = 0;
         foreach($moyens as $moyen){
@@ -1313,7 +1367,6 @@ $RapportPcs= new JsonResponse($daty2);
         }
         //dump($data);
         $moyen= new JsonResponse($data);
-        dump($moyen);
 //Chargement d'une variable pour les tâches déjà plannifiées
         $repo=$this->getDoctrine()->getRepository(Planning::class);
         $Taches=$repo -> findAll();
@@ -1341,7 +1394,7 @@ $RapportPcs= new JsonResponse($daty2);
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
 
         $Titres=$repo -> findAll();
-
+        dump($test);
 //Envoie au template Plannification
         return $this->render('planning_mc/Planification.html.twig',[
             'Titres' => $Titres,

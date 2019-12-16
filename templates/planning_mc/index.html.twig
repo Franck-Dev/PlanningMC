@@ -50,7 +50,7 @@
         #visualization{
             height: 100%;
         }
-        #item-popup{
+        #item-template{
             height: auto;
         }
         .button{
@@ -79,6 +79,7 @@
             border-top-left-radius:     1em;
             border-top-right-radius:    1em;
         }
+
     </style>
 {%endblock%}    
 {% block body %}
@@ -86,16 +87,20 @@
     <div class="input" id="DatePlanif">
         <input type="hidden" id="JourPlannif" value="">
     </div>
-    <div id="visualization">
-        <h2>Planning de la semaine </h2>
-        <div class="button_menu">
-            <input type="button" id="jour" value="Aujourd'hui">
-            <input type="button" id="semaine-1" value="Semaine dernière">
-            <input type="button" id="semaine" value="Semaine en cours">
-            <input type="button" id="semaine+1" value="Semaine suivante">
-            {% if is_granted('ROLE_PLANIF') %}
-                <a href="{{ path('CreaPolymRecur', {'user': app.user}) }}" class="btn_valid">Plannification</a>
-            {% endif %}
+    <div id="visualization" class="conteiner-fluid">
+        <div class="row">
+            <h2 class="col-lg-12">Planning de la semaine </h2>
+        </div>
+        <div class="row">
+            <div class="button_menu">
+                <input type="button" id="jour" value="Aujourd'hui" class="col-xs-2">
+                <input type="button" id="semaine-1" value="Semaine dernière" class="col-xs-2">
+                <input type="button" id="semaine" value="Semaine en cours" class="col-xs-2">
+                <input type="button" id="semaine+1" value="Semaine suivante" class="col-xs-2">
+                {% if is_granted('ROLE_PLANIF') %}
+                    <a href="{{ path('CreaPolymRecur', {'user': app.user}) }}" class="btn_valid">Plannification</a>
+                {% endif %}
+            </div>
         </div>
            <!-- Modal -->  
             <div id="Modale" class="modal" aria-hidden="true">
@@ -123,8 +128,6 @@
                 </div>
             </div>
     </div>
-    <p></p>
-    <div id="log"></div>
 {% endblock %}
 {% block javascripts %}
     <script src="{{ asset('build/vis.js') }}"></script>
@@ -184,6 +187,7 @@
             start: new Date(),
             end: new Date(1000*60*60*24*7 + (new Date()).valueOf()),
             maxHeight: 1000,
+            autoResize: true,
             verticalScroll: true,
 			zoomKey: "ctrlKey",
             orientation: 'top',

@@ -181,7 +181,11 @@
                             <td>{{ test.outillages }}</td>
                             <td>{{ test.reccurance ? 'OUI' : 'NON'}}</td>
                             <td><input id='{{nominputS}}' type="hidden" value={{ test.plannifie ? 'OUI' : 'NON'}} readonly>
-                                <input type="checkbox" id='{{nominputR}}' value='{{ test.Id }}' >
+                                {% if (test.recurvalide == true)  %}
+                                    <input type="checkbox" id='{{nominputR}}' value='{{ test.Id }}' checked disabled="true" >
+                                {% else %}
+                                    <input type="checkbox" id='{{nominputR}}' value='{{ test.Id }}'>
+                                {% endif %}
                             </td>
                             <td> {% if (test.plannifie == 0) %}
                                     <select id='{{nomselectM}}'>

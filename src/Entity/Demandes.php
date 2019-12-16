@@ -73,11 +73,6 @@ class Demandes
     private $planning;
 
     /**
-     * @ORM\OneToOne(targetEntity="App\Entity\RecurrancePolym", mappedBy="NumDemande", cascade={"persist", "remove"})
-     */
-    private $recurrancePolym;
-
-    /**
      * @ORM\Column(type="boolean")
      */
     private $Reccurance;
@@ -235,23 +230,6 @@ class Demandes
         $newNumDemande = $planning === null ? null : $this;
         if ($newNumDemande !== $planning->getNumDemande()) {
             $planning->setNumDemande($newNumDemande);
-        }
-
-        return $this;
-    }
-
-    public function getRecurrancePolym(): ?RecurrancePolym
-    {
-        return $this->recurrancePolym;
-    }
-
-    public function setRecurrancePolym(RecurrancePolym $recurrancePolym): self
-    {
-        $this->recurrancePolym = $recurrancePolym;
-
-        // set the owning side of the relation if necessary
-        if ($this !== $recurrancePolym->getNumDemande()) {
-            $recurrancePolym->setNumDemande($this);
         }
 
         return $this;

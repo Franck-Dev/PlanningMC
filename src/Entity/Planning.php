@@ -56,6 +56,11 @@ class Planning
      */
     private $polymCrea;
 
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\RecurrancePolym", mappedBy="NumPlanning", cascade={"persist", "remove"})
+     */
+    private $recurrancePolym;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -164,6 +169,23 @@ class Planning
         $newPolymPlannif = $polymCrea === null ? null : $this;
         if ($newPolymPlannif !== $polymCrea->getPolymPlannif()) {
             $polymCrea->setPolymPlannif($newPolymPlannif);
+        }
+
+        return $this;
+    }
+
+    public function getRecurrancePolym(): ?RecurrancePolym
+    {
+        return $this->recurrancePolym;
+    }
+
+    public function setRecurrancePolym(RecurrancePolym $recurrancePolym): self
+    {
+        $this->recurrancePolym = $recurrancePolym;
+
+        // set the owning side of the relation if necessary
+        if ($this !== $recurrancePolym->getNumPlanning()) {
+            $recurrancePolym->setNumPlanning($this);
         }
 
         return $this;
