@@ -21,7 +21,6 @@ use App\Entity\User;
 use App\Entity\PolymReal;
 use App\Entity\RecurrancePolym;
 use App\Entity\TypeRecurrance;
-use App\Repository\DefaultRepositoryFactory;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
@@ -1102,9 +1101,6 @@ $RapportPcs= new JsonResponse($daty2);
             $lastDateTime = $lastDateTime->modify('23 hours');
         }
         else{
-            //$currentMonthDateTime = new \DateTime(strtotime($requette->get('DatedebPlan')));
-            //$sem = date("w", strtotime($requette->get('DatedebPlan').date('Y-m-d') ));
-            //$firstDateTime = $currentMonthDateTime->modify('Monday next week');
             $firstDateTime=date("Y-m-d",strtotime($requette->get('DatedebPlan')));
             $currentMonthDateTime = new \DateTime($firstDateTime);
             $lastDateTime = $currentMonthDateTime->modify('Sunday this week');

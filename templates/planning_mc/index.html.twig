@@ -9,6 +9,7 @@
             width: 100%;
             font-size: 2vmin;
         }
+        
         .sweetalert-lg {
             width: 600px;
         }
@@ -36,6 +37,9 @@
         .progress-label {
             position: absolute;
             z-index: 1;
+            font-size:  1.3vmin;
+            padding:    0;
+            top:    0px;
         }
 
         .modal, .modal-header { 
@@ -79,7 +83,11 @@
             border-top-left-radius:     1em;
             border-top-right-radius:    1em;
         }
+        .vis-item{
+            height: 3vmin;
 
+        }
+        
     </style>
 {%endblock%}    
 {% block body %}
@@ -139,7 +147,7 @@
             <table class="table-condensed" style="height: 10px">
                 <tr>
                     <td colspan="3" class="programmes" style="font-size: 0.7em">{% verbatim %}{{programmes}}{% endverbatim %}</td>
-                    <th><img src="{{asset('build/images/{{statut}}.png')}}" width="31" height="20" alt="{% verbatim %}{{icone}}{% endverbatim %}"></th>
+                    <th><img src="{{asset('build/images/{{statut}}.png')}}" width="31em" height="20em" alt="{% verbatim %}{{icone}}{% endverbatim %}"></th>
                     <td colspan="3" class="statut" style="font-size: 0.7em">{% verbatim %}{{statut}}{% endverbatim %}</td>
                 </tr>
             </table>
