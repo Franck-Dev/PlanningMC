@@ -36,7 +36,24 @@ class ChargeRepository extends ServiceEntityRepository
     }
     */
     // Calcul de la répartition de la charge polym
-    public function findReparCharge ( $dateD,$dateF ) : array
+    public function findReparChargeCyc ( $dateD,$dateF,$cycle ) : array
+{
+    $entityManager = $this -> getEntityManager ();
+
+    $query = $entityManager -> createQuery (
+        'SELECT p.DateDeb as Jour, count(p.ReferencePcs) as NbrPcs, p.NumProg as Cycles
+        FROM App\Entity\Charge p 
+        WHERE p.DateDeb > :dateD AND  p.DateDeb < :dateF AND  p.NumProg = :cyc
+        GROUP BY Cycles'
+    );
+    $query-> setParameter ( 'dateD' , $dateD );
+    $query-> setParameter ('dateF' , $dateF);
+    $query-> setParameter ('cyc' , $cycle);
+    // returns an array of Product objects
+    return $query -> execute ();
+}
+    // Calcul de la charge polym par semaine
+    public function findChargeSem ( $dateD,$dateF ) : array
 {
     $entityManager = $this -> getEntityManager ();
 
@@ -51,6 +68,24 @@ class ChargeRepository extends ServiceEntityRepository
     // returns an array of Product objects
     return $query -> execute ();
 }
+
+    // Calcul de la charge polym par semaine
+    public function findChargeMois ( $dateD,$dateF ) : array
+    {
+        $entityManager = $this -> getEntityManager ();
+        
+        $query = $entityManager -> createQuery (
+            'SELECT DATE_FORMAT (p.DateDeb,\'%v\') as Semaine,MONTH(p.DateDeb) as Mois,  YEAR(p.DateDeb) as Annee, count(p.ReferencePcs) as NbrRef,p.NumProg as Cycles
+                FROM App\Entity\Charge p 
+                WHERE p.DateDeb > :dateD AND  p.DateDeb < :dateF
+                GROUP BY Annee,Mois,Cycles'
+        );
+        $query-> setParameter ( 'dateD' , $dateD );
+        $query-> setParameter ('dateF' , $dateF);
+            // returns an array of Product objects
+        return $query -> execute ();
+    }
+
     /*
     public function findOneBySomeField($value): ?Charge
     {

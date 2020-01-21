@@ -666,8 +666,8 @@ class PlanningMCController extends Controller
 //{ label: "Oregon", y: 25342 },
 //{ label: "Montana",  y: 20088 },
 //{ label: "Massachusetts",  y: 28234 }
-    
-    $Polyms=$repo -> findRapportPcsH($jour);
+        //Création de la date du premier jour de l'année
+    $Polyms=$repo -> findRapportPcsH($dateAn);
     $daty = [];
     $i = 0;
     foreach($Polyms as $polym){
@@ -1565,24 +1565,31 @@ $RapportPcs= new JsonResponse($daty2);
         // Date à aujourd'hui
         $jour= new \datetime;
         $date=$jour;
+        $SemUn=$jour->format("W");
         // Date à 1 mois
         $jourVisu = date("Y-m-d", strtotime('+ 30 days'.date('Y') ));
         $jourVisu=new \datetime($jourVisu);
-        $ChargeTot=$repo -> findReparCharge($date,$jourVisu);
-        dump($ChargeTot);
-        $data = [];
-        $i = 0;
-        foreach($ChargeTot as $charge){ 
-
-            //$DateMoisenCours=new \datetime( $Annee.'-'.$polym['Mois'].'-01');
-            //$NewFormatDMC=date("Y-m-d\TH:i.v\Z",strtotime($Annee.'-'.$polym['Mois'].'-01'));
-            //$DateMoisenCours='01 '.$NewFormatDMC.' 2019';  
+        $DerSem=$jourVisu->format("W");
+        //Récupération de la charge SAP sur 1 mois
+        $ChargeTot=$repo -> findChargeSem($date,$jourVisu); 
+        dump($date);
+        $i=0;
+        $j=0;
+        foreach($ChargeTot as $charge){
             $y=intval($charge['NbrRef']);
-            $data[$i] = ['x'=> $charge['Semaine'], 'y'=> $y];
-            $i = $i + 1;
+            $lundi = new \DateTime();
+            $lundi->setISOdate($charge['Annee'], $charge['Semaine']);
+            $jour=strtotime($lundi->format("Y-m-d"))*1000;
+            //dump($lundi->format("WY"));
+            $TboData[$j]=['x'=> $jour,'y'=>$y];
+            $Tablo[$i]=['type'=>"stackedColumn",'name'=>$charge['Cycles'],'showInLegend'=>"true",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboData];
+                $i = $i + 1;
+            //$Tablo[$i]=['type'=>"stackedColumn",'name'=>$charge['Cycles'],'showInLegend'=>"false",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboData];
+            
+            //$CharTot=intval($polym['DureTheoPolym']/10000);
         }
-        $RepartP= new JsonResponse($data);
-        dump($RepartP);
+        $RepartP= new JsonResponse($Tablo);
+        //dump($RepartP);
 
         // Création de la table de répartition des programmes en retard suivant OF SAP lancés 
         $repo=$this->getDoctrine()->getRepository(Charge::class);
@@ -1592,23 +1599,70 @@ $RapportPcs= new JsonResponse($daty2);
         // Date en retard d'1 mois
         $jourVisu = date("Y-m-d", strtotime('- 31 days'.date('Y') ));
         $jourVisu=new \datetime($jourVisu);
-        $ChargeTard=$repo -> findReparCharge($jourVisu,$date);
-        dump($ChargeTard);
+        $ChargeTard=$repo -> findChargeSem($jourVisu,$date);
+        //dump($ChargeTard);
+        $i=0;
+        $j=0;
+        foreach($ChargeTard as $charge){
+            $y=intval($charge['NbrRef']);
+            $DebSem = new \DateTime();
+            $DebSem->setISOdate($charge['Annee'], $charge['Semaine']);
+            $JDebSem=strtotime($DebSem->format("Y-m-d"))*1000;
+            //dump($lundi->format("WY"));
+            $TboDatas[$j]=['x'=> $JDebSem,'y'=>$y];
+            $Tablos[$i]=['type'=>"stackedColumn",'name'=>$charge['Cycles'],'showInLegend'=>"true",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboDatas];
+                $i = $i + 1;
+            //$Tablo[$i]=['type'=>"stackedColumn",'name'=>$charge['Cycles'],'showInLegend'=>"false",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboData];
+            
+            //$CharTot=intval($polym['DureTheoPolym']/10000);
+        }
+
+        $RepartRetard= new JsonResponse($Tablos);
+        //dump($RepartRetard);
 
         // Création de la table de répartition des programmes oubliés
         $repo=$this->getDoctrine()->getRepository(Charge::class);
         // Date à plus d'un mois
-        $jourFinRetard = date("Y-m-d", strtotime('- 32 days'.date('Y') ));
+        $jourFinRetard = date("Y-m-d", strtotime('+ 1000 days'.date('Y') ));
         $date=new \datetime($jourFinRetard);
         // Date en retard d'1 an
         $jourVisu = date("Y-m-d", strtotime('- 1372days'.date('Y') ));
         $jourVisu=new \datetime($jourVisu);
-        $ChargeOubli=$repo -> findReparCharge($jourVisu,$date);
-        dump($ChargeOubli);
+        $ChargeOubli=$repo -> findChargeMois($jourVisu,$date);
+        //dump($ChargeOubli);
+        $i=0;
+        $j=0;
+        foreach($ChargeOubli as $charge){
+            $y=intval($charge['NbrRef']);
+            $DebSem = new \DateTime();
+            $DebSem->setISOdate($charge['Annee'], $charge['Mois']);
+            $JDebSem=strtotime($DebSem->format("Y-m-d"))*1000;
+            //dump($lundi->format("WY"));
+            $TboDati[$j]=['x'=> $JDebSem,'y'=>$y];
+            $Tabli[$i]=['type'=>"stackedColumn",'name'=>$charge['Cycles'],'showInLegend'=>"true",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboDati];
+                $i = $i + 1;
+            //$Tablo[$i]=['type'=>"stackedColumn",'name'=>$charge['Cycles'],'showInLegend'=>"false",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboData];
+            
+            //$CharTot=intval($polym['DureTheoPolym']/10000);
+        }
+
+        $RepartT= new JsonResponse($Tabli);
+        dump($RepartT);
+
+        // Création de la charge totale SAP
+        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        $ChargTot=$repo -> findAll();
+        dump($ChargTot);
+        
 
         return $this->render('planning_mc/Ordo.html.twig', [
             'controller_name' => 'PlanningMCController',
             'RepartPcs' => $RepartP->getContent(),
+            'RepartRetard'=> $RepartRetard->getContent(),
+            'RepartT'=> $RepartT->getContent(),
+            'DerSem' => $DerSem,
+            'ChargeTot' => $ChargTot,
+            'SemUn' => $SemUn,
             'Titres' => $Titres,
         ]);
     }
