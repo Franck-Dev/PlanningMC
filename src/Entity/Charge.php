@@ -49,12 +49,12 @@ class Charge
     /**
      * @ORM\Column(type="datetime", nullable=true)
      */
-    private $DateDebW;
+    private $DateDeb;
 
     /**
      * @ORM\Column(type="datetime", nullable=true)
      */
-    private $DateFinW;
+    private $DateFin;
 
     /**
      * @ORM\Column(type="datetime")
@@ -143,26 +143,26 @@ class Charge
         return $this;
     }
 
-    public function getDateDebW(): ?\DateTimeInterface
+    public function getDateDeb(): ?\DateTimeInterface
     {
-        return $this->DateDebW;
+        return $this->DateDeb;
     }
 
-    public function setDateDebW(?\DateTimeInterface $DateDebW): self
+    public function setDateDeb(?\DateTimeInterface $DateDeb): self
     {
-        $this->DateDebW = $DateDebW;
+        $this->DateDeb = $DateDeb;
 
         return $this;
     }
 
-    public function getDateFinW(): ?\DateTimeInterface
+    public function getDateFin(): ?\DateTimeInterface
     {
-        return $this->DateFinW;
+        return $this->DateFin;
     }
 
-    public function setDateFinW(?\DateTimeInterface $DateFinW): self
+    public function setDateFin(?\DateTimeInterface $DateFin): self
     {
-        $this->DateFinW = $DateFinW;
+        $this->DateFin = $DateFin;
 
         return $this;
     }

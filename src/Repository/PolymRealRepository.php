@@ -50,13 +50,13 @@ class PolymRealRepository extends ServiceEntityRepository
     public function findAllPcsByDates ( $date ) : array
 {
     $entityManager = $this -> getEntityManager ();
-
     $query = $entityManager -> createQuery (
         'SELECT g.Nom , count(p.Programmes), sum(p.NbrPcs)
         FROM App\Entity\PolymReal p LEFT OUTER JOIN  App\Entity\ProgMoyens g WITH g.id = p.Programmes  
-        WHERE p.DebPolym > :date
+        WHERE p.DebPolym > :dateDeb AND p.DebPolym < :dateFin
         GROUP BY p.Programmes'
-    ) -> setParameter ( 'date' , $date );
+    );
+    $query -> setParameter ( 'dateFin' , $date );
     // returns an array of Product objects
     return $query -> execute ();
 }
@@ -66,7 +66,7 @@ class PolymRealRepository extends ServiceEntityRepository
     $entityManager = $this -> getEntityManager ();
 
     $query = $entityManager -> createQuery (
-        'SELECT g.Nom , count(p.Programmes), sum(p.NbrPcs),DAY(p.DebPolym) as jour,MONTH(p.DebPolym) as mois, YEAR(p.DebPolym) as annee
+        'SELECT g.Nom , count(p.Programmes), sum(p.NbrPcs),DAY(p.DebPolym) as jour,MONTH(p.DebPolym) as Mois, YEAR(p.DebPolym) as annee
         FROM App\Entity\PolymReal p LEFT OUTER JOIN  App\Entity\ProgMoyens g WITH g.id = p.Programmes  
         WHERE p.DebPolym > :dateD AND p.DebPolym < :dateF
         GROUP BY p.Programmes'
@@ -80,7 +80,6 @@ class PolymRealRepository extends ServiceEntityRepository
     public function findAllPcsByDate ( $date ) : array
 {
     $entityManager = $this -> getEntityManager ();
-
     $query = $entityManager -> createQuery (
         'SELECT MONTH(p.DebPolym) as Mois, sum(p.NbrPcs), p.Articles as Dossier
         FROM App\Entity\PolymReal p LEFT OUTER JOIN  App\Entity\ProgMoyens g WITH g.id = p.Programmes 
@@ -94,7 +93,6 @@ class PolymRealRepository extends ServiceEntityRepository
 public function findAllPcs ( $date ) : array
 {
     $entityManager = $this -> getEntityManager ();
-
     $query = $entityManager -> createQuery (
         'SELECT sum(p.NbrPcs)
         FROM App\Entity\PolymReal p LEFT OUTER JOIN  App\Entity\ProgMoyens g WITH g.id = p.Programmes 

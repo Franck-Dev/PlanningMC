@@ -35,7 +35,22 @@ class ChargeRepository extends ServiceEntityRepository
         ;
     }
     */
+    // Calcul de la répartition de la charge polym
+    public function findReparCharge ( $dateD,$dateF ) : array
+{
+    $entityManager = $this -> getEntityManager ();
 
+    $query = $entityManager -> createQuery (
+        'SELECT DATE_FORMAT (p.DateDeb,\'%v\') as Semaine,  YEAR(p.DateDeb) as Annee, count(p.ReferencePcs) as NbrRef, p.NumProg as Cycles
+        FROM App\Entity\Charge p 
+        WHERE p.DateDeb > :dateD AND  p.DateDeb < :dateF
+        GROUP BY Annee,Semaine,Cycles'
+    );
+    $query-> setParameter ( 'dateD' , $dateD );
+    $query-> setParameter ('dateF' , $dateF);
+    // returns an array of Product objects
+    return $query -> execute ();
+}
     /*
     public function findOneBySomeField($value): ?Charge
     {

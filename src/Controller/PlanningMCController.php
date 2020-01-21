@@ -2,39 +2,40 @@
 
 namespace App\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\Routing\Annotation\Route;
+use App\Entity\User;
+use App\Entity\Charge;
+use App\Entity\Moyens;
+use App\Entity\Demandes;
+use App\Entity\Planning;
 use App\Entity\ConfSmenu;
+use App\Entity\PolymReal;
 use App\Entity\ConfSsmenu;
+use App\Entity\ProgMoyens;
+use App\Form\PolymFormType;
+use App\Entity\CategoryMoyens;
+use App\Entity\TypeRecurrance;
+use App\Form\CreationProgType;
+use App\Entity\RecurrancePolym;
+use App\Form\PlanifDemandeType;
+use App\Form\CreationMoyensType;
+use Doctrine\ORM\EntityRepository;
+use App\Repository\DefaultRepositoryFactory;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Persistence\ObjectManager;
-use App\Entity\ProgMoyens;
-use App\Form\CreationProgType;
-use App\Form\CreationMoyensType;
-use App\Entity\CategoryMoyens;
-use App\Entity\Planning;
-use App\Form\PolymFormType;
-use App\Form\PlanifDemandeType;
-use App\Entity\Demandes;
-use App\Entity\Moyens;
-use App\Entity\User;
-use App\Entity\PolymReal;
-use App\Entity\RecurrancePolym;
-use App\Entity\TypeRecurrance;
-use App\Repository\DefaultRepositoryFactory;
-use Symfony\Bridge\Doctrine\Form\Type\EntityType;
-use Symfony\Component\Form\Extension\Core\Type\TimeType;
-use Symfony\Component\Form\Extension\Core\Type\DateType;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
-use Symfony\Component\Form\Extension\Core\Type\SubmitType;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Form\Extension\Core\Type\DateType;
+use Symfony\Component\Form\Extension\Core\Type\TimeType;
+use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
-use Doctrine\ORM\EntityRepository;
 //use Symfony\Component\HttpFoundation\Session\Session ;
 //use Symfony\Component\Serializer\Serializer;
 
@@ -610,7 +611,9 @@ class PlanningMCController extends Controller
         $Titres=$repo -> findAll();
         
         //Recherche du début de l'année avec n+1 mois pour effectuer les calcul des indicateurs         
-        $DateAnCours = date("l", strtotime('first day of January '.date('Y') )); 
+        $DateAnCours = date("l", strtotime('first day of January '.date('Y') ));
+        $dateAn= new \datetime();
+        $dateAn->modify('First day of this year'); 
         //Recherche de la date du début de semaine dernière
         $currentMonthDateTime = new \DateTime();
         $DateSem = $currentMonthDateTime->modify('first day of this week');
@@ -638,10 +641,9 @@ class PlanningMCController extends Controller
 
 // Création de la variable pour la répartition des programmes svt format ci-dessous
         //{ x: new Date("1 Jan 2015"), y: 868800 },
-        //{ x: new Date("1 Feb 2015"), y: 1071550 }, 
+        //{ x: new Date("1 Feb 2015"), y: 1071550 },
         $repo=$this->getDoctrine()->getRepository(PolymReal::class);
-        $Polyms=$repo -> findAllPcsByDate($DateEncours);
-        //dump($Polyms);
+        $Polyms=$repo -> findAllPcsByDate($dateAn);
         $data = [];
         $i = 0;
         foreach($Polyms as $polym){ 
@@ -664,7 +666,8 @@ class PlanningMCController extends Controller
 //{ label: "Oregon", y: 25342 },
 //{ label: "Montana",  y: 20088 },
 //{ label: "Massachusetts",  y: 28234 }
-    $Polyms=$repo -> findRapportPcsH($DateEncours);
+    
+    $Polyms=$repo -> findRapportPcsH($jour);
     $daty = [];
     $i = 0;
     foreach($Polyms as $polym){
@@ -705,7 +708,7 @@ $RapportPcs= new JsonResponse($daty2);
         //dump($RepartP->getContent());
 
 // Création de la variable pour le nombre total de pcs sur 13 mois
-        $Polyms=$repo -> findAllPcs ($DateEncours);
+        $Polyms=$repo -> findAllPcs ($dateAn);
         foreach($Polyms as $polym){
             $TotPcs=intval($polym[1]);
             //dump($TotPcs);
@@ -868,6 +871,7 @@ $RapportPcs= new JsonResponse($daty2);
         }*/
         $JourAvant = date("Y-m-d", strtotime('- 15 days'.date('Y') ));
         $JourAvant=new \datetime($JourAvant);
+        dump($DateJour);
         $Polyms=$repo ->findTRSJour($DateJour,$JourAvant);
         $datuy = [];
         $datuy1 = [];
@@ -1550,15 +1554,88 @@ $RapportPcs= new JsonResponse($daty2);
     }
 
     /**
-     * @Route("/LOGISTIQUE/Urgences", name="Urgences")
+     * @Route("/LOGISTIQUE/Ordonnancement", name="Ordo")
      */
-    public function Urgences()
+    public function Ordo()
         {
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
+        $Titres=$repo -> findAll();
+        // Création de la table de répartition des programmes suivant OF SAP lancés sur 1 mois
+        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        // Date à aujourd'hui
+        $jour= new \datetime;
+        $date=$jour;
+        // Date à 1 mois
+        $jourVisu = date("Y-m-d", strtotime('+ 30 days'.date('Y') ));
+        $jourVisu=new \datetime($jourVisu);
+        $ChargeTot=$repo -> findReparCharge($date,$jourVisu);
+        dump($ChargeTot);
+        $data = [];
+        $i = 0;
+        foreach($ChargeTot as $charge){ 
 
+            //$DateMoisenCours=new \datetime( $Annee.'-'.$polym['Mois'].'-01');
+            //$NewFormatDMC=date("Y-m-d\TH:i.v\Z",strtotime($Annee.'-'.$polym['Mois'].'-01'));
+            //$DateMoisenCours='01 '.$NewFormatDMC.' 2019';  
+            $y=intval($charge['NbrRef']);
+            $data[$i] = ['x'=> $charge['Semaine'], 'y'=> $y];
+            $i = $i + 1;
+        }
+        $RepartP= new JsonResponse($data);
+        dump($RepartP);
+
+        // Création de la table de répartition des programmes en retard suivant OF SAP lancés 
+        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        // Date à hier
+        $jourFinRetard = date("Y-m-d", strtotime('- 1 days'.date('Y') ));
+        $date=new \datetime($jourFinRetard);
+        // Date en retard d'1 mois
+        $jourVisu = date("Y-m-d", strtotime('- 31 days'.date('Y') ));
+        $jourVisu=new \datetime($jourVisu);
+        $ChargeTard=$repo -> findReparCharge($jourVisu,$date);
+        dump($ChargeTard);
+
+        // Création de la table de répartition des programmes oubliés
+        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        // Date à plus d'un mois
+        $jourFinRetard = date("Y-m-d", strtotime('- 32 days'.date('Y') ));
+        $date=new \datetime($jourFinRetard);
+        // Date en retard d'1 an
+        $jourVisu = date("Y-m-d", strtotime('- 1372days'.date('Y') ));
+        $jourVisu=new \datetime($jourVisu);
+        $ChargeOubli=$repo -> findReparCharge($jourVisu,$date);
+        dump($ChargeOubli);
+
+        return $this->render('planning_mc/Ordo.html.twig', [
+            'controller_name' => 'PlanningMCController',
+            'RepartPcs' => $RepartP->getContent(),
+            'Titres' => $Titres,
+        ]);
+    }
+
+    /**
+     * @Route("/LOGISTIQUE/Urgences", name="Urgences")
+     */
+    public function Urgences(Request $requette, ObjectManager $manager)
+    {
+        $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
         $Titres=$repo -> findAll();
 
         return $this->render('planning_mc/Urgences.html.twig', [
+            'controller_name' => 'PlanningMCController',
+            'Titres' => $Titres,
+        ]);
+    }
+
+    /**
+     * @Route("/LOGISTIQUE/Bloquants", name="Bloquants")
+     */
+    public function Bloquants(Request $requette, ObjectManager $manager)
+    {
+        $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
+        $Titres=$repo -> findAll();
+
+        return $this->render('planning_mc/Bloquants.html.twig', [
             'controller_name' => 'PlanningMCController',
             'Titres' => $Titres,
         ]);

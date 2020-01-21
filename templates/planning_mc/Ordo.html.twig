@@ -1,0 +1,71 @@
+{% extends 'base.html.twig' %}
+
+
+{% block title %}Ordonnancement{% endblock %}
+
+{% block body %}
+	<h1>Charge des différents postes ! ✅</h1>
+
+<div class="container-fluid">
+    <h2 id="header">
+        <strong>Charge Découpe</strong>
+        <small class="text-muted">Jan 2020 - Dec 2020</small>
+    </h2>
+    <h2 id="header">
+        <strong>Charge Moyen Chaud</strong>
+        <small class="text-muted">Jan 2020 - Dec 2020</small>
+    </h2>
+    <div class="row m-b-1">
+        <div class="col-xl-6">
+            <div class="card shadow">
+            <h4 class="card-header">Charge à venir</h4>
+                <div class="card-block">
+                    <div id="revenue-column-chart"></div>
+                </div>
+            </div>
+        </div>
+	</div>    
+	
+{% endblock %}
+{% block javascripts %}
+<script src="{{ asset('build/jquery.min.js') }}"></script>
+<script src="{{ asset('build/canvasjs.min.js') }}"></script>
+<script src="{{ asset('build/bootstrap.min.js') }}"></script>
+<script src="{{ asset('build/tether.min.js') }}"></script>
+<script type="text/javascript"> 
+        $(function () {
+            //var totalRevenue = 15341110;
+            //var totalUsers = 7687036;
+            // CanvasJS column chart to show revenue from Jan 2015 - Dec 2015
+            var revenueColumnChart = new CanvasJS.Chart("revenue-column-chart", {
+                animationEnabled: true,
+                exportEnabled: true,
+                backgroundColor: "transparent",
+                theme: "theme2",
+                axisX: {
+                    labelFontSize: 14,
+                    valueFormatString: "WW YYYY",
+                    interval: 1,
+                    intervalType: "week"
+                },
+                axisY: {
+                    labelFontSize: 14,
+                    prefix: ""
+                },
+                toolTip: {
+                    borderThickness: 0,
+                    cornerRadius: 0
+                },
+                data: [
+                    {
+                        type: "column",
+                        yValueFormatString: "####",
+                        xValueType: "dateTime",
+                        dataPoints: {{RepartPcs|raw}}
+                    }
+                ]
+            });
+
+			revenueColumnChart.render();
+</script>
+{% endblock %}
