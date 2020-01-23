@@ -593,11 +593,18 @@ class PlanningMCController extends Controller
        //dump($Polyms);
        foreach($Polyms as $polym){
            $y=intval($polym['DureTheoPolym']/10000);
-           $RatioC=round(($y/$TpsOuvParMach)*100,1);
-           $datu[$i] = ['y'=> $y,'indexLabel'=> $RatioC.'%',  'label' => $polym['Moyen']];
+           if ($request->get('NomKPI')==="occupation-moyen"){
+                $RatioC=round(($y/$TpsOuvParMach)*100,1);
+                $datu[$i] = ['y'=> $y,'indexLabel'=> $RatioC.'%',  'label' => $polym['Moyen']];
+                
+            }
+            else {
+                $RatioC=round(($y/$CharTot)*100,1);
+                $datu[$i] = ['y'=> $y,'indexLabel'=> $RatioC.'%',  'label' => $polym['Moyen']];
+                dump($datu);
+            }
            $i = $i + 1;
        }
-       $ChargeMoy= new JsonResponse($datu);
        //dump($datu);
        return new JsonResponse(['TabVal'=>$datu]);
     }
@@ -1322,15 +1329,20 @@ $RapportPcs= new JsonResponse($daty2);
         
        //Création de la variable charge de chaque machine sur la semaine encours
        $Polyms=$repo -> findChargeMach($FinSem,$DebSem);
+       dump($Polyms);
        $datu = [];
+       $datrix=[];
        $i = 0;
        foreach($Polyms as $polym){
            $y=intval($polym['DureTheoPolym']/10000);
            $RatioC=round(($y/$TpsOuvParMach)*100,1);
+           $RatioR=round(($y/$CharTot)*100,1);
            $datu[$i] = ['y'=> $y,'indexLabel'=> $RatioC.'%',  'label' => $polym['Moyen']];
+           $datrix[$i] = ['y'=> $y,'indexLabel'=> $RatioR.'%',  'label' => $polym['Moyen']];
            $i = $i + 1;
        }
        $ChargeMoy= new JsonResponse($datu);
+       $ReparCharg= new JsonResponse($datrix);
         
 //Chargement d'une variable pour toutes les demandes créées
         $test = $this->getDoctrine()
@@ -1409,6 +1421,7 @@ $RapportPcs= new JsonResponse($daty2);
             'moyens' => $moyen->getContent(),
             'items' => $item,
             'ChargeMoy' =>$ChargeMoy->getContent(),
+            'RepartChargeMoy' =>$ReparCharg->getContent(),
             'CharTot' => $CharTot
         ]);
     }

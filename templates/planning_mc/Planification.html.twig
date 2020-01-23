@@ -41,9 +41,20 @@
             height: 550px;
             width: 550px;
             padding: 10px;
-            background: #6B9A49; color: #fff;
+            background: blue; color: blue;
             position: relative;
-	        left: -550px; top: 150px;
+	        left: -550px; top: 130px;
+            -webkit-transition: all .5s ease-in;
+	        transition: all .5s ease-in;
+            position:  fixed;	
+        }
+        #volet_droit {
+            height: 550px;
+            width: 550px;
+            padding: 10px;
+            background: blue; color: blue;
+            position: relative;
+	        right: -550px; top: 130px;
             -webkit-transition: all .5s ease-in;
 	        transition: all .5s ease-in;
             position:  fixed;	
@@ -55,7 +66,7 @@
             color: #fff;
             text-decoration: none;
             position: absolute;
-            right: -73px;
+            right: -93px;
             top: 29px;
             /* quelques styles CSS3 */
             -ms-transform: rotate(270deg);
@@ -64,19 +75,50 @@
             transform: rotate(270deg);
             border-radius: 0 0 8px 8px;
         }
+        #volet_droit a.ouvrir,
+        #volet_droit a.fermer {
+            padding: 10px 25px;
+            background: #555;
+            color: #fff;
+            text-decoration: none;
+            position: absolute;
+            left: -93px;
+            top: 29px;
+            /* quelques styles CSS3 */
+            -ms-transform: rotate(90deg);
+            -moz-transform: rotate(90deg);
+            -webkit-transform: rotate(90deg);
+            transform: rotate(90deg);
+            border-radius: 0 0 8px 8px;
+        }
         #volet:target {
 	        left: 0;
         }
+         #volet_droit:target {
+	        right: 0;
+        }
         #volet a.fermer {
+	        display: none;
+        }
+        #volet_droit a.fermer {
 	        display: none;
         }
         #volet_clos:target #volet {
 	        left: -550px;
         }
+        #volet_clos_droit:target #volet_droit {
+	        right: -550px;
+        }
         #volet:target a.ouvrir {
             display: none;
         }
+        #volet_droit:target a.ouvrir {
+            display: none;
+        }
         #volet:target a.fermer {
+            display: block;
+        }
+        #volet_droit:target a.fermer {
             display: block;
         }
         
@@ -96,20 +138,34 @@
         </div>
     </div>
 </div>
-<!-- Création du slider Indicateur remplissage -->
+<!-- Création du slider Indicateur Répartition Charge -->
 <div id="volet_clos">
 	<div id="volet">
 		<div class="col-xl-12">
             <div class="card shadow">
-                <h4 class="card-header">Charge de la semaine par Moyens (Totale : {{CharTot|raw}} H)<span class="tag tag-success" id="revenue-tag"></span></h4>
+                <h4 class="card-header">Répartition de la charge par Moyens (Totale : {{CharTot|raw}} H)<span class="tag tag-success" id="revenue-tag"></span></h4>
                 <div class="card-block">
-                    <div id="users-countries-bar-chart"></div>
+                    <div id="repartition-charge"></div>
+                </div>
+            </div>
+        </div>	
+		<a href="#volet" class="ouvrir" aria-hidden="true" onclick=MaJkpiRC("repartition-charge",'{{ path('Maj_Indicateur') }}')>Répartion Charge !</a>
+        <a href="#volet_clos" class="fermer" aria-hidden="true">fermer !</a>
+	</div>
+</div>
+<!-- Création du slider Indicateur remplissage -->
+<div id="volet-droit_clos">
+	<div id="volet_droit">
+		<div class="col-xl-12">
+            <div class="card shadow">
+                <h4 class="card-header">Charge par Moyens sur la semaine<span class="tag tag-success" id="revenue-tag"></span></h4>
+                <div class="card-block">
+                    <div id="occupation-moyen"></div>
                 </div>
             </div>
         </div>
-	
-		<a href="#volet" class="ouvrir" aria-hidden="true" onclick=MaJkpi("users-countries-bar-chart",'{{ path('Maj_Indicateur') }}')>Ouvrir !</a>
-        <a href="#volet_clos" class="fermer" aria-hidden="true">fermer !</a>
+		<a href="#volet_droit" class="ouvrir" aria-hidden="true" onclick=MaJkpi("occupation-moyen",'{{ path('Maj_Indicateur') }}')>Taux Occupation !</a>
+        <a href="#volet_clos_droit" class="fermer" aria-hidden="true">fermer !</a>
 	</div>
 </div>
  {#<pre>{{dump(items)}}</pre>#}  
@@ -184,7 +240,11 @@
                                 {% if (test.recurvalide == true)  %}
                                     <input type="checkbox" id='{{nominputR}}' value='{{ test.Id }}' checked disabled="true" >
                                 {% else %}
-                                    <input type="checkbox" id='{{nominputR}}' value='{{ test.Id }}'>
+                                    {% if (test.reccurance == false) %}
+                                        <input type="checkbox" id='{{nominputR}}' value='{{ test.Id }}' disabled="true" >
+                                    {% else %}
+                                        <input type="checkbox" id='{{nominputR}}' value='{{ test.Id }}'>
+                                    {% endif %}         
                                 {% endif %}
                             </td>
                             <td> {% if (test.plannifie == 0) %}
@@ -222,27 +282,24 @@
             </table>
                 <h1>Prévisualisation des créneaux de polymérisations ✅</h1>
  		<div id="visualization">
-		</div>
-        
-		
-<!-- Modal -->
-<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalTitle" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                	<span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-				{{ render(controller('App\\Controller\\PlanningMCController::DemandesCrea',{'user': app.user}))}}
+
+		</div>	
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalTitle" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    {{ render(controller('App\\Controller\\PlanningMCController::DemandesCrea',{'user': app.user}))}}
+                </div>
             </div>
         </div>
     </div>
 </div>
-        </div>
-   
-
 {% endblock %}
 {% block javascripts %}
 <script src="{{ asset('build/canvasjs.min.js') }}"></script>
@@ -253,9 +310,6 @@
 <script src="{{ asset('build/sweetalert.min.js') }}"></script>
 <script src="{{ asset('build/jquery.min.js') }}"></script>
 <script id="item-template" type="text/x-handlebars-template">
-
-
-
             <table class="infos">
                 <tr>
                     <td colspan="3" class="programmes">{% verbatim %}{{programmes}}{% endverbatim %}</td>
@@ -273,7 +327,7 @@
             </table>
     </script>
 <script type="text/javascript">
-//yuzeudusu
+//Mise à jour de l'indicateur d'occupation moyen à chaque click
 function MaJkpi(id,Url){
     console.log(document.getElementById(id));
     $(document).ready(function () {
@@ -285,7 +339,7 @@ function MaJkpi(id,Url){
                     console.log(dat.TabVal);
                     $(function(){
      // CanvasJS bar chart to show country wise annual users percentage
-				var usersCountriesBarChart = new CanvasJS.Chart("users-countries-bar-chart", {
+				var OccupationMoyen = new CanvasJS.Chart("occupation-moyen", {
                     animationEnabled: true,
                     exportEnabled: true,
 					theme: "theme2",
@@ -323,13 +377,69 @@ function MaJkpi(id,Url){
 						}
 					]
 				});
-                usersCountriesBarChart.render();
+                OccupationMoyen.render();
                 });
                 }
             });
     });
 }
         
+//Mise à jour de l'indicateur de répartition de la charge par moyen à chaque click
+function MaJkpiRC(id,Url){
+    console.log(document.getElementById(id));
+    $(document).ready(function () {
+        $.ajax({
+                method: "POST",
+                data: {NomKPI: id},
+                url: Url,
+                success: function(dat){
+                    console.log(dat.TabVal);
+                    $(function(){
+     // CanvasJS bar chart to show country wise annual users percentage
+				var RepartitionCharge = new CanvasJS.Chart("repartition-charge", {
+                    animationEnabled: true,
+                    exportEnabled: true,
+					theme: "theme2",
+					axisX: {
+						labelFontColor: "#848484",
+						labelFontSize: 18,
+						lineThickness: 0,
+						tickThickness: 0
+					},
+					axisY: {
+						gridThickness: 0,
+						lineThickness: 0,
+						tickThickness: 0,
+						valueFormatString: " "
+						                    
+					},
+					toolTip: {
+						backgroundColor: "#ffffff",
+						borderThickness: 0,
+						cornerRadius: 0,
+						fontColor: "#424242",
+						contentFormatter: function (e) {
+							return e.entries[0].dataPoint.label + ": " +  CanvasJS.formatNumber(Math.round(e.entries[0].dataPoint.y / 100 ), '###,###'); // calculating and showing country wise number of users inside tooltip
+						}
+					},
+					data: [
+						{
+							color: "#424242",
+							indexLabelFontColor: "#848484",
+							indexLabelFontFamily: "calibri",
+							indexLabelFontSize: 18,
+							indexLabelPlacement: "outside",
+							type: "bar",
+							dataPoints: dat.TabVal
+						}
+					]
+				});
+                RepartitionCharge.render();
+                });
+                }
+            });
+    });
+}
 
 const lang = navigator.language; // "de_DE"; // "en_US"; // 
 const locale = (lang && lang !== undefined) ? lang.match(/^\w{2}/)[0] : 
@@ -486,7 +596,7 @@ function modification(x,StatPlan,Url){
         Moy+="\n<option value=\"{\" numero.libelle=\"\" }=\"\">"+{{moyens|raw}}[i].content+"</option>";  
     }
     Moy+="\n</select><br>";
-    console.log(Moy);
+    //console.log(Moy);
     //Envoie de la requette AJAX pour modification du statut et du moyen
     $(document).ready(function () {
         $.ajax({
@@ -503,15 +613,20 @@ function modification(x,StatPlan,Url){
                                     //récupération du cycle
                                     var Idx=item.children;
                                     var cycle=Idx[1].innerHTML;
-                                    console.log(cycle);
+                                    //console.log(cycle);
                                     //Modification de la liste déroulante en input de la ligne(demande)
                                     Idx[7].innerHTML=Moy;
                                     //Modification du bouton "Enregistrer" en "Modifier"
                                     Idx[8].innerHTML="<b ref=\"\" id=\"btn-success\" class=\"btn btn-success\" style=\"border-radius:40px;background-color:blue;color:white\" onclick=\"validation('"+x+"','0','"+url+"')\">Enregistrer</b>\n<input type=\"hidden\" name=\"UrlId"+x+"\" value=\""+url+"\">\n<input type=\"hidden\" name=\"CycleId"+x+"\" value=\""+cycle+"\">\n<input type=\"hidden\" name=\"Hdeb"+x+"\">\n<input type=\"hidden\" name=\"Hfin"+x+"\">\n<input type=\"hidden\" name=\"Statut"+x+"\">\n<input type=\"hidden\" name=\"Moyen"+x+"\">\n";
                                     Idx[6].lastElementChild.checked=false;
-                                    Idx[6].lastElementChild.disabled=false;
-                                    console.log(dat);
-                                    console.log(Idx[6].lastElementChild);
+                                    if(dat.StatRecur==true){
+                                        Idx[6].lastElementChild.disabled=false;
+                                    }
+                                    else{
+                                        Idx[6].lastElementChild.disabled=true;
+                                    }
+                                    //console.log(dat);
+                                    //console.log(Idx[6].lastElementChild);
                                 }
                             });
                            }
@@ -549,8 +664,8 @@ function ValidJour(jour){
             
 //        };
 $(function(){
-     // CanvasJS bar chart to show country wise annual users percentage
-				var usersCountriesBarChart = new CanvasJS.Chart("users-countries-bar-chart", {
+     // CanvasJS bar chart occupation par moyen
+				var OccupationMoyen = new CanvasJS.Chart("occupation-moyen", {
                     animationEnabled: true,
                     exportEnabled: true,
 					theme: "theme2",
@@ -588,8 +703,52 @@ $(function(){
 						}
 					]
 				});
-            usersCountriesBarChart.render();
+            OccupationMoyen.render();
 });
+
+$(function(){
+     // CanvasJS bar chart occupation par moyen
+				var RepartitionCharge = new CanvasJS.Chart("repartition-charge", {
+                    animationEnabled: true,
+                    exportEnabled: true,
+					theme: "theme2",
+					axisX: {
+						labelFontColor: "#848484",
+						labelFontSize: 18,
+						lineThickness: 0,
+						tickThickness: 0
+					},
+					axisY: {
+						gridThickness: 0,
+						lineThickness: 0,
+						tickThickness: 0,
+						valueFormatString: " "
+						                    
+					},
+					toolTip: {
+						backgroundColor: "#ffffff",
+						borderThickness: 0,
+						cornerRadius: 0,
+						fontColor: "#424242",
+						contentFormatter: function (e) {
+							return e.entries[0].dataPoint.label + ": " +  CanvasJS.formatNumber(Math.round(e.entries[0].dataPoint.y / 100 ), '###,###'); // calculating and showing country wise number of users inside tooltip
+						}
+					},
+					data: [
+						{
+							color: "#424242",
+							indexLabelFontColor: "#848484",
+							indexLabelFontFamily: "calibri",
+							indexLabelFontSize: 18,
+							indexLabelPlacement: "outside",
+							type: "bar",
+							dataPoints: {{RepartChargeMoy|raw}}
+						}
+					]
+				});
+            RepartitionCharge.render();
+});
+
 </script>
 {% endblock %}
 

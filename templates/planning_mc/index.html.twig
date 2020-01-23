@@ -83,27 +83,28 @@
             padding:    0;
         }
     </style>
-{%endblock%}    
+{% endblock %}    
 {% block body %}
-
-    <div class="input" id="DatePlanif">
-        <input type="hidden" id="JourPlannif" value="">
-    </div>
-    <div id="visualization" class="conteiner-fluid">
-        <div class="row">
-            <h2 class="col-lg-12">Planning de la semaine </h2>
-        </div>
-        <div class="row">
+<div class="input" id="DatePlanif">
+    <input type="hidden" id="JourPlannif" value="">
+</div>
+<nav class="nav nav-tabs" id="myTab" role="tablist">
+  <a class="nav-item nav-link active" href="#p1" data-toggle="tab" role="tab" aria-controls="tab-p1" aria-selected="true">Autoclaves</a>
+  <a class="nav-item nav-link" href="#p2" data-toggle="tab" role="tab" aria-controls="tab-p2" aria-selected="false">Etuves et Presses</a>
+</nav>
+<div class="tab-content">
+  <div class="tab-pane fade show active" id="p1" role="tabpanel" aria-labelledby="p1">
+    <div class="conteiner-fluid">
             <div class="button_menu">
                 <input type="button" id="jour" value="Aujourd'hui" class="col-xs-2">
                 <input type="button" id="semaine-1" value="Semaine dernière" class="col-xs-2">
                 <input type="button" id="semaine" value="Semaine en cours" class="col-xs-2">
                 <input type="button" id="semaine+1" value="Semaine suivante" class="col-xs-2">
+                <h2 class="col-lg-2">Planning de la semaine </h2>
                 {% if is_granted('ROLE_PLANIF') %}
                     <a href="{{ path('CreaPolymRecur', {'user': app.user}) }}" class="btn_valid">Plannification</a>
                 {% endif %}
             </div>
-        </div>
            <!-- Modal -->  
             <div id="Modale" class="modal" aria-hidden="true">
                 <div class="modal-dialog" role="document">
@@ -129,13 +130,58 @@
                     </div>
                 </div>
             </div>
+        <div id="visualization" class="conteiner"></div>
     </div>
+  </div>
+  <div class="tab-pane fade in" id="p2" role="tabpanel" aria-labelledby="p2">
+    <div class="conteiner-fluid">
+            <div class="button_menu">
+                <input type="button" id="jour" value="Aujourd'hui" class="col-xs-2">
+                <input type="button" id="semaine-1" value="Semaine dernière" class="col-xs-2">
+                <input type="button" id="semaine" value="Semaine en cours" class="col-xs-2">
+                <input type="button" id="semaine+1" value="Semaine suivante" class="col-xs-2">
+                <h2 class="col-lg-2">Planning de la semaine </h2>
+                {% if is_granted('ROLE_PLANIF') %}
+                    <a href="{{ path('CreaPolymRecur', {'user': app.user}) }}" class="btn_valid">Plannification</a>
+                {% endif %}
+            </div>
+           <!-- Modal -->  
+            <div id="Modale" class="modal" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        {% if is_granted('ROLE_CE_POLYM') %}
+                            <div id="Modale" class="modal-body"></div>
+                            {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolym',{'user': app.user}) )}}
+                            <button type="button" class="success" value="Valider">
+                                    <span aria-hidden="true"></span>
+                            </button>
+                        {% elseif is_granted('ROLE_REGLEUR') %}
+                            <div id="Modale" class="modal-body"></div>
+                            
+                            <button type="button" class="success" value="Modifier">
+                                    <span aria-hidden="true"></span>
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        <div id="visualisation" class="conteiner"></div>
+    </div>
+  </div>
+</div>  
 {% endblock %}
 {% block javascripts %}
+    <script src="{{ asset('build/popper.min.js') }}"></script>
     <script src="{{ asset('build/vis.js') }}"></script>
     <script src="{{ asset('build/handlebars.min.js') }}"></script>
-    <script src="{{ asset('build/prototype.js') }}"></script>
+    <!-- <script src="{{ asset('build/prototype.js') }}"></script> perturbe le fonctionnement des navs de bootstrap -->
     <script src="{{ asset('build/jquery.min.js') }}"></script>
+    <script src="{{ asset('build/bootstrap.min.js') }}"></script> 
     <script src="{{ asset('build/sweetalert.min.js') }}"></script>
     <script id="item-template" type="text/x-handlebars-template"> 
             <table class="table-condensed" style="height: 10px">
