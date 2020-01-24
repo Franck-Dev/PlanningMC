@@ -992,7 +992,7 @@ div.vis-network div.vis-navigation div.vis-button.vis-zoomExtends {
 .vis-item .vis-item-content {
   white-space: nowrap;
   box-sizing: border-box;
-  padding: 5px;
+  padding: 0px;
 }
 
 .vis-item .vis-onUpdateTime-tooltip {

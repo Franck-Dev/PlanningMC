@@ -7,7 +7,7 @@
     <style type="text/css">
         table {
             width: 100%;
-            font-size: 2vmin;
+            font-size: 1.5em;
         }
         .sweetalert-lg {
             width: 600px;
@@ -47,12 +47,6 @@
             margin: 10% auto;
             background: blue;
         }
-        #visualization{
-            height: 100%;
-        }
-        #item-template{
-            height: auto;
-        }
         .button{
             display:    block;
             width:  100%;
@@ -78,9 +72,14 @@
             min-height: 0.5em;
             border-top-left-radius:     1em;
             border-top-right-radius:    1em;
+            top:    0px;
         }
-        .vis-item.vis-item-content{
-            padding:    0;
+        #icone{
+            height: 1em;
+            width: 1em;
+        }
+        .vis-timeline{
+            max-height: 100%;
         }
     </style>
 {% endblock %}    
@@ -184,10 +183,10 @@
     <script src="{{ asset('build/bootstrap.min.js') }}"></script> 
     <script src="{{ asset('build/sweetalert.min.js') }}"></script>
     <script id="item-template" type="text/x-handlebars-template"> 
-            <table class="table-condensed" style="height: 10px">
+            <table class="table-condensed">
                 <tr>
                     <td colspan="3" class="programmes" style="font-size: 0.7em">{% verbatim %}{{programmes}}{% endverbatim %}</td>
-                    <th><img src="{{asset('build/images/{{statut}}.png')}}" width="31" height="20" alt="{% verbatim %}{{icone}}{% endverbatim %}"></th>
+                    <th><img id="icone" src="{{asset('build/images/{{statut}}.png')}}" alt="{% verbatim %}{{icone}}{% endverbatim %}"></th>
                     <td colspan="3" class="statut" style="font-size: 0.7em">{% verbatim %}{{statut}}{% endverbatim %}</td>
                 </tr>
             </table>
@@ -234,9 +233,6 @@
             stack: true,
             start: new Date(),
             end: new Date(1000*60*60*24*7 + (new Date()).valueOf()),
-            maxHeight: 1100,
-            autoResize: true,
-            verticalScroll: true,
 			zoomKey: "ctrlKey",
             orientation: 'top',
             groupOrder: 'content',
