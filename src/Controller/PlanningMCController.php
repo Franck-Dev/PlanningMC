@@ -163,10 +163,10 @@ class PlanningMCController extends Controller
             //$DemRec=$repo -> findBy(['Reccurance'=>'1','UserCrea'=>$user->getUsername(),'Plannifie'=>'1','RecurValide'=>'0']);
             $repo=$this->getDoctrine()->getRepository(RecurrancePolym::class);
             $ListRec=$repo ->findRecur($lastDateTime,$firstDateTime);
-            dump($ListRec);
+            //dump($ListRec);
             //On va créer la demande et la polym à semaine +1 de chaque polym recur de la semaine -1
             foreach($ListRec as $dem){
-                dump($dem->getNumHeritage());
+                //dump($dem->getNumHeritage());
                 if(!$dem->getNumHeritage()){
                     //Création de la demande
                     $demande = new Demandes();
@@ -296,6 +296,7 @@ class PlanningMCController extends Controller
 
                 //Récupération de l'ID de la demande pour plannifier la polym en suivant
                 $DemVal = $demande->getId();
+                dump($DemVal);
                 //On créé la polym si une demande a été réalisé
                 if ($DemVal){
                     $Planning=new Planning();
@@ -329,7 +330,7 @@ class PlanningMCController extends Controller
                     $manager = $this->getDoctrine()->getManager();
                     $manager->persist($Planning);
                     $manager->flush();
-                    //dump($Planning);
+                    dump($Planning);
                     //return $this->redirectToRoute('Planning');
                     //Si polym avec un recurrance, création de cette dernière
                     dump($demande->getRecurValide());
@@ -356,7 +357,6 @@ class PlanningMCController extends Controller
                 }            
             }
         }
-            
             return new JsonResponse(['Message'=>"Vous n'avez pas les droits pour créer une polym",'Code'=>404]);        
     }
 
