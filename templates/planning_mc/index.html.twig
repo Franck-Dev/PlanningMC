@@ -121,7 +121,7 @@
                             </button>
                         {% elseif is_granted('ROLE_REGLEUR') %}
                             <div id="Modale" class="modal-body"></div>
-                            
+                            {{ render(controller('App\\Controller\\PlanningMCController::ModifPolym',{'user': app.user}) )}}
                             <button type="button" class="success" value="Modifier">
                                     <span aria-hidden="true"></span>
                             </button>
@@ -239,7 +239,22 @@
             }, 
 
             onUpdate: function(item,callback){
-                var html = htmlForSweetAlert(item);
+                $(document).ready(function () {
+                    $.ajax({
+                        method: "POST",
+                        data: {PolymId: item.id, Moyen: item.group},
+                        url: "{{ path('Polym_Modif') }}",
+                        beforeSend : function() { // traitements JS à faire AVANT l'envoi AJAX
+                         //Mettre à jour la date dans l'input pour l'url
+                        },
+                        success: function(data){
+                            console.log(data);                           
+                            $('#Modale').html(data); // affichage des résultats dans la modal
+                            $('#Modale').show();
+                        }
+                    });
+                });
+                /* var html = htmlForSweetAlert(item);
                 swal({ 
                     title: "Modification des paramètres", 
                     text: item.programmes, 
@@ -275,7 +290,7 @@
                   else {
                     callback(null); // cancel updating the item
                   }
-                console.log(swal.getState('content'));
+                console.log(swal.getState('content')); */
             },
 
             onAdd: function (item, callback) {

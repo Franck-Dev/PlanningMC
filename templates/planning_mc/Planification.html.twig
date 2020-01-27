@@ -619,7 +619,7 @@ function modification(x,StatPlan,Url){
                                     //Modification du bouton "Enregistrer" en "Modifier"
                                     Idx[8].innerHTML="<b ref=\"\" id=\"btn-success\" class=\"btn btn-success\" style=\"border-radius:40px;background-color:blue;color:white\" onclick=\"validation('"+x+"','0','"+url+"')\">Enregistrer</b>\n<input type=\"hidden\" name=\"UrlId"+x+"\" value=\""+url+"\">\n<input type=\"hidden\" name=\"CycleId"+x+"\" value=\""+cycle+"\">\n<input type=\"hidden\" name=\"Hdeb"+x+"\">\n<input type=\"hidden\" name=\"Hfin"+x+"\">\n<input type=\"hidden\" name=\"Statut"+x+"\">\n<input type=\"hidden\" name=\"Moyen"+x+"\">\n";
                                     Idx[6].lastElementChild.checked=false;
-                                    if(dat.StatRecur==true){
+                                    if(dat.DemRecur==true){
                                         Idx[6].lastElementChild.disabled=false;
                                     }
                                     else{

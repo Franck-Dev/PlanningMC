@@ -22,6 +22,7 @@ use Doctrine\ORM\EntityRepository;
 use App\Repository\DefaultRepositoryFactory;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\ORM\Query\AST\Functions\LengthFunction;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
@@ -34,8 +35,11 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+use Symfony\Component\Validator\Constraints\Length;
+
 //use Symfony\Component\HttpFoundation\Session\Session ;
 //use Symfony\Component\Serializer\Serializer;
 
@@ -220,7 +224,7 @@ class PlanningMCController extends Controller
                         //Récupération des données du type de récurrance
                         $repo=$this->getDoctrine()->getRepository(TypeRecurrance::class);
                         $Dur=$repo ->findBy(['id' =>$dem->getTypeRecurrance()]);
-                        dump($Dur);
+                        
                         $DurRec='+ '.$Dur[0]->getNbrJourCycle().'Days';
                         $NewDateRecur=date_modify($dem->getDateFinrecurrance(),$DurRec);
                         
@@ -254,106 +258,128 @@ class PlanningMCController extends Controller
                 $demande = new Demandes();
                 //$demande->setDatePropose($request->get('DatePropose'));
                 $TabDem=$request->request->get('form');
-               
-                //Récupération de l'objet cycle
-                $Cyc = $this->getDoctrine()
-                    ->getRepository(ProgMoyens::class)
-                    ->findBy(['id' =>$TabDem['cycle']]);
-                $demande->setCycle($Cyc[0]);
+                //On gère si c'est une création ou une modif
+                if (count($TabDem)===9){
+                    //Récupération de l'objet cycle
+                    $Cyc = $this->getDoctrine()
+                        ->getRepository(ProgMoyens::class)
+                        ->findBy(['id' =>$TabDem['cycle']]);
+                    $demande->setCycle($Cyc[0]);
 
-                //Récupération de l'objet moyen
-                $Moy = $this->getDoctrine()
-                    ->getRepository(Moyens::class)
-                    ->findBy(['id' =>$TabDem['moyen_utilise']]);
-                $demande->setMoyenUtilise($Moy[0]);
-                
-                //Formatage de la date
-                $DatFor=$TabDem['date_propose'];
-                $lastDate=date("Y-m-d H:m:s",strtotime($DatFor['year'].'-'.$DatFor["month"]."-".$DatFor["day"]));
-                $newfindate = new \DateTime($lastDate);
-                $demande->setDatePropose($newfindate);
-                
-                //Formatage de l'heure
-                $HeurFor=$TabDem['heure_propose'];
-                $lastTime=date("H:m:s",strtotime($HeurFor['hour'].':'.$HeurFor["minute"].":00"));
-                $newfinheure = new \DateTime($lastTime);
-                $demande->setHeurePropose($newfinheure);
+                    //Récupération de l'objet moyen
+                    $Moy = $this->getDoctrine()
+                        ->getRepository(Moyens::class)
+                        ->findBy(['id' =>$TabDem['moyen_utilise']]);
+                    $demande->setMoyenUtilise($Moy[0]);
+                    
+                    //Formatage de la date
+                    $DatFor=$TabDem['date_propose'];
+                    $lastDate=date("Y-m-d H:m:s",strtotime($DatFor['year'].'-'.$DatFor["month"]."-".$DatFor["day"]));
+                    $newfindate = new \DateTime($lastDate);
+                    $demande->setDatePropose($newfindate);
+                    
+                    //Formatage de l'heure
+                    $HeurFor=$TabDem['heure_propose'];
+                    $lastTime=date("H:m:s",strtotime($HeurFor['hour'].':'.$HeurFor["minute"].":00"));
+                    $newfinheure = new \DateTime($lastTime);
+                    $demande->setHeurePropose($newfinheure);
 
-                //Récupération des données outillages et commentaires
-                $demande->setOutillages($TabDem["outillages"]);
-                $demande->setCommentaires($TabDem["commentaires"]);
+                    //Récupération des données outillages et commentaires
+                    $demande->setOutillages($TabDem["outillages"]);
+                    $demande->setCommentaires($TabDem["commentaires"]);
 
-                $demande->setReccurance($TabDem["Reccurance"]);
+                    $demande->setReccurance($TabDem["Reccurance"]);
 
-                $demande->setDateCreation(new \datetime());
-                $demande->setPlannifie(1);
-                $demande->setRecurValide($TabDem["Reccurance"]);
-                $demande->setUserCrea($user->getUsername());
-                
-                    $manager = $this->getDoctrine()->getManager();
-                    $manager->persist($demande);
-                    $manager->flush();
-
-                //Récupération de l'ID de la demande pour plannifier la polym en suivant
-                $DemVal = $demande->getId();
-                dump($DemVal);
-                //On créé la polym si une demande a été réalisé
-                if ($DemVal){
-                    $Planning=new Planning();
-                    //dump($demande);
-                //récupération des données de la demande pour les reporter dans la polym
-                    //Formatage des dates de début
-                    $heure=$demande->getHeurePropose()->format('H');
-                    $minute=$demande->getHeurePropose()->format('i');
-                    $seconde=$demande->getHeurePropose()->format('s');
-                    $DebDate=$demande->getDatePropose()->format('Y-m-d');
-                    $date = new \DateTime($DebDate);
-                    $date->setTime($heure,$minute,$seconde);
-                    $Planning->setDebutDate($date);
-                    //dump($Planning);
-                    //Formatage de la date de fin, en récupérant la durée du cycle
-                    $dated=clone($date);
-                    $DureCycH=$demande->getCycle()->getDuree()->format('H');
-                    $DureCycH="+".$DureCycH."Hours";
-                    $DateFinH=date_modify($dated,$DureCycH);
-                    $DureCycM=$demande->getCycle()->getDuree()->format('i');
-                    $DureCycM="+".$DureCycM."Minutes";
-                    $DateFin=date_modify($DateFinH,$DureCycM);
-                    $Planning->setFinDate($DateFin);
-                    //dump($Planning);
-                    $Planning->setIdentification($demande->getMoyenUtilise()->getLibelle());
-                    $Planning->setAction($demande->getCycle()->getNom());
-                    $Planning->setNumDemande($demande);
-                    $Planning->setStatut("PLANNIFIE");
-                    //dump($Planning);
-
-                    $manager = $this->getDoctrine()->getManager();
-                    $manager->persist($Planning);
-                    $manager->flush();
-                    dump($Planning);
-                    //return $this->redirectToRoute('Planning');
-                    //Si polym avec un recurrance, création de cette dernière
-                    dump($demande->getRecurValide());
-                    if($demande->getRecurValide() == "true"){
-                        $recur= new RecurrancePolym;
-
-                        //Récupération du type de récurrence(à modifier pour automatisation)
-                        $TypRecur = $this->getDoctrine()
-                        ->getRepository(TypeRecurrance::class)
-                        ->findBy(['Type' => 'HEBDO']);
-
-                        $recur->setTypeRecurrance($TypRecur[0]);
-                        $recur->setNumPlanning($Planning);
-                        //récupération du nombre de jour et création de la variable
-                        $DureRecTyp=$TypRecur[0]->getNbrJourCycle();
-                        $varCycle='+ '.$DureRecTyp.'days';
-                        $NewDate=date_modify($Planning->getDebutDate(),$varCycle);
-                        $recur->setDateFinrecurrance($NewDate);
-                        dump($recur);
+                    $demande->setDateCreation(new \datetime());
+                    $demande->setPlannifie(1);
+                    $demande->setRecurValide($TabDem["Reccurance"]);
+                    $demande->setUserCrea($user->getUsername());
+                    
                         $manager = $this->getDoctrine()->getManager();
-                        $manager->persist($recur);
+                        $manager->persist($demande);
                         $manager->flush();
+
+                    //Récupération de l'ID de la demande pour plannifier la polym en suivant
+                    $DemVal = $demande->getId();
+
+                    //On créé la polym si une demande a été réalisé
+                    if ($DemVal){
+                        $Planning=new Planning();
+                        //dump($demande);
+                    //récupération des données de la demande pour les reporter dans la polym
+                        //Formatage des dates de début
+                        $heure=$demande->getHeurePropose()->format('H');
+                        $minute=$demande->getHeurePropose()->format('i');
+                        $seconde=$demande->getHeurePropose()->format('s');
+                        $DebDate=$demande->getDatePropose()->format('Y-m-d');
+                        $date = new \DateTime($DebDate);
+                        $date->setTime($heure,$minute,$seconde);
+                        $Planning->setDebutDate($date);
+                        //dump($Planning);
+                        //Formatage de la date de fin, en récupérant la durée du cycle
+                        $dated=clone($date);
+                        $DureCycH=$demande->getCycle()->getDuree()->format('H');
+                        $DureCycH="+".$DureCycH."Hours";
+                        $DateFinH=date_modify($dated,$DureCycH);
+                        $DureCycM=$demande->getCycle()->getDuree()->format('i');
+                        $DureCycM="+".$DureCycM."Minutes";
+                        $DateFin=date_modify($DateFinH,$DureCycM);
+                        $Planning->setFinDate($DateFin);
+                        //dump($Planning);
+                        $Planning->setIdentification($demande->getMoyenUtilise()->getLibelle());
+                        $Planning->setAction($demande->getCycle()->getNom());
+                        $Planning->setNumDemande($demande);
+                        $Planning->setStatut("PLANNIFIE");
+                        //dump($Planning);
+
+                        $manager = $this->getDoctrine()->getManager();
+                        $manager->persist($Planning);
+                        $manager->flush();
+
+                        //return $this->redirectToRoute('Planning');
+                        //Si polym avec un recurrance, création de cette dernière
+                        //dump($demande->getRecurValide());
+                        if($demande->getRecurValide() == "true"){
+                            $recur= new RecurrancePolym;
+
+                            //Récupération du type de récurrence(à modifier pour automatisation)
+                            $TypRecur = $this->getDoctrine()
+                            ->getRepository(TypeRecurrance::class)
+                            ->findBy(['Type' => 'HEBDO']);
+
+                            $recur->setTypeRecurrance($TypRecur[0]);
+                            $recur->setNumPlanning($Planning);
+                            //récupération du nombre de jour et création de la variable
+                            $DureRecTyp=$TypRecur[0]->getNbrJourCycle();
+                            $varCycle='+ '.$DureRecTyp.'days';
+                            $NewDate=date_modify($Planning->getDebutDate(),$varCycle);
+                            $recur->setDateFinrecurrance($NewDate);
+
+                            $manager = $this->getDoctrine()->getManager();
+                            $manager->persist($recur);
+                            $manager->flush();
+                        }
                     }
+                }
+                else{
+                    //dump(count($TabDem));
+                    $planning = new Planning();
+                    //$demande->setDatePropose($request->get('DatePropose'));
+                    dump($TabDem);
+                    //Récupération de l'objet polym suivant l'id concerné
+                    $PolymPla = $this->getDoctrine()
+                        ->getRepository(Planning::class)
+                        ->findBy(['id' =>$TabDem['id']]);
+                    dump($PolymPla);
+                    $planning=$PolymPla[0];
+                    dump($planning);
+                    $planning->setStatut($TabDem['statut']);
+                    dump($planning);
+                    $manager = $this->getDoctrine()->getManager();
+                        $manager->persist($planning);
+                        $manager->flush();
+                        dump($planning);
+                    //return $this->redirectToRoute('ModifPolym');
                 }            
             }
         }
@@ -489,7 +515,7 @@ class PlanningMCController extends Controller
                         $manager = $this->getDoctrine()->getManager();
                         $manager->remove($RecurDel->getNumPlanning());
                         $manager->flush();
-                        $StatRecur=false;
+                        $StatRecur=true;
                     }
                     else{
                         $StatRecur=false;
@@ -500,16 +526,16 @@ class PlanningMCController extends Controller
                     $manager->remove($demande->getPlanning());
                     $manager->flush();
                     $StatRecur=false;
-            }
-
-            return new JsonResponse(['StatRecur'=> $StatRecur,'Message'=>"Modification de l'item n°".$request->get('id')." effectuée avec succès",'Code'=>200]);
+                }
+            $DemRecur=$demande->getreccurance();
+            return new JsonResponse(['StatRecur'=> $StatRecur,'DemRecur'=>$DemRecur,'Message'=>"Modification de l'item n°".$request->get('id')." effectuée avec succès",'Code'=>200]);
         }
         
     }
 
     /**
-     * @Route("/Planning/", name="Polym_Edit", condition="request.isXmlHttpRequest()")
-     * @Security("has_role('ROLE_REGLEUR')")
+     * @Route("/PlanningMC/", name="Polym_Edit", condition="request.isXmlHttpRequest()")
+     * @Security("has_role('ROLE_PLANIF')")
      */
     public function editpolym(Request $request)
     {
@@ -528,7 +554,6 @@ class PlanningMCController extends Controller
         ->getRepository(Moyens::class)
         ->findBy(['id' =>$request->get('Moyen')]);
         $demande->setMoyenUtilise($Moy[0]);
-
 
        $form = $this -> createFormBuilder($demande)
                       ->add('moyen_utilise', EntityType::class, array(
@@ -553,6 +578,7 @@ class PlanningMCController extends Controller
                         'choices'  => [
                             'NON' => false,
                             'OUI' => true]])
+                      ->add('save', SubmitType::class, ['label' => 'Valider'])
                       ->getForm();
         $form->handleRequest($request);
         //dump($form);
@@ -563,6 +589,73 @@ class PlanningMCController extends Controller
            'Titres' => $Titres,
            'form' => $form->createView()
         ]);
+    }
+    
+     /**
+     * @Route("/PlanningMC/Modification", name="Polym_Modif", condition="request.isXmlHttpRequest()")
+     * @Security("has_role('ROLE_REGLEUR')")
+     */
+    public function modifpolym(Request $request)
+    {
+        $planning = new Planning();
+        $idPolym=substr($request->get('PolymId'),1,strlen($request->get('PolymId'))-1);
+        dump($idPolym);
+        $PolymPla = $this->getDoctrine()
+            ->getRepository(Planning::class)
+            ->findBy(['id' => $idPolym]);
+        //$planning->setMoyenUtilise($PolymPla[0]);
+        dump($PolymPla);
+        $form = $this -> createFormBuilder($PolymPla[0])
+        -> add('id')
+        -> add('identification')
+        -> add('action')
+        -> add('debut_date', DateTimeType::class,['disabled'=>true])
+        -> add('fin_date', DateTimeType::class,['disabled'=>true])
+        -> add('statut', ChoiceType::class, [
+            'choices'  => [
+                'PLANNIFIE' => 'PLANNIFIE',
+                'ANNULER' => 'ANNULER',
+                'REMPLACER' => 'REMPLACER',
+            ]])
+        ->add('save', SubmitType::class, ['label' => 'Modification'])
+        /* -> add('commentaires') */
+        ->getForm();
+        $form->handleRequest($request);
+        dump($form);
+        $Titres=[];
+        return $this->render('planning_mc/editpolym.html.twig',[
+            'controller_name' => 'Moyen Chaud',
+           'Titres' => $Titres,
+           'form' => $form->createView()
+        ]);
+    }
+
+    /**
+     * @Route("/PlanningMC/Modification/Polym", name="ModifPolym")
+     */
+    public function polymodif(Request $request,RequestStack $requestStack, userInterface $user=null)
+    {
+        if($requestStack->getParentRequest()){
+            $request=$requestStack->getParentRequest();
+            if ($request->isMethod('POST')) {
+                $planning = new Planning();
+                //$demande->setDatePropose($request->get('DatePropose'));
+                $TabDem=$request->request->get('form');
+                dump($TabDem);
+                //Récupération de l'objet cycle
+                $PolymPla = $this->getDoctrine()
+                    ->getRepository(Planning::class)
+                    ->findBy(['id' =>$TabDem['id']]);
+                $planning=$PolymPla[0];
+                $planning->setStatut($TabDem['statut']);
+
+                $manager = $this->getDoctrine()->getManager();
+                    $manager->persist($planning);
+                    $manager->flush();
+                    dump($planning);
+            }
+        }
+        return new JsonResponse(['Message'=>"Vous n'avez pas les droits pour créer une polym",'Code'=>404]);
     }
 
 /**
@@ -1387,30 +1480,31 @@ $RapportPcs= new JsonResponse($daty2);
         $repo=$this->getDoctrine()->getRepository(Planning::class);
         $Taches=$repo -> findAll();
         //$item=array();
-        //dump($Taches);
+
         $data = [];
         $i = 0;
+        $Pourc=10;
         foreach($Taches as $tache){
-            $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification()]);
-            $data[$i] = ['id'=> $i,'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $tache->getNumDemande()->getCommentaires()];
+            $commentaires=$tache->getNumDemande()->getCommentaires()."/".$tache->getNumDemande()->getOutillages();
+            $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification(),'Activitees'=> 'Plannifie']);
+            if($Pourc<75){
+                $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires,'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%; background:red"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
+            }
+            else{
+                $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires, 'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
+            }
+            //$data[$i] = ['id'=> $i,'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $tache->getNumDemande()->getCommentaires()];
             $i = $i + 1;
             //dump($MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification()]));
             //dump($MoyUtil[0]->getId());
         }
-        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
-        $Polyms=$repo -> findAll();
-        //dump($data);
-        foreach($Polyms as $polym){ 
-            $data[$i] = ['id'=> $i,'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym()];
-            $i = $i + 1;
-        }
         $taches= new JsonResponse($data);
-        //dump($taches);
+
 //Chargement des éléments du nav-bar menu
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
 
         $Titres=$repo -> findAll();
-        dump($test);
+
 //Envoie au template Plannification
         return $this->render('planning_mc/Planification.html.twig',[
             'Titres' => $Titres,
