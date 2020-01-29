@@ -22,23 +22,24 @@ use Doctrine\ORM\EntityRepository;
 use App\Repository\DefaultRepositoryFactory;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Persistence\ObjectManager;
-use Doctrine\ORM\Query\AST\Functions\LengthFunction;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Validator\Constraints\Length;
+use Doctrine\ORM\Query\AST\Functions\LengthFunction;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
-use Symfony\Component\Validator\Constraints\Length;
 
 //use Symfony\Component\HttpFoundation\Session\Session ;
 //use Symfony\Component\Serializer\Serializer;
@@ -411,9 +412,9 @@ class PlanningMCController extends Controller
                 $demande->setMoyenUtilise($moyen[0]);
             }       
             //Récupération de l'heure de début de l'action
-            $demande->setDatePropose(new \Datetime($request->get('Hdeb')));
+            //$demande->setDatePropose(new \Datetime($request->get('Hdeb')));
             //Récupération de l'heure de fin de l'action
-            $demande->setDateHeureFin(new \Datetime($request->get('Hfin')));
+            //$demande->setDateHeureFin(new \Datetime($request->get('Hfin')));
             //Récupération du statut
             $demande->setPlannifie($request->get('Statut'));
             //Récupération des données de la requette
@@ -597,16 +598,17 @@ class PlanningMCController extends Controller
      */
     public function modifpolym(Request $request)
     {
-        $planning = new Planning();
+        //Remonté d'info pour modification du statut de la polymérisation
         $idPolym=substr($request->get('PolymId'),1,strlen($request->get('PolymId'))-1);
-        dump($idPolym);
+        //dump($idPolym);
         $PolymPla = $this->getDoctrine()
             ->getRepository(Planning::class)
             ->findBy(['id' => $idPolym]);
         //$planning->setMoyenUtilise($PolymPla[0]);
-        dump($PolymPla);
+        //dump($PolymPla);
         $form = $this -> createFormBuilder($PolymPla[0])
-        -> add('id')
+        -> add('id', NumberType::class, [
+            'disabled'=>true])
         -> add('identification')
         -> add('action')
         -> add('debut_date', DateTimeType::class,['disabled'=>true])
@@ -621,7 +623,7 @@ class PlanningMCController extends Controller
         /* -> add('commentaires') */
         ->getForm();
         $form->handleRequest($request);
-        dump($form);
+        //dump($form);
         $Titres=[];
         return $this->render('planning_mc/editpolym.html.twig',[
             'controller_name' => 'Moyen Chaud',
@@ -632,16 +634,18 @@ class PlanningMCController extends Controller
 
     /**
      * @Route("/PlanningMC/Modification/Polym", name="ModifPolym")
+     * @Security("has_role('ROLE_REGLEUR')")
      */
     public function polymodif(Request $request,RequestStack $requestStack, userInterface $user=null)
     {
+        //Modification du statut de la polym
         if($requestStack->getParentRequest()){
             $request=$requestStack->getParentRequest();
             if ($request->isMethod('POST')) {
                 $planning = new Planning();
                 //$demande->setDatePropose($request->get('DatePropose'));
                 $TabDem=$request->request->get('form');
-                dump($TabDem);
+                //dump($TabDem);
                 //Récupération de l'objet cycle
                 $PolymPla = $this->getDoctrine()
                     ->getRepository(Planning::class)
@@ -653,6 +657,49 @@ class PlanningMCController extends Controller
                     $manager->persist($planning);
                     $manager->flush();
                     dump($planning);
+            }
+        }
+        return new JsonResponse(['Message'=>"Vous n'avez pas les droits pour créer une polym",'Code'=>404]);
+    }
+    
+     /**
+     * @Route("/PlanningMC/Suppression", name="Polym_Del", condition="request.isXmlHttpRequest()")
+     * @Security("has_role('ROLE_PLANIF')")
+     */
+    public function deletepolym(Request $request)
+    {
+        //Suppression de la polym
+        dump($request->get('PolymId'));
+        if($request->get('PolymId')){
+            if ($request->isMethod('POST')) {
+                $planning = new Planning();
+                $idPolym=substr($request->get('PolymId'),1,strlen($request->get('PolymId'))-1);
+                //dump($idPolym);
+                $PolymPla = $this->getDoctrine()
+                    ->getRepository(Planning::class)
+                    ->findBy(['id' => $idPolym]);
+                $planning=$PolymPla[0];
+
+                //On va rechercher la demande liée pour modifier son statut et la récurrence si besoin
+                $Demande = new Demandes();
+                $Dem = $this->getDoctrine()
+                    ->getRepository(Demandes::class)
+                    ->findBy(['id' => $planning->getNumDemande()]);
+                $Demande = $Dem[0];
+
+                $manager = $this->getDoctrine()->getManager();
+                $manager->remove($planning);
+                $manager->flush();
+
+                //Si la demande à une récurrence on la supprime
+                $Demande->setRecurValide(0);
+                $Demande->setPlannifie(0);
+                $Demande->setMoyenUtilise(Null);
+
+                $manager = $this->getDoctrine()->getManager();
+                    $manager->persist($Demande);
+                    $manager->flush();
+                    //dump($planning);
             }
         }
         return new JsonResponse(['Message'=>"Vous n'avez pas les droits pour créer une polym",'Code'=>404]);
@@ -1288,6 +1335,7 @@ $RapportPcs= new JsonResponse($daty2);
     else{
         $DemRec=$repo -> findBy(['Reccurance'=>'1','UserCrea'=>$requette->get('UtilisateursCE'),'Plannifie'=>'1','RecurValide'=>'0']);
     }
+    dump($DemRec);
     //$DemRec=$repo ->findDemRecur($lastDateTime,$firstDateTime,$user->getUsername());
 //Récupération des CE du moulage pour listing
     $repo=$this->getDoctrine()->getRepository(User::class);    
@@ -1422,7 +1470,6 @@ $RapportPcs= new JsonResponse($daty2);
         
        //Création de la variable charge de chaque machine sur la semaine encours
        $Polyms=$repo -> findChargeMach($FinSem,$DebSem);
-       dump($Polyms);
        $datu = [];
        $datrix=[];
        $i = 0;
@@ -1499,7 +1546,7 @@ $RapportPcs= new JsonResponse($daty2);
             //dump($MoyUtil[0]->getId());
         }
         $taches= new JsonResponse($data);
-
+        dump($taches);
 //Chargement des éléments du nav-bar menu
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
 

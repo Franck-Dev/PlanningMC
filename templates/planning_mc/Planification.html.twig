@@ -121,7 +121,15 @@
         #volet_droit:target a.fermer {
             display: block;
         }
-        
+        .modal, .modal-header { 
+            z-index: 10000;
+            opacity:    1;
+            width: 400px;
+            height: auto;
+            position: fixed;
+            margin: 10% auto;
+            background: blue;
+        }
 	</style>
 {% endblock %}
 {% block body %}
@@ -183,7 +191,7 @@
                     {% set myDa = myDate|localizeddate('none', 'none', null, null, 'EEEE') %}<!-- Nom des jours de la semaine -->
                     {% set myDat = myDate|date('d/m/y')|upper %}<!-- Mise en forme des jours -->
                     <tr>
-                        <!-- Mise en forme du bouton de validation de la plannification -->
+                        <!-- Mise en forme du bouton de validation groupé de la plannification -->
                         <td colspan="11">
 
                                 <i href="" data-toggle="modal" class="btn btn-info btn-block" font="white" data-target="" data-id={{ myDat }} onclick=ValidJour('{{day}}')>
@@ -279,26 +287,27 @@
                     </i>
                 {% endfor %}
                 </tbody>
-            </table>
-                <h1>Prévisualisation des créneaux de polymérisations ✅</h1>
+        </table>
+            <h1>Prévisualisation des créneaux de polymérisations ✅</h1>
  		<div id="visualization">
 
-		</div>	
-    <!-- Modal -->
-    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalTitle" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+            <!-- Modal -->  
+                <div id="Modale" class="modal" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div id="Modale" class="modal-body">
+                                {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolym',{'user': app.user}) )}}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    {{ render(controller('App\\Controller\\PlanningMCController::DemandesCrea',{'user': app.user}))}}
-                </div>
-            </div>
-        </div>
-    </div>
+
+		</div>	  
 </div>
 {% endblock %}
 {% block javascripts %}
@@ -463,13 +472,85 @@ var options = {
             editable : { 
                 add : true , // ajoute de nouveaux éléments en double tapant  
                 updateTime : true , // déplace les éléments horizontalement  
-                updateGroup : true , // déplace les éléments d'un groupe à un autre  
+                updateGroup : false , // déplace les éléments d'un groupe à un autre  
                 remove : true , // supprime un élément en appuyant sur le bouton de suppression en haut à droite  
                 overrideItems : false  // autorise ces options à remplacer item.editable
             },
-            onUpdate: function (item, callback) { 
+            onMove: function (item, callback) { 
+                //console.log(groups._data[groups._data[item.group].nestedInGroup].content);
                 //prettyPromptItemUpdate('Données de polymérisation', 'Edition', item, groups, timeline, callback); 
-                item.content = prompt('Edit items text:', item.content);
+                //item.content = prompt('Edit items text:', item.content);
+                $(document).ready(function () {
+                    //console.log(items._data[item.id]);
+                    //console.log(item.start);
+                    //Conversion de la date pour prise en compte dans controlleur
+                    var DateDeb = (item.start).toISOString().slice(0,24);
+                    var DateFin = (item.end).toISOString().slice(0,24);
+                    //console.log(DateDeb);
+                    $.ajax({
+                        method: "POST",
+                        data: {id: item.id, olddatedeb: items._data[item.id].start, olddatefin: items._data[item.id].end, moyen: item.group, cycle: item.programmes, newdatedeb: DateDeb, newdatefin: DateFin},
+                        url: "{{ path('Modif_Polym_Pla') }}",
+                        success: function(dat){
+                            console.log(dat);
+                        }
+                    });
+                });
+            }, 
+
+            onUpdate: function(item,callback){
+                $(document).ready(function () {
+                    $.ajax({
+                        method: "POST",
+                        data: {PolymId: item.id, Moyen: item.group},
+                        url: "{{ path('Polym_Modif') }}",
+                        beforeSend : function() { // traitements JS à faire AVANT l'envoi AJAX
+                         //Mettre à jour la date dans l'input pour l'url
+                        },
+                        success: function(data){
+                            console.log(data);                           
+                            $('#Modale').html(data); // affichage des résultats dans la modal
+                            $('#Modale').show();
+                        }
+                    });
+                });
+            },
+
+            onAdd: function (item, callback) {
+                var DateDeb = (item.start).toISOString().slice(0,24);//On garde que la date, et pas l"heure
+                var HeureDeb="1970-01-01"+(item.start).toISOString().slice(10,24);
+                $(document).ready(function () {
+                    $.ajax({
+                        method: "POST",
+                        data: {DateDeb: DateDeb ,Hdeb: HeureDeb, Moyen: item.group},
+                        url: "{{ path('Polym_Edit') }}",
+                        beforeSend : function() { // traitements JS à faire AVANT l'envoi AJAX
+                         //Mettre à jour la date dans l'input pour l'url
+                        },
+                        success: function(data){
+                            console.log(data);                           
+                            $('#Modale').html(data); // affichage des résultats dans la modal
+                            $('#Modale').show();
+                        }
+                    });
+                });
+                    
+            },
+
+            onRemove: function(item,callback){
+                $(document).ready(function () {
+                    $.ajax({
+                        method: "POST",
+                        data: {PolymId: item.id},
+                        url: "{{ path('Polym_Del') }}",
+                        beforeSend : function() { // traitements JS à faire AVANT l'envoi AJAX
+                         //Mettre à jour la date dans l'input pour l'url
+                        },
+                        success: function(data){
+                            console.log(data);
+                        }   
+                    });
+                });
             }
         };
 var timeline = new vis.Timeline (conteneur, items, groups, options);
