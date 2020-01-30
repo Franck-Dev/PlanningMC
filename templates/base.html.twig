@@ -6,7 +6,13 @@
 		<link rel="stylesheet" href="https://bootswatch.com/4/lumen/bootstrap.min.css">
 		<link rel="stylesheet" href="{{ asset('build/app.css') }}">
 		<link rel="stylesheet" href="{{ asset('build/bootstrap.min.css') }}">
-        {% block stylesheets %}{% endblock %}
+        {% block stylesheets %}
+        <style type="text/css">
+            .body{
+                position:   sticky;
+            }
+        </style>
+        {% endblock %}
     </head>
     <body>
 		<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
@@ -21,59 +27,59 @@
 
   <div class="collapse navbar-collapse" id="navbarColor01">
     <ul class="navbar-nav mr-auto">
-        {%if Titres is empty%}
+        {% if Titres is empty %}
 
-        {%else%}
-          {%for menu in Titres %}
-              {%if app.user%}
+        {% else %}
+          {% for menu in Titres %}
+              {% if app.user %}
                 <li class="nav-item dropdown">
-                  <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id={{menu.Nom}}>{{menu.Nom}}<span class="caret"></span></a>
+                  <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id={{ menu.Nom }}>{{menu.Nom}}<span class="caret"></span></a>
                       <div class="dropdown-menu" aria-labelledby={{menu.Nom}}>
                           <a class="dropdown-item" href="{{path(menu.IdSmenu1)}}">{{menu.IdSmenu1}} </a>
                           <a class="dropdown-item" href="{{path(menu.IdSmenu2)}}">{{menu.IdSmenu2}}</a>
                           <div class="dropdown-divider"></div>
-                          {%if menu.IdSmenu3 is empty%}
-                          {%else%}
+                          {% if menu.IdSmenu3 is empty %}
+                          {% else %}
                               <a class="dropdown-item" href="{{path(menu.IdSmenu3)}}">{{menu.IdSmenu3}}</a>
-                          {%endif%}
-                          {%if menu.IdSmenu4 is empty%}
-                          {%else%}
+                          {% endif %}
+                          {% if menu.IdSmenu4 is empty %}
+                          {% else %}
                               <a class="dropdown-item" href="{{path(menu.IdSmenu4)}}">{{menu.IdSmenu4}}</a>
-                          {%endif%}
-                          {%if menu.IdSmenu5 is empty%}
-                          {%else%}
+                          {% endif %}
+                          {% if menu.IdSmenu5 is empty %}
+                          {% else %}
                               <a class="dropdown-item" href="{{path(menu.IdSmenu5)}}">{{menu.IdSmenu5}}</a>
-                          {%endif%}
-                          {%if menu.IdSmenu6 is empty%}
-                          {%else%}
+                          {% endif %}
+                          {% if menu.IdSmenu6 is empty %}
+                          {% else %}
                               <a class="dropdown-item" href="{{path(menu.IdSmenu6)}}">{{menu.IdSmenu6}}</a>
-                          {%endif%}
-                          {%if menu.IdSmenu7 is empty%}
+                          {% endif %}
+                          {% if menu.IdSmenu7 is empty %}
                           {%else%}
                               <a class="dropdown-item" href="{{path(menu.IdSmenu7)}}">{{menu.IdSmenu7}}</a>
-                          {%endif%}
+                          {% endif %}
                       </div>
                 </li>
-              {%else%}
+              {% else %}
                   
-              {%endif%}
-          {%endfor%}
-        {%endif%}
-        {%if not app.user %}
+              {% endif %}
+          {% endfor %}
+        {% endif %}
+        {% if not app.user %}
             <li class="nav-item">
                 <a href="{{path('security_login')}}" class="btn btn-info" role="button">Connexion</a>
             </li>
-        {%else%}
-            {%if Titres is empty%}
+        {% else %}
+            {% if Titres is empty %}
                 
-            {%else%}
+            {% else %}
                 <li class="nav-item">
                     <a href="{{path('security_logout')}}" class="btn btn-info" role="button">Deconnexion</a>
                 </li>
-            {%endif%}
-        {%endif%}
+            {% endif %}
+        {% endif %}
     </ul>
-    {%if app.user%}
+    {% if app.user %}
         <form class="form-inline my-2 my-lg-0">
             {#<pre></pre><a href="{{ path('security_registration') }}">{{app.user}}</a></pre>#} 
             {#<pre></pre>{{dump(last_user|raw)}}</pre>#} 
@@ -82,11 +88,11 @@
         <input class="form-control mr-sm-2" type="text" placeholder="Search">
         <button class="btn btn-secondary my-2 my-sm-0" type="submit">Search</button></pre>#} 
         </form>
-    {%else%}
+    {% else %}
          <form class="form-inline my-2 my-lg-0">
             <a href="#" class="btn btn-primary disabled">Visiteur</a>
          </form>   
-    {%endif%}
+    {% endif %}
   </div>
 </nav>
 		<div class="conteiner" >
@@ -99,6 +105,6 @@
             <script src="{{ asset('build/bootstrap.min.js') }}"></script>
 		{% endblock %}
         {% block mesJavascripts %}
-        {%endblock%}
+        {% endblock %}
     </body>
 </html>

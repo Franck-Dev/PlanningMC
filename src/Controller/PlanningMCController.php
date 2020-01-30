@@ -384,7 +384,9 @@ class PlanningMCController extends Controller
                 }            
             }
         }
-            return new JsonResponse(['Message'=>"Vous n'avez pas les droits pour créer une polym",'Code'=>404]);        
+        $Titres=[];
+        return $this->render('planning_mc/ModifPolym.html.twig', [
+            'Titres' => $Titres]);
     }
 
      /**
@@ -1540,18 +1542,15 @@ $RapportPcs= new JsonResponse($daty2);
             else{
                 $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires, 'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
             }
-            //$data[$i] = ['id'=> $i,'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $tache->getNumDemande()->getCommentaires()];
             $i = $i + 1;
-            //dump($MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification()]));
-            //dump($MoyUtil[0]->getId());
         }
         $taches= new JsonResponse($data);
-        dump($taches);
+        
 //Chargement des éléments du nav-bar menu
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
 
         $Titres=$repo -> findAll();
-
+        dump($Titres);
 //Envoie au template Plannification
         return $this->render('planning_mc/Planification.html.twig',[
             'Titres' => $Titres,

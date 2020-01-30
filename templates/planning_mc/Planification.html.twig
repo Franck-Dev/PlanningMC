@@ -35,7 +35,7 @@
         }
         .btn.btn-info.btn-block {
             -webkit-text-fill-color: aliceblue;
-
+            font-size:  1em;
         }
         #volet {
             height: 550px;
@@ -94,7 +94,7 @@
         #volet:target {
 	        left: 0;
         }
-         #volet_droit:target {
+        #volet_droit:target {
 	        right: 0;
         }
         #volet a.fermer {
@@ -135,7 +135,7 @@
 {% block body %}
 <div class="row">
 	<div class="col-md-10">
-        <h1>Listing des Demandes de créneaux de polymérisation en date du :</h1>
+        <h1>Listing des Demandes de créneaux de polymérisation de la semaine : {{datedeb|date('W')}}</h1>
     </div>
     <div class="col-md-2">
         <div class="input-group">
@@ -207,7 +207,7 @@
                                     <th> Date et Heure Début </th>
                                     <th> Heure Fin Théo </th>
                                     <th> Nbre OT </th>
-                                    <th> Récurrance </th>
+                                    <th> Récurrence </th>
                                     <th> Valide</th>
                                     <th> Moyen Utilisé</th>
                                     <th> Action </th>
@@ -290,7 +290,7 @@
         </table>
             <h1>Prévisualisation des créneaux de polymérisations ✅</h1>
  		<div id="visualization">
-
+    
             <!-- Modal -->  
                 <div id="Modale" class="modal" aria-hidden="true">
                     <div class="modal-dialog" role="document">
