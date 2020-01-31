@@ -1,0 +1,54 @@
+{% extends 'base.html.twig' %}
+
+
+
+{% block title %}APAMC{% endblock %}
+
+{% block body %}
+	<h1>Création des Moyens Pour les Pièces Composites  ! ✅</h1>
+<div class="conteiner-fluid">
+    <div class="card shadow">
+        <h4 class="card-header">Répartition Heures par Moyens</h4>
+        <div class="card-block">
+            <div id="ChartProgMoy"></div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block javascripts %}
+<script src="{{ asset('build/jquery.min.js') }}"></script>
+<script src="{{ asset('build/canvasjs.min.js') }}"></script>
+<script src="{{ asset('build/bootstrap.min.js') }}"></script>
+<script src="{{ asset('build/tether.min.js') }}"></script>
+<script type="text/javascript"> 
+    $(function () {
+//Graphique sur la répartition des pcs svt programmes et machine
+             var chart = new CanvasJS.Chart("ChartProgMoy", {
+                    animationEnabled: true,
+                    exportEnabled: true,
+                    title:{
+                            text: ""
+                    },
+                    axisX: {
+                            valueFormatString: "DD/M/Y",
+                            labelFontSize: 24,
+                            interval: 1,
+                            intervalType: "day"
+                            
+                    },
+                    axisY: {
+                            prefix: ""
+                    },
+                    toolTip: {
+                            shared: true
+                    },
+                    legend:{
+                            cursor: "pointer"                            
+                    },
+                    data: {{Productivite|raw}}
+            });
+            chart.render();
+        });
+</script>
+{% endblock %}

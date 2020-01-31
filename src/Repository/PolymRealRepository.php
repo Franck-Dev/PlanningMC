@@ -107,7 +107,7 @@ public function findAllPcs ( $date ) : array
     $entityManager = $this -> getEntityManager ();
 
     $query = $entityManager -> createQuery (
-        'SELECT SUM(TIMEDIFF(p.FinPolym, p.DebPolym)) as DureePolym , g.Nom , count(p.Programmes), sum(p.NbrPcs)
+        'SELECT SUM(TIMETOSEC(TIMEDIFF(p.FinPolym, p.DebPolym))) as DureePolym , g.Nom , count(p.Programmes), sum(p.NbrPcs)
         FROM App\Entity\PolymReal p LEFT OUTER JOIN  App\Entity\ProgMoyens g WITH g.id = p.Programmes  
         WHERE p.DebPolym > :dateD AND p.DebPolym < :dateF
         GROUP BY p.Programmes'
@@ -123,7 +123,7 @@ public function findTRS ( $dateF,$dateD ) : array
     $entityManager = $this -> getEntityManager ();
 
     $query = $entityManager -> createQuery (
-        'SELECT SUM(TIMEDIFF(p.FinPolym, p.DebPolym)) as DureePolym, avg(p.PourcVolCharge) as PourVol
+        'SELECT SUM(TIMETOSEC(TIMEDIFF(p.FinPolym, p.DebPolym))) as DureePolym, avg(p.PourcVolCharge) as PourVol
         FROM App\Entity\PolymReal p   
         WHERE p.DebPolym > :dateD AND p.DebPolym < :dateF'
     );
@@ -138,7 +138,7 @@ public function findCharSem ( $dateF,$dateD  ) : array
     $entityManager = $this -> getEntityManager ();
 
     $query = $entityManager -> createQuery (
-        'SELECT SUM(TIMEDIFF(p.FinPolym, p.DebPolym)) as DureTotPolyms, g.Libelle as moyen, sum(p.NbrPcs) as NbrPcs, DAY(p.DebPolym) as jour
+        'SELECT SUM(TIMETOSEC(TIMEDIFF(p.FinPolym, p.DebPolym))) as DureTotPolyms, g.Libelle as moyen, sum(p.NbrPcs) as NbrPcs, DAY(p.DebPolym) as jour
         FROM App\Entity\PolymReal p LEFT OUTER JOIN  App\Entity\Moyens g WITH g.id = p.Moyens
         WHERE p.DebPolym > :dateD AND p.FinPolym < :dateF
         GROUP BY p.Moyens');            
@@ -153,7 +153,7 @@ public function findCharJourSem ( $dateD  ) : array
     $entityManager = $this -> getEntityManager ();
 
     $query = $entityManager -> createQuery (
-        'SELECT SUM(TIMEDIFF(p.FinPolym, p.DebPolym)) as DureTotPolyms, count(p.Programmes) as NbrProg,DATE_FORMAT (p.DebPolym,\'%v\') as semaine, DAY(p.DebPolym) as jour,MONTH(p.DebPolym) as mois, YEAR(p.DebPolym) as annee
+        'SELECT SUM(TIMETOSEC(TIMEDIFF(p.FinPolym, p.DebPolym))) as DureTotPolyms, count(p.Programmes) as NbrProg,DATE_FORMAT (p.DebPolym,\'%v\') as semaine, DAY(p.DebPolym) as jour,MONTH(p.DebPolym) as mois, YEAR(p.DebPolym) as annee
         FROM App\Entity\PolymReal p LEFT OUTER JOIN  App\Entity\Moyens g WITH g.id = p.Moyens
         WHERE p.DebPolym > :dateD
         GROUP BY semaine');            
@@ -167,7 +167,7 @@ public function findCharMachSem ( $dateF,$dateD,$Moy  ) : array
     $entityManager = $this -> getEntityManager ();
 
     $query = $entityManager -> createQuery (
-        'SELECT SUM(TIMEDIFF(p.FinPolym, p.DebPolym)) as DureTotPolyms, g.Libelle as moyen, sum(p.NbrPcs) as NbrPcs, DAY(p.DebPolym) as jour,MONTH(p.DebPolym) as mois, YEAR(p.DebPolym) as annee
+        'SELECT SUM(TIMETOSEC(TIMEDIFF(p.FinPolym, p.DebPolym))) as DureTotPolyms, g.Libelle as moyen, sum(p.NbrPcs) as NbrPcs, DAY(p.DebPolym) as jour,MONTH(p.DebPolym) as mois, YEAR(p.DebPolym) as annee
         FROM App\Entity\PolymReal p LEFT OUTER JOIN  App\Entity\Moyens g WITH g.id = p.Moyens
         WHERE p.DebPolym > :dateD AND p.FinPolym < :dateF AND g.Libelle = :Mach
         GROUP BY  jour,p.Moyens');            
@@ -183,7 +183,7 @@ public function findRapportPcsH ( $date  ) : array
     $entityManager = $this -> getEntityManager ();
 
     $query = $entityManager -> createQuery (
-        'SELECT SUM(TIMEDIFF(p.FinPolym, p.DebPolym)) as DureTotPolyms, sum(p.NbrPcs) as NbrPcs, DATE_FORMAT (p.DebPolym,\'%v\') as semaine
+        'SELECT SUM(TIMETOSEC(TIMEDIFF(p.FinPolym, p.DebPolym))) as DureTotPolyms, sum(p.NbrPcs) as NbrPcs, DATE_FORMAT (p.DebPolym,\'%v\') as semaine
         FROM App\Entity\PolymReal p 
         WHERE p.DebPolym > :dateD
         GROUP BY  semaine');            
@@ -197,12 +197,28 @@ public function findTRSJour ( $dateF,$dateD ) : array
     $entityManager = $this -> getEntityManager ();
 
     $query = $entityManager -> createQuery (
-        'SELECT SUM(TIMEDIFF(p.FinPolym, p.DebPolym)) as DureePolym, avg(p.PourcVolCharge) as PourVol, count(p.Programmes) as NbrProg, DAY(p.DebPolym) as jour,MONTH(p.DebPolym) as mois, YEAR(p.DebPolym) as annee, DATE_FORMAT (p.DebPolym,\'%j\') as journee
+        'SELECT SUM(TIMETOSEC(TIMEDIFF(p.FinPolym, p.DebPolym))) as DureePolym, avg(p.PourcVolCharge) as PourVol, count(p.Programmes) as NbrProg, DAY(p.DebPolym) as jour,MONTH(p.DebPolym) as mois, YEAR(p.DebPolym) as annee, DATE_FORMAT (p.DebPolym,\'%j\') as journee
         FROM App\Entity\PolymReal p   
         WHERE p.DebPolym > :dateD AND p.DebPolym < :dateF
         GROUP BY journee');
     $query-> setParameter ( 'dateD' , $dateD );
     $query-> setParameter ('dateF' , $dateF);
+    // returns an array of Product objects
+    return $query -> execute ();
+}
+// Calcul de la charge réalisée par machine en heure
+public function findCharMach ( $dateF,$dateD,$moyen  ) : array
+{
+    $entityManager = $this -> getEntityManager ();
+
+    $query = $entityManager -> createQuery (
+        'SELECT SUM(TIMETOSEC(TIMEDIFF(p.FinPolym, p.DebPolym))) as DureTotPolyms, g.Libelle as moyen, DAY(p.DebPolym) as jour, MONTH(p.DebPolym) as mois, YEAR(p.DebPolym) as annee, DATE_FORMAT (p.DebPolym,\'%j\') as journee
+        FROM App\Entity\PolymReal p LEFT OUTER JOIN  App\Entity\Moyens g WITH g.id = p.Moyens
+        WHERE p.DebPolym > :dateD AND p.FinPolym < :dateF AND g.Libelle = :Nmoyen
+        GROUP BY jour');            
+    $query-> setParameter ( 'dateD' , $dateD );
+    $query-> setParameter ('dateF' , $dateF);
+    $query-> setParameter ('Nmoyen' , $moyen);
     // returns an array of Product objects
     return $query -> execute ();
 }

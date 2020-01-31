@@ -820,7 +820,7 @@ class PlanningMCController extends Controller
     $daty = [];
     $i = 0;
     foreach($Polyms as $polym){
-        $y=intval($polym['DureTotPolyms']/10000);
+        $y=intval($polym['DureTotPolyms']/3600);
         $daty[$i] = ['label'=> $polym['semaine'],'y'=> $y];
         $i = $i + 1;
     }
@@ -872,7 +872,7 @@ $RapportPcs= new JsonResponse($daty2);
         $dato = [];
         $i = 0;
         foreach($Polyms as $polym){
-            $y=intval($polym[2]);
+            $y=intval($polym[2]/3600);
             //dump($y);
             $dato[$i] = ['y'=> $y,'name'=> $polym['Nom']];
             $i = $i + 1;
@@ -890,7 +890,7 @@ $RapportPcs= new JsonResponse($daty2);
         $datix = [];
         $i = 0;
         foreach($Polyms as $polym){
-            $y=intval($polym['DureePolym']/10000);
+            $y=intval($polym['DureePolym']/3600);
             $x=11*24;
             $z=$polym['PourVol'];
             $dato[$i] = ['y'=> ($y/$x)*100,'color' => "#c70000"];
@@ -951,7 +951,7 @@ $RapportPcs= new JsonResponse($daty2);
 
         $i = 0;
         foreach($Polyms as $polym){
-            $y=intval($polym['DureTotPolyms']/10000);
+            $y=intval($polym['DureTotPolyms']/3600);
             $daty[$i] = ['label'=> $polym['semaine'],'y'=> ($y/$TpsOuv)*100];
             $y2=intval($polym['NbrProg']);
             $daty2[$i] = ['label'=> $polym['semaine'],'y' => $y2];
@@ -1028,7 +1028,7 @@ $RapportPcs= new JsonResponse($daty2);
         $i = 0;
         $x=11*24;
         foreach($Polyms as $polym){
-            $y=intval($polym['DureePolym']/10000);
+            $y=intval($polym['DureePolym']/3600);
             $datuy[$i] = ['x'=> strtotime($polym['annee'].'-'.$polym['mois'].'-'.$polym['jour'])*1000,'y'=> ($y/$x)*100];
             $y1=intval($polym['PourVol']);
             $datuy1[$i] = ['x'=> strtotime($polym['annee'].'-'.$polym['mois'].'-'.$polym['jour'])*1000,'y' => $y1];
@@ -1963,6 +1963,54 @@ $RapportPcs= new JsonResponse($daty2);
     public function DemandesO(Request $requette, ObjectManager $manager)
     {
 
+    }
+
+     /**
+     * @Route("/METHODES/Moyens", name="MOYENS_INDUS")
+     */
+    public function CreationM(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
+        {$repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+            $Titres=$repo -> findall();
+            //dump($Titres);
+        //$form = $this->createForm(CreationProgType::class, $Prog);
+        //$form->handleRequest($Requet);
+        //Recherche date du jour
+        $DateJour = new \DateTime();
+        $jour=$DateJour->modify('today');
+        $dateAn= new \datetime();
+        $dateAn->modify('First day of this year');
+
+        $repo=$this->getDoctrine()->getRepository(Moyens::class);
+        $Moyen=$repo ->findMoyens(intval('8'),intval('23'));
+        dump($Moyen);
+        $Tablo = [];
+        $i = 0;
+        foreach($Moyen as $moyen){
+            $currentMonthDateTime = new \DateTime();
+            $JourDep = $currentMonthDateTime->modify('monday this week');
+            $TboData = [];
+            $j = 0;
+            $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+            $PMoy=$repo ->findCharMach($jour,$dateAn,$moyen['Moyen']);
+            dump($PMoy);    //$Annee.'-'.$polym['Mois'].'-01')
+            foreach($PMoy as $pmoy){
+                $y=intval($pmoy['DureTotPolyms'])/3600;
+                $w=round($y,1);
+                $TboData[$j]=['x'=> strtotime($pmoy['annee'].'-'.$pmoy['mois'].'-'.$pmoy['jour'])*1000,'y'=>$y,'indexLabel'=> $w."H"];
+                $j = $j + 1;
+            };
+            $Tablo[$i]=['type'=>"stackedColumn",'name'=>$moyen['Moyen'],'indexLabelWrap'=> 'true' ,'indexLabelFontSize'=> 12,'showInLegend'=>"true",'xValueType'=>"dateTime",'yValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboData];
+            //dump($Tablo);
+            $i = $i + 1;
+            //$CharTot=intval($polym['DureTheoPolym']/10000);
+        }
+        $Productivite= new JsonResponse($Tablo);
+        dump($Productivite);
+        return $this->render('planning_mc/MoyensIndus.html.twig',[
+            'Titres' => $Titres,
+            'Productivite' => $Productivite->getContent(),
+            //'formProg' => $form->createView(),
+        ]);
     }
 
     /**

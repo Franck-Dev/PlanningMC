@@ -36,3 +36,5 @@ doctrine:
                 DATEDIFF: DoctrineExtensions\Query\Mysql\DateDiff
                 TIMEDIFF: DoctrineExtensions\Query\Mysql\TimeDiff
                 DATE_FORMAT: DoctrineExtensions\Query\Mysql\DateFormat
+                TIMESTAMPDIFF: DoctrineExtensions\Query\Mysql\TimestampDiff
+                TIMETOSEC: DoctrineExtensions\Query\Mysql\TimeToSec

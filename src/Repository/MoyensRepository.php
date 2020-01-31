@@ -60,4 +60,19 @@ class MoyensRepository extends ServiceEntityRepository
     // returns an array of Product objects
     return $query -> execute ();
 }
+//Trouver les moyens correspondant au critères
+public function findMoyens ( $IdService,$IdCate ) : array
+{
+    $entityManager = $this -> getEntityManager ();
+
+    $query = $entityManager -> createQuery (
+        'SELECT DISTINCT p.Libelle as Moyen, p.id, g.Libelle as Categorie
+        FROM App\Entity\Moyens p LEFT OUTER JOIN  App\Entity\CategoryMoyens g WITH g.id = p.categoryMoyens
+        WHERE p.Id_Service = :serv AND p.categoryMoyens < :Cate
+        GROUP BY Moyen');            
+    $query-> setParameter ( 'serv' , $IdService );
+    $query-> setParameter ('Cate' , $IdCate);
+    // returns an array of Product objects
+    return $query -> execute ();
+}
 }
