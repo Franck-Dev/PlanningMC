@@ -249,9 +249,9 @@ class PlanningMCController extends Controller
             return $this->redirectToRoute('Planning');
     } 
      /**
-     * @Route("/PlanningMC/Creation/", name="CreaDemPolym")
+     * @Route("/PlanningMC/Creation/", name="CreaDemPolymf")
      */
-    public function CreaDemPolym(Request $request,RequestStack $requestStack, userInterface $user=null)
+    public function CreaDemPolymf(Request $request,RequestStack $requestStack, userInterface $user=null)
     {
         if($requestStack->getParentRequest()){
             $request=$requestStack->getParentRequest();
@@ -366,21 +366,20 @@ class PlanningMCController extends Controller
                     //dump(count($TabDem));
                     $planning = new Planning();
                     //$demande->setDatePropose($request->get('DatePropose'));
-                    dump($TabDem);
+                    //dump($TabDem);
                     //Récupération de l'objet polym suivant l'id concerné
                     $PolymPla = $this->getDoctrine()
                         ->getRepository(Planning::class)
                         ->findBy(['id' =>$TabDem['id']]);
-                    dump($PolymPla);
+                    //dump($PolymPla);
                     $planning=$PolymPla[0];
-                    dump($planning);
+                    //dump($planning);
                     $planning->setStatut($TabDem['statut']);
-                    dump($planning);
+                    //dump($planning);
                     $manager = $this->getDoctrine()->getManager();
                         $manager->persist($planning);
                         $manager->flush();
-                        dump($planning);
-                    //return $this->redirectToRoute('ModifPolym');
+                       // dump($planning);
                 }            
             }
         }
@@ -598,7 +597,7 @@ class PlanningMCController extends Controller
      * @Route("/PlanningMC/Modification", name="Polym_Modif", condition="request.isXmlHttpRequest()")
      * @Security("has_role('ROLE_REGLEUR')")
      */
-    public function modifpolym(Request $request)
+    public function polymodif(Request $request)
     {
         //Remonté d'info pour modification du statut de la polymérisation
         $idPolym=substr($request->get('PolymId'),1,strlen($request->get('PolymId'))-1);
@@ -609,8 +608,7 @@ class PlanningMCController extends Controller
         //$planning->setMoyenUtilise($PolymPla[0]);
         //dump($PolymPla);
         $form = $this -> createFormBuilder($PolymPla[0])
-        -> add('id', NumberType::class, [
-            'disabled'=>true])
+        -> add('id')
         -> add('identification')
         -> add('action')
         -> add('debut_date', DateTimeType::class,['disabled'=>true])
@@ -621,7 +619,7 @@ class PlanningMCController extends Controller
                 'ANNULER' => 'ANNULER',
                 'REMPLACER' => 'REMPLACER',
             ]])
-        ->add('save', SubmitType::class, ['label' => 'Modification'])
+        ->add('save', SubmitType::class, ['label' => 'Modifier'])
         /* -> add('commentaires') */
         ->getForm();
         $form->handleRequest($request);
@@ -635,15 +633,17 @@ class PlanningMCController extends Controller
     }
 
     /**
-     * @Route("/PlanningMC/Modification/Polym", name="ModifPolym")
+     * @Route("/PlanningMC/ModificationPolym", name="CreaDemPolym")
      * @Security("has_role('ROLE_REGLEUR')")
      */
-    public function polymodif(Request $request,RequestStack $requestStack, userInterface $user=null)
+    public function CreaDemPolym(Request $request,RequestStack $requestStack, userInterface $user=null)
     {
         //Modification du statut de la polym
         if($requestStack->getParentRequest()){
+            
             $request=$requestStack->getParentRequest();
             if ($request->isMethod('POST')) {
+                dump($request);
                 $planning = new Planning();
                 //$demande->setDatePropose($request->get('DatePropose'));
                 $TabDem=$request->request->get('form');
@@ -654,13 +654,13 @@ class PlanningMCController extends Controller
                     ->findBy(['id' =>$TabDem['id']]);
                 $planning=$PolymPla[0];
                 $planning->setStatut($TabDem['statut']);
-
                 $manager = $this->getDoctrine()->getManager();
                     $manager->persist($planning);
                     $manager->flush();
-                    dump($planning);
+
             }
         }
+        $request->getSession()->getFlashbag()->add('success', '1');
         return new JsonResponse(['Message'=>"Vous n'avez pas les droits pour créer une polym",'Code'=>404]);
     }
     
@@ -762,7 +762,7 @@ class PlanningMCController extends Controller
         //Recherche du début de l'année avec n+1 mois pour effectuer les calcul des indicateurs         
         $DateAnCours = date("l", strtotime('first day of January '.date('Y') ));
         $dateAn= new \datetime();
-        $dateAn->modify('First day of this year'); 
+        $dateAn->modify('First day of january this year'); 
         //Recherche de la date du début de semaine dernière
         $currentMonthDateTime = new \DateTime();
         $DateSem = $currentMonthDateTime->modify('first day of this week');
@@ -1570,7 +1570,7 @@ $RapportPcs= new JsonResponse($daty2);
      * @Route("/Plannification/Modification", name="Modif_Polym_Pla")
      * @Security("has_role('ROLE_PLANIF')")
      */
-    public function ModifPolymPla(Request $request, Planning $Polyms=null)
+    public function Modif_Polym_Pla(Request $request, Planning $Polyms=null)
     {
         //Si c'est le retour de la requette AJAX, on récupère les données
         if($request->isXmlHttpRequest()) {
@@ -1969,17 +1969,16 @@ $RapportPcs= new JsonResponse($daty2);
      * @Route("/METHODES/Moyens", name="MOYENS_INDUS")
      */
     public function CreationM(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
-        {$repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
-            $Titres=$repo -> findall();
-            //dump($Titres);
-        //$form = $this->createForm(CreationProgType::class, $Prog);
-        //$form->handleRequest($Requet);
+        {//$repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+            //$Titres=$repo -> findall();
+
         //Recherche date du jour
         $DateJour = new \DateTime();
         $jour=$DateJour->modify('today');
-        $dateAn= new \datetime();
-        $dateAn->modify('First day of this year');
+        $dateDebAn= new \datetime();
+        $dateDebAn->modify('First day of january this year');
 
+        //La requête remonte les moyens inférieur à 23 du service 8
         $repo=$this->getDoctrine()->getRepository(Moyens::class);
         $Moyen=$repo ->findMoyens(intval('8'),intval('23'));
         dump($Moyen);
@@ -1991,7 +1990,7 @@ $RapportPcs= new JsonResponse($daty2);
             $TboData = [];
             $j = 0;
             $repo=$this->getDoctrine()->getRepository(PolymReal::class);
-            $PMoy=$repo ->findCharMach($jour,$dateAn,$moyen['Moyen']);
+            $PMoy=$repo ->findCharMach($jour,$dateDebAn,$moyen['Moyen']);
             dump($PMoy);    //$Annee.'-'.$polym['Mois'].'-01')
             foreach($PMoy as $pmoy){
                 $y=intval($pmoy['DureTotPolyms'])/3600;
@@ -2005,7 +2004,8 @@ $RapportPcs= new JsonResponse($daty2);
             //$CharTot=intval($polym['DureTheoPolym']/10000);
         }
         $Productivite= new JsonResponse($Tablo);
-        dump($Productivite);
+        $Titres=[];
+
         return $this->render('planning_mc/MoyensIndus.html.twig',[
             'Titres' => $Titres,
             'Productivite' => $Productivite->getContent(),

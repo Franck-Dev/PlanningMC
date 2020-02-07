@@ -115,13 +115,13 @@
                         </div>
                         {% if is_granted('ROLE_CE_POLYM') %}
                             <div id="Modale" class="modal-body"></div>
-                            {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolym',{'user': app.user}) )}}
+                            {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolymf',{'user': app.user}) )}}
                             <button type="button" class="success" value="Valider">
                                     <span aria-hidden="true"></span>
                             </button>
                         {% elseif is_granted('ROLE_REGLEUR') %}
                             <div id="Modale" class="modal-body"></div>
-                            {{ render(controller('App\\Controller\\PlanningMCController::ModifPolym',{'user': app.user}) )}}
+                            {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolym',{'user': app.user}) )}}
                             <button type="button" class="success" value="Modifier">
                                     <span aria-hidden="true"></span>
                             </button>
