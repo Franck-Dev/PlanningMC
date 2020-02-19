@@ -318,6 +318,7 @@
 <script src="{{ asset('build/prototype.js') }}"></script>
 <script src="{{ asset('build/sweetalert.min.js') }}"></script>
 <script src="{{ asset('build/jquery.min.js') }}"></script>
+<script src="{{ asset('build/bootstrap.min.js')}}"></script>
 <script id="item-template" type="text/x-handlebars-template">
             <table class="infos">
                 <tr>
@@ -338,11 +339,12 @@
 <script type="text/javascript">
 //Mise à jour de l'indicateur d'occupation moyen à chaque click
 function MaJkpi(id,Url){
-    console.log(document.getElementById(id));
+    //console.log(document.getElementById(id));
+    var Datedeb=document.getElementById('datejourplanif').value;
     $(document).ready(function () {
         $.ajax({
                 method: "POST",
-                data: {NomKPI: id},
+                data: {NomKPI: id,DatedebPlan: Datedeb},
                 url: Url,
                 success: function(dat){
                     console.log(dat.TabVal);

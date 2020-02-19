@@ -642,7 +642,7 @@ class PlanningMCController extends Controller
         if($requestStack->getParentRequest()){
             
             $request=$requestStack->getParentRequest();
-            if ($request->isMethod('POST')) {
+            if ($request->isMethod('POST') and $request->request->get('form')) {
                 dump($request);
                 $planning = new Planning();
                 //$demande->setDatePropose($request->get('DatePropose'));
@@ -713,14 +713,22 @@ class PlanningMCController extends Controller
      */
     public function MaJIndicateur(Request $request)
     {
-        //Création des indicateurs
-        //Création de la variable charge totale sur la semaine
-        //Recherche du début et de la fin de semaine à plannifier
-        $currentMonthDateTime = new \DateTime();
-        $FinSem = $currentMonthDateTime->modify('sunday next week');
-        $currentMonthDateTime = new \DateTime();
-        $DebSem = $currentMonthDateTime->modify('monday next week');
-
+     //Création des indicateurs
+        //Si modification de la date, on revoie la période des données
+        if(!$request->get('DatedebPlan')){
+            //Création de la variable charge totale sur la semaine
+            //Recherche du début et de la fin de semaine à plannifier
+            $currentMonthDateTime = new \DateTime();
+            $FinSem = $currentMonthDateTime->modify('sunday this week');
+            $currentMonthDateTime = new \DateTime();
+            $DebSem = $currentMonthDateTime->modify('monday this week');
+        }
+        else{
+            $currentMonthDateTime = new \DateTime($request->get('DatedebPlan'));
+            $FinSem = $currentMonthDateTime->modify('sunday this week');
+            $currentMonthDateTime = new \DateTime($request->get('DatedebPlan'));
+            $DebSem = $currentMonthDateTime->modify('monday this week');
+        }
        $repo=$this->getDoctrine()->getRepository(Planning::class);
        $Polyms=$repo -> findCharge($FinSem,$DebSem);
        foreach($Polyms as $polym){
@@ -732,7 +740,7 @@ class PlanningMCController extends Controller
        $Polyms=$repo -> findChargeMach($FinSem,$DebSem);
        $datu = [];
        $i = 0;
-       //dump($Polyms);
+       
        foreach($Polyms as $polym){
            $y=intval($polym['DureTheoPolym']/10000);
            if ($request->get('NomKPI')==="occupation-moyen"){
@@ -743,11 +751,11 @@ class PlanningMCController extends Controller
             else {
                 $RatioC=round(($y/$CharTot)*100,1);
                 $datu[$i] = ['y'=> $y,'indexLabel'=> $RatioC.'%',  'label' => $polym['Moyen']];
-                dump($datu);
+                //dump($datu);
             }
            $i = $i + 1;
        }
-       //dump($datu);
+
        return new JsonResponse(['TabVal'=>$datu]);
     }
 
