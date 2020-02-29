@@ -10,7 +10,9 @@ use App\Entity\Planning;
 use App\Entity\ConfSmenu;
 use App\Entity\PolymReal;
 use App\Entity\ConfSsmenu;
+use App\Entity\Outillages;
 use App\Entity\ProgMoyens;
+use App\Form\CreationOType;
 use App\Form\PolymFormType;
 use App\Entity\CategoryMoyens;
 use App\Entity\TypeRecurrance;
@@ -1857,8 +1859,8 @@ $RapportPcs= new JsonResponse($daty2);
     }
 
     /**
-     * @Route("/METHODES/PE/Creation", name="Creation")
-     * @Route("/METHODES/PE//Modification/{id}", name="Modification")
+     * @Route("/METHODES/PROGRAMMATION/Creation", name="Creation")
+     * @Route("/METHODES/PROGRAMMATION/Modification/{id}", name="Modification")
      */
     public function Creation(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
     {
@@ -1889,7 +1891,7 @@ $RapportPcs= new JsonResponse($daty2);
 
         $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
 
-        $Titres=$repo -> findAll();
+        $Titres=$repo -> findBy(['Description' => 'PROGRAMMATION']);
         //dump($Titres);
         return $this->render('planning_mc/Creation.html.twig',[
             'Titres' => $Titres,
@@ -1899,8 +1901,8 @@ $RapportPcs= new JsonResponse($daty2);
     }
 
     /**
-     * @Route("/METHODES/Consultation", name="Consultation")
-     * @Route("METHODES/Consultation/{id}", name="Consul_ProgMoy")
+     * @Route("/METHODES/PROGRAMMATION/Consultation", name="Consultation")
+     * @Route("METHODES/PROGRAMMATION/Consultation/{id}", name="Consul_ProgMoy")
      */
     public function Consultation(CategoryMoyens $moyen=null)
     {
@@ -1926,7 +1928,7 @@ $RapportPcs= new JsonResponse($daty2);
         dump($moyen);
 
         $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
-        $Titres=$repo -> findall();
+        $Titres=$repo -> findBy(['Description' => 'PROGRAMMATION']);
         dump($Titres);
         dump($cycles);
         
@@ -1936,20 +1938,41 @@ $RapportPcs= new JsonResponse($daty2);
             'Moyens' => $moyen,
         ]);
     }
-
     
      /**
      * @Route("/OUTILLAGE/Article/Creation", name="CreationO")
      * @Route("/OUTILLAGE/Article/Modification/{id}", name="ModificationO")
      */
-    public function CreationO(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
-        {$repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
-            $Titres=$repo -> findall();
-            dump($Titres);
-        $form = $this->createForm(CreationProgType::class, $Prog);
+    public function CreationO(Request $Requet,ObjectManager $manager,Outillages $OT=null)
+        {
+        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $Titres=$repo -> findBy(['Description' => 'OUTILLAGE']);
+
+        if(!$OT){
+            $OT=new Outillages();
+        }
+        $form = $this->createForm(CreationOType::class, $OT);
         
         $form->handleRequest($Requet);
         
+        if($form->isSubmitted() && $form->isValid()){
+            if(!$OT->getId()){
+                $OT->setCycleMoulage(new \Datetime('06:00:00'));
+                $OT->setTpsDecharge(new \Datetime('00:05:00'));
+                $OT->setTpsCharge(new \Datetime('00:08:00'));
+            }
+            else{
+                //$Prog->setDateModif(new \datetime());
+            
+            }
+            dump($OT);
+            $manager->persist($OT);
+            $manager->flush();
+            
+
+            //return $this->redirectToRoute('ConsultationO');
+        }
+
         return $this->render('planning_mc/CreationOutillages.html.twig',[
             'Titres' => $Titres,
             'formProg' => $form->createView(),
@@ -1960,9 +1983,22 @@ $RapportPcs= new JsonResponse($daty2);
      * @Route("/OUTILLAGE/Article/Consultation", name="ConsultationO")
      * @Route("/OUTILLAGE/Article/Consultation/{id}", name="ConsulO")
      */
-    public function ConsultationO(CategoryMoyens $moyen=null)
+    public function ConsultationO(Outillages $OT=null)
     {
+        $OT=new Outillages();
+        $repo=$this->getDoctrine()->getRepository(Outillages::class);
+        $OTs=$repo -> findall();
+        dump($OTs);
 
+        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $Titres=$repo -> findBy(['Description' => 'OUTILLAGE']);
+        dump($Titres);
+        dump($OTs);
+        
+        return $this->render('planning_mc/ConsultationOutil.html.twig',[
+            'Titres' => $Titres,
+            'Outillages' => $OTs,
+        ]);
     }
 
     /**

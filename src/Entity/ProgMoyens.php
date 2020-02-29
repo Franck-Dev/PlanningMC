@@ -85,7 +85,7 @@ class ProgMoyens
     private $couleur;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Outillages", mappedBy="Programme1")
+     * @ORM\ManyToMany(targetEntity="App\Entity\Outillages", inversedBy="Programme")
      */
     private $outillages;
 
@@ -288,7 +288,7 @@ class ProgMoyens
     {
         if (!$this->outillages->contains($outillage)) {
             $this->outillages[] = $outillage;
-            $outillage->addProgramme1($this);
+            $outillage->addProgramme($this);
         }
 
         return $this;
@@ -298,7 +298,7 @@ class ProgMoyens
     {
         if ($this->outillages->contains($outillage)) {
             $this->outillages->removeElement($outillage);
-            $outillage->removeProgramme1($this);
+            $outillage->removeProgramme($this);
         }
 
         return $this;

@@ -1,0 +1,54 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Listes des Programmes{% endblock %}
+
+{% block body %}
+	<h1>Listing des Outillages ! ✅</h1>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Référence</th>
+                        <th>Désignation</th>
+                        <th>Nb Empreintes</th>
+                        <th>Hauteur</th>
+                        <th>Longueur</th>
+                        <th>Largeur</th>
+                        <th>Volume</th>
+                        <th>Coef Aéro</th>
+                        <th>Dispo</th>
+                        <th>Cycle Moulage</th>
+                        <th>Tps Dechargement</th>
+                        <th>Tps Chargement</th>
+                        <th>Nb TC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for OT in Outillages %}
+                    <tr>
+                        <td>{{ OT.id }}</td>
+                        <td>{{ OT.ref }}</td>
+                        <td>{{ OT.designation }}</td>
+                        <td>{{ OT.nbempreinte|raw}}</td>
+                        <td>{{ OT.hauteur}}</td>
+                        <td>{{ OT.longueur}}</td>
+                        <td>{{ OT.largeur}}</td>
+                        <td>{{ OT.volume}}</td>
+                        <td>{{ OT.coefaero}}</td>
+                        <td>{{ OT.dispo}}</td>
+                        <td>{{ OT.cyclemoulage ? OT.cyclemoulage|date('H:i:s') : '' }}</td>
+                        <td>{{ OT.tpsdecharge ? OT.tpsdecharge|date('H:i:s') : '' }}</td>
+                        <td>{{ OT.tpscharge ? OT.tpscharge|date('H:i:s') : '' }}</td>
+                        <td>{{ OT.nbthermocouples }}</td>
+                        <td>
+                            <a href="{{ path('ModificationO', {'id': OT.id}) }}">Editer</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    <a href="{{ path('CreationO') }}">Creer un nouvel outillage</a>
+
+{% endblock %}

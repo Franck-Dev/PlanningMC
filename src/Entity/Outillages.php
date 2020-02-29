@@ -34,22 +34,22 @@ class Outillages
     private $NbEmpreinte;
 
     /**
-     * @ORM\Column(type="integer", nullable=true)
+     * @ORM\Column(type="decimal", precision=2, scale=2, nullable=true)
      */
     private $Hauteur;
 
     /**
-     * @ORM\Column(type="integer", nullable=true)
+     * @ORM\Column(type="decimal", precision=3, scale=2, nullable=true)
      */
     private $Longueur;
 
     /**
-     * @ORM\Column(type="integer", nullable=true)
+     * @ORM\Column(type="decimal", precision=2, scale=2, nullable=true)
      */
     private $Largeur;
 
     /**
-     * @ORM\Column(type="integer")
+     * @ORM\Column(type="decimal", precision=5, scale=2)
      */
     private $Volume;
 
@@ -59,9 +59,9 @@ class Outillages
     private $CoefAero;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\ProgMoyens", inversedBy="outillages")
+     * @ORM\ManyToMany(targetEntity="App\Entity\ProgMoyens", mappedBy="outillages")
      */
-    private $Programme1;
+    private $Programme;
 
     /**
      * @ORM\Column(type="boolean")
@@ -69,13 +69,28 @@ class Outillages
     private $Dispo;
 
     /**
-     * @ORM\Column(type="datetime")
+     * @ORM\Column(type="time")
      */
     private $CycleMoulage;
 
+    /**
+     * @ORM\Column(type="time", nullable=true)
+     */
+    private $TpsDecharge;
+
+    /**
+     * @ORM\Column(type="time", nullable=true)
+     */
+    private $TpsCharge;
+
+    /**
+     * @ORM\Column(type="integer")
+     */
+    private $NbThermocouples;
+
     public function __construct()
     {
-        $this->Programme1 = new ArrayCollection();
+        $this->Programme = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -182,24 +197,25 @@ class Outillages
     /**
      * @return Collection|ProgMoyens[]
      */
-    public function getProgramme1(): Collection
+    public function getProgramme(): Collection
     {
-        return $this->Programme1;
+        return $this->Programme;
     }
 
-    public function addProgramme1(ProgMoyens $programme1): self
+    public function addProgramme(ProgMoyens $programme): self
     {
-        if (!$this->Programme1->contains($programme1)) {
-            $this->Programme1[] = $programme1;
+        if (!$this->Programme->contains($programme)) {
+            $this->Programme[] = $programme;
+            
         }
 
         return $this;
     }
 
-    public function removeProgramme1(ProgMoyens $programme1): self
+    public function removeProgramme(ProgMoyens $programme): self
     {
-        if ($this->Programme1->contains($programme1)) {
-            $this->Programme1->removeElement($programme1);
+        if ($this->Programme->contains($programme)) {
+            $this->Programme->removeElement($programme);
         }
 
         return $this;
@@ -225,6 +241,42 @@ class Outillages
     public function setCycleMoulage(\DateTimeInterface $CycleMoulage): self
     {
         $this->CycleMoulage = $CycleMoulage;
+
+        return $this;
+    }
+
+    public function getTpsDecharge(): ?\DateTimeInterface
+    {
+        return $this->TpsDecharge;
+    }
+
+    public function setTpsDecharge(?\DateTimeInterface $TpsDecharge): self
+    {
+        $this->TpsDecharge = $TpsDecharge;
+
+        return $this;
+    }
+
+    public function getTpsCharge(): ?\DateTimeInterface
+    {
+        return $this->TpsCharge;
+    }
+
+    public function setTpsCharge(?\DateTimeInterface $TpsCharge): self
+    {
+        $this->TpsCharge = $TpsCharge;
+
+        return $this;
+    }
+
+    public function getNbThermocouples(): ?int
+    {
+        return $this->NbThermocouples;
+    }
+
+    public function setNbThermocouples(int $NbThermocouples): self
+    {
+        $this->NbThermocouples = $NbThermocouples;
 
         return $this;
     }
