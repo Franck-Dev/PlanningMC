@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}ChargFige index{% endblock %}
+
+{% block body %}
+    <h1>ChargFige index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Code</th>
+                <th>Statut</th>
+                <th>Pourc</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for charg_fige in charg_figes %}
+            <tr>
+                <td>{{ charg_fige.id }}</td>
+                <td>{{ charg_fige.Code }}</td>
+                <td>{{ charg_fige.Statut ? 'Yes' : 'No' }}</td>
+                <td>{{ charg_fige.Pourc }}</td>
+                <td>
+                    <a href="{{ path('charg_fige_show', {'id': charg_fige.id}) }}">show</a>
+                    <a href="{{ path('charg_fige_edit', {'id': charg_fige.id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="5">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('charg_fige_new') }}">Create new</a>
+{% endblock %}

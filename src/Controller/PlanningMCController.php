@@ -1864,6 +1864,15 @@ $RapportPcs= new JsonResponse($daty2);
      */
     public function Creation(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
     {
+        
+    }
+
+    /**
+     * @Route("/METHODES/PROGRAMMATION/Creation", name="Creation PRP")
+     * @Route("/METHODES/PROGRAMMATION/Modification_PRP/{id}", name="Modification_PRP")
+     */
+    public function Creation_PRP(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
+    {
 //Si pas de programmes connus, c'est une création sinon une modif
         if(!$Prog){
             $Prog=new ProgMoyens();
@@ -1898,6 +1907,21 @@ $RapportPcs= new JsonResponse($daty2);
             'formProg' => $form->createView(),
         ]);
 
+    }
+
+    /**
+     * @Route("/METHODES/PROGRAMMATION/Creation_ChargF", name="Creation Chargement Fige")
+     * @Route("/METHODES/PROGRAMMATION/Modification_ChargF/{id}", name="Modification_Charge")
+     */
+    public function Creation_ChargeF(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
+    {
+        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $Titres=$repo -> findBy(['Description' => 'PROGRAMMATION']);
+        dump($Titres);
+        
+        return $this->render('planning_mc/charg_fige/edit.html.twig',[
+            'Titres' => $Titres,
+        ]);
     }
 
     /**
@@ -1950,6 +1974,8 @@ $RapportPcs= new JsonResponse($daty2);
 
         if(!$OT){
             $OT=new Outillages();
+            $Prog= new ProgMoyens();
+            $OT->addProgramme($Prog);
         }
         $form = $this->createForm(CreationOType::class, $OT);
         

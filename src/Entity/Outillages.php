@@ -88,9 +88,15 @@ class Outillages
      */
     private $NbThermocouples;
 
+    /**
+     * @ORM\ManyToMany(targetEntity="App\Entity\ChargFige", mappedBy="OT")
+     */
+    private $chargFiges;
+
     public function __construct()
     {
         $this->Programme = new ArrayCollection();
+        $this->chargFiges = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -277,6 +283,34 @@ class Outillages
     public function setNbThermocouples(int $NbThermocouples): self
     {
         $this->NbThermocouples = $NbThermocouples;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|ChargFige[]
+     */
+    public function getChargFiges(): Collection
+    {
+        return $this->chargFiges;
+    }
+
+    public function addChargFige(ChargFige $chargFige): self
+    {
+        if (!$this->chargFiges->contains($chargFige)) {
+            $this->chargFiges[] = $chargFige;
+            $chargFige->addOT($this);
+        }
+
+        return $this;
+    }
+
+    public function removeChargFige(ChargFige $chargFige): self
+    {
+        if ($this->chargFiges->contains($chargFige)) {
+            $this->chargFiges->removeElement($chargFige);
+            $chargFige->removeOT($this);
+        }
 
         return $this;
     }

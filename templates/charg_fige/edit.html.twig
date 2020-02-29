@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit ChargFige{% endblock %}
+
+{% block body %}
+    <h1>Edit ChargFige</h1>
+
+    {{ include('charg_fige/_form.html.twig', {'button_label': 'Update'}) }}
+
+    <a href="{{ path('charg_fige_index') }}">back to list</a>
+
+    {{ include('charg_fige/_delete_form.html.twig') }}
+{% endblock %}

@@ -64,9 +64,15 @@ class Moyens
      */
     private $Activitees;
 
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\ChargFige", mappedBy="Moyen")
+     */
+    private $chargFiges;
+
     public function __construct()
     {
         $this->demandes = new ArrayCollection();
+        $this->chargFiges = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -198,6 +204,37 @@ class Moyens
     public function setActivitees(?string $Activitees): self
     {
         $this->Activitees = $Activitees;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|ChargFige[]
+     */
+    public function getChargFiges(): Collection
+    {
+        return $this->chargFiges;
+    }
+
+    public function addChargFige(ChargFige $chargFige): self
+    {
+        if (!$this->chargFiges->contains($chargFige)) {
+            $this->chargFiges[] = $chargFige;
+            $chargFige->setMoyen($this);
+        }
+
+        return $this;
+    }
+
+    public function removeChargFige(ChargFige $chargFige): self
+    {
+        if ($this->chargFiges->contains($chargFige)) {
+            $this->chargFiges->removeElement($chargFige);
+            // set the owning side to null (unless already changed)
+            if ($chargFige->getMoyen() === $this) {
+                $chargFige->setMoyen(null);
+            }
+        }
 
         return $this;
     }
