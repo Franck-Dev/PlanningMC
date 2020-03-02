@@ -44,6 +44,12 @@ class ChargFige
      */
     private $Pourc;
 
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\ProgMoyens", inversedBy="chargFiges")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $Programme;
+
     public function __construct()
     {
         $this->OT = new ArrayCollection();
@@ -124,6 +130,18 @@ class ChargFige
     public function setPourc(int $Pourc): self
     {
         $this->Pourc = $Pourc;
+
+        return $this;
+    }
+
+    public function getProgramme(): ?ProgMoyens
+    {
+        return $this->Programme;
+    }
+
+    public function setProgramme(?ProgMoyens $Programme): self
+    {
+        $this->Programme = $Programme;
 
         return $this;
     }

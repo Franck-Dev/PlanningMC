@@ -86,6 +86,23 @@ class ChargeRepository extends ServiceEntityRepository
         return $query -> execute ();
     }
 
+    // Calcul de la charge polym par semaine
+    public function findReparChargeW ( $dateD,$dateF ) : array
+    {
+        $entityManager = $this -> getEntityManager ();
+    
+        $query = $entityManager -> createQuery (
+            'SELECT p.DateDeb as Jour, count(p.ReferencePcs) as NbrPcs, p.NumProg as Cycles
+            FROM App\Entity\Charge p 
+            WHERE p.DateDeb > :dateD AND  p.DateDeb < :dateF
+            GROUP BY Cycles'
+        );
+        $query-> setParameter ( 'dateD' , $dateD );
+        $query-> setParameter ('dateF' , $dateF);
+        // returns an array of Product objects
+        return $query -> execute ();
+    }
+
     /*
     public function findOneBySomeField($value): ?Charge
     {

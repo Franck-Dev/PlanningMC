@@ -101,8 +101,6 @@ class ChargFigeController extends AbstractController
      */
     public function delete(Request $request, ChargFige $chargFige): Response
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
-        $Titres=$repo -> findBy(['Description' => 'PROGRAMMATION']);
         
         if ($this->isCsrfTokenValid('delete'.$chargFige->getId(), $request->request->get('_token'))) {
             $entityManager = $this->getDoctrine()->getManager();

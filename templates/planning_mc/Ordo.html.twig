@@ -40,95 +40,170 @@
 }
 
 </style>
-	<h1>Charge des différents postes ! ✅</h1>
+<nav class="nav nav-tabs" id="myTab" role="tablist">
+  <a class="nav-item nav-link active" href="#p1" data-toggle="tab" role="tab" aria-controls="tab-p1" aria-selected="true">Charge des différents postes ! ✅</a>
+  <a class="nav-item nav-link" href="#p2" data-toggle="tab" role="tab" aria-controls="tab-p2" aria-selected="false">Planning Prévisionnel ! ✅</a>
+</nav>
+<div class="tab-content">
+  <div class="tab-pane fade show active" id="p1" role="tabpanel" aria-labelledby="p1">
+    <div class="conteiner-fluid">
+        <h2 id="header">
+            <strong>Charge Découpe</strong>
+            <small class="text-muted">Jan 2020 - Dec 2020</small>
+        </h2>
+        <h2 id="header">
+            <strong>Charge Moulage</strong>
+            <small class="text-muted">Jan 2020 - Dec 2020</small>
+        </h2>
+        <h2 id="header">
+            <strong>Charge Moyen Chaud</strong>
+            <small class="text-muted">Jan 2020 - Dec 2020</small>
+        </h2>
+        <div class="row m-b-1">
+            <div class="col-xl-6">
+                <div class="card shadow">
+                <h4 class="card-header">Charge SAP par programme de S{{SemUn|raw}} à S{{DerSem|raw}}</h4>
+                    <div class="card-block">
+                        <div id="chart-Repart-Charge"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6">
+                <div class="card shadow">
+                <h4 class="card-header">Retard Charge SAP -1 mois</h4>
+                    <div class="card-block">
+                        <div id="chart-Charge-Retard"></div>
+                    </div>
+                </div>
+            </div>
+        </div>    
+        <hr></hr>
+        <div class="row m-b-1">
+            <div class="col-xl-12">
+                <div class="card shadow filterable">
+                    <div class="card-header">
+                        <h4>Liste OF charge SAP</h4>
+                        <button class="btn btn-primary btn-filter"><span class="glyphicon glyphicon-th-list"></span>Filter</button>
+                    </div>
+                    <div class="card-block">
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead class="thead-dark">
+                                    <tr class="filters">
+                                        <th><input type="text" class="form-control" placeholder="#"></th>
+                                        <th><input type="text" class="form-control" placeholder="OF"></th>
+                                        <th><input type="text" class="form-control" placeholder="PosteW"></th>
+                                        <th><input type="text" class="form-control" placeholder="Ref"></th>
+                                        <th><input type="text" class="form-control" placeholder="Désignation"></th>
+                                        <th><input type="text" class="form-control" placeholder="Prog"></th>
+                                        <th><input type="text" class="form-control" placeholder="Conf"></th>
+                                        <th><input type="text" class="form-control" placeholder="Date Debut"></th>
+                                        <th><input type="text" class="form-control" placeholder="Date Fin"></th>
+                                        <th><input type="text" class="form-control" placeholder="Date Création"></th>
+                                        <th><input type="text" class="form-control" placeholder="Statut"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="myTable">
+                                    {% for chargeT in ChargeTot %}
+                                        <tr>
+                                            <td>{{chargeT.id}}</td>
+                                            <td>{{chargeT.OrdreFab}}</td>
+                                            <td>{{chargeT.PosteW}}</td>
+                                            <td>{{chargeT.ReferencePcs}}</td>
+                                            <td>{{chargeT.DesignationPcs}}</td>
+                                            <td>{{chargeT.NumProg}}</td>
+                                            <td>{{chargeT.Conf}}</td>
+                                            <td>{{chargeT.DateDeb|date('Y-m-d')}}</td>
+                                            <td>{{chargeT.DateFin|date('Y-m-d')}}</td>
+                                            <td>{{chargeT.DateCreation|date('Y-m-d')}}</td>
+                                            <td>{{chargeT.Statut}}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr></hr>
+        <div class="row m-b-1">
+            <div class="col-xl-12">
+                <div class="card shadow">
+                <h4 class="card-header">Charge Totale SAP par programme : {{ChargeTot|length}} pcs</h4>
+                    <div class="card-block">
+                        <div id="chart-Repart-ChargeTot"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+  <div class="tab-pane fade in" id="p2" role="tabpanel" aria-labelledby="p2">
+    <div class="conteiner-fluid">
+        {#<pre>{{dump(tests)}}</pre>#} 
+        <div class="table-responsive">
+        <table class="table">
+            <thead>		
+            </thead>
+                <table class="table">	
+                {% set start_jour = datedeb | date('d') %}<!-- Recherche du n° du jour de départ de la semaine n+1-->
+                {% set end_jour = datefin | date('d') %}<!-- Recherche du n° du jour de fin de la semaine n+1 -->
+                {% for day in  start_jour .. start_jour+31  %}<!-- Boucle sur la semaine concernée -->
+                    {% set jour = day-start_jour %}<!-- Variable permettant de recaler l'offset dût à la boucle -->
+                    {% set myDate = datedeb|date_modify(['+',jour,'days']|join) %}<!-- On prend en compte l'offset pour retrouver le premier jour de la semaine -->
+                    {% set myDa = myDate|localizeddate('none', 'none', null, null, 'EEEE') %}<!-- Nom des jours de la semaine -->
+                    {% set myDat = myDate|date('d/m/y')|upper %}<!-- Mise en forme des jours -->
+                    <tr>
+                        <!-- Mise en forme du bouton de validation groupé de la plannification -->
+                        <td colspan="11">
 
-<div class="container-fluid">
-    <h2 id="header">
-        <strong>Charge Découpe</strong>
-        <small class="text-muted">Jan 2020 - Dec 2020</small>
-    </h2>
-    <h2 id="header">
-        <strong>Charge Moyen Chaud</strong>
-        <small class="text-muted">Jan 2020 - Dec 2020</small>
-    </h2>
-    <div class="row m-b-1">
-        <div class="col-xl-6">
-            <div class="card shadow">
-            <h4 class="card-header">Charge SAP par programme de S{{SemUn|raw}} à S{{DerSem|raw}}</h4>
-                <div class="card-block">
-                    <div id="chart-Repart-Charge"></div>
-                </div>
-            </div>
-        </div>
-		<div class="col-xl-6">
-            <div class="card shadow">
-            <h4 class="card-header">Retard Charge SAP -1 mois</h4>
-                <div class="card-block">
-                    <div id="chart-Charge-Retard"></div>
-                </div>
-            </div>
-        </div>
-	</div>    
-	<hr></hr>
-    <div class="row m-b-1">
-		<div class="col-xl-12">
-            <div class="card shadow filterable">
-				<div class="card-header">
-					<h4>Liste OF charge SAP</h4>
-					<button class="btn btn-primary btn-filter"><span class="glyphicon glyphicon-th-list"></span>Filter</button>
-				</div>
-				<div class="card-block">
-					<div class="table-responsive">
-						<table class="table table-sm table-hover">
-							<thead class="thead-dark">
-								<tr class="filters">
-									<th><input type="text" class="form-control" placeholder="#"></th>
-									<th><input type="text" class="form-control" placeholder="OF"></th>
-									<th><input type="text" class="form-control" placeholder="PosteW"></th>
-									<th><input type="text" class="form-control" placeholder="Ref"></th>
-									<th><input type="text" class="form-control" placeholder="Désignation"></th>
-									<th><input type="text" class="form-control" placeholder="Prog"></th>
-									<th><input type="text" class="form-control" placeholder="Conf"></th>
-									<th><input type="text" class="form-control" placeholder="Date Debut"></th>
-									<th><input type="text" class="form-control" placeholder="Date Fin"></th>
-									<th><input type="text" class="form-control" placeholder="Date Création"></th>
-									<th><input type="text" class="form-control" placeholder="Statut"></th>
-								</tr>
-							</thead>
-							<tbody id="myTable">
-								{% for chargeT in ChargeTot %}
-									<tr>
-										<td>{{chargeT.id}}</td>
-										<td>{{chargeT.OrdreFab}}</td>
-										<td>{{chargeT.PosteW}}</td>
-										<td>{{chargeT.ReferencePcs}}</td>
-										<td>{{chargeT.DesignationPcs}}</td>
-										<td>{{chargeT.NumProg}}</td>
-										<td>{{chargeT.Conf}}</td>
-										<td>{{chargeT.DateDeb|date('Y-m-d')}}</td>
-										<td>{{chargeT.DateFin|date('Y-m-d')}}</td>
-										<td>{{chargeT.DateCreation|date('Y-m-d')}}</td>
-										<td>{{chargeT.Statut}}</td>
-									</tr>
-								{% endfor %}
-							</tbody>
-						</table>
-					</div>
-				</div>
-            </div>
-        </div>
-	</div>
-	<hr></hr>
-	<div class="row m-b-1">
-        <div class="col-xl-12">
-            <div class="card shadow">
-            <h4 class="card-header">Charge Totale SAP par programme : {{ChargeTot|length}} pcs</h4>
-                <div class="card-block">
-                    <div id="chart-Repart-ChargeTot"></div>
-                </div>
-            </div>
-        </div>
-	</div>
+                                <i href="" data-toggle="modal" class="btn btn-info btn-block" font="white" data-target="" data-id={{ myDat }} onclick=ValidJour('{{day}}')>
+                                        <span>VALIDATION SUGGESTIONS DU {{myDa}} {{myDat}}</span>
+
+                        </td>
+                    </tr>
+                    <thead>
+                            <tr> 
+                                <!-- Titre du tableau -->
+                                    <th> Id </th>
+                                    <th> Cycle </th>
+                                    <th> Date et Heure Début </th>
+                                    <th> Heure Fin Théo </th>
+                                    <th> Nbre OT </th>
+                                    <th> ChargeType </th>
+                                    <th> Valide</th>
+                                    <th> Moyen Utilisé</th>
+                                    <th> Action </th>
+                                    <th></th>
+                    
+                            </tr>
+                    </thead
+                    {% for test in tests if test.Jour|date('d/m/Y') == myDate|date('d/m/Y') %}  
+                    <tbody>
+                        <tr id="{{ test.Cycles }}" {% if (test.Cycles == 1) %}
+                                style="background-color:green"
+                            {% else %}
+                                style="background-color:red"
+                            {% endif %} 
+                            >
+                            <td></td>
+                            <td>{{ test.Cycles }}</td>
+                            <td>{{ test.Jour|date('d/m/Y') }}</td>
+                            <td></td>
+                            <td>{{ test.NbrPcs }}</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                {% endfor %}
+            </table>
+        </di>
+    </div>
+  </div>
 </div>
 {% endblock %}
 {% block javascripts %}
