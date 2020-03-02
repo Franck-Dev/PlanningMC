@@ -7,11 +7,13 @@ use App\Entity\ProgMoyens;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+use Symfony\Component\Validator\Constraints\Type;
+use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 
 class CreationOType extends AbstractType
 {
@@ -45,7 +47,12 @@ class CreationOType extends AbstractType
                 'attr' => array('maxlength' => 3, 'placeholder' => 'Renseigner la hauteur de l\'outillage'),
                 'help' => 'Renseigner la valeur en ml',
                 'required' => true,
-                'empty_data' => null
+                'empty_data' => null,
+                'constraints' => [
+                    new NotBlank(),
+                    new Type([
+                        'type' => 'float'])
+                    ],
             ))
             ->add('Longueur', NumberType::class, array(
                 'attr' => array('maxlength' => 4, 'placeholder' => 'Renseigner la longueur de l\'outillage'),

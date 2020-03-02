@@ -1859,16 +1859,39 @@ $RapportPcs= new JsonResponse($daty2);
     }
 
     /**
-     * @Route("/METHODES/PROGRAMMATION/Creation", name="Creation")
-     * @Route("/METHODES/PROGRAMMATION/Modification/{id}", name="Modification")
+     * @Route("/METHODES/PE/Consultation_PE", name="Consultation PE")
+     * @Route("METHODES/PE/Consultation_PE/{id}", name="Consul_PE")
      */
-    public function Creation(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
+    public function Consultation_PE(CategoryMoyens $moyen=null)
     {
-        
+
     }
 
     /**
-     * @Route("/METHODES/PROGRAMMATION/Creation", name="Creation PRP")
+     * @Route("/METHODES/PE/Demande_SPF", name="Demandes SPF")
+     */
+    public function Demandes_SPF(CategoryMoyens $moyen=null)
+    {
+
+    }
+
+    /**
+     * @Route("/METHODES/PE/Creation_PE", name="Creation PE")
+     * @Route("/METHODES/PE/Modification_PE/{id}", name="Modification_PE")
+     */
+    public function Creation_PE(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
+    {
+        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $Titres=$repo -> findBy(['Description' => 'PE']);
+        dump($Titres);
+        
+        return $this->render('planning_mc/articles/edit.html.twig',[
+            'Titres' => $Titres,
+        ]);
+    }
+
+    /**
+     * @Route("/METHODES/PROGRAMMATION/Creation_PRP", name="Creation PRP")
      * @Route("/METHODES/PROGRAMMATION/Modification_PRP/{id}", name="Modification_PRP")
      */
     public function Creation_PRP(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
@@ -2081,6 +2104,15 @@ $RapportPcs= new JsonResponse($daty2);
             'Productivite' => $Productivite->getContent(),
             //'formProg' => $form->createView(),
         ]);
+    }
+
+     /**
+     * @Route("/METHODES/PE/Creation", name="Creation")
+     * @Route("/METHODES/PE/Modification/{id}", name="Modification")
+     */
+    public function Creation(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
+    {
+        
     }
 
     /**
