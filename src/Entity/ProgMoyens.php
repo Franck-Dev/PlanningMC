@@ -85,15 +85,21 @@ class ProgMoyens
     private $couleur;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Outillages", inversedBy="Programme")
+     * @ORM\ManyToMany(targetEntity="App\Entity\Outillages", mappedBy="Programme")
      */
     private $outillages;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\ChargFige", mappedBy="Programme")
+     */
+    private $chargFiges;
 
 
     public function __construct()
     {
         $this->demandes = new ArrayCollection();
         $this->outillages = new ArrayCollection();
+        $this->chargFiges = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -299,6 +305,37 @@ class ProgMoyens
         if ($this->outillages->contains($outillage)) {
             $this->outillages->removeElement($outillage);
             $outillage->removeProgramme($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|ChargFige[]
+     */
+    public function getChargFiges(): Collection
+    {
+        return $this->chargFiges;
+    }
+
+    public function addChargFige(ChargFige $chargFige): self
+    {
+        if (!$this->chargFiges->contains($chargFige)) {
+            $this->chargFiges[] = $chargFige;
+            $chargFige->setProgramme($this);
+        }
+
+        return $this;
+    }
+
+    public function removeChargFige(ChargFige $chargFige): self
+    {
+        if ($this->chargFiges->contains($chargFige)) {
+            $this->chargFiges->removeElement($chargFige);
+            // set the owning side to null (unless already changed)
+            if ($chargFige->getProgramme() === $this) {
+                $chargFige->setProgramme(null);
+            }
         }
 
         return $this;

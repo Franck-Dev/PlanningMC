@@ -15,6 +15,7 @@ use App\Entity\ProgMoyens;
 use App\Form\CreationOType;
 use App\Form\PolymFormType;
 use App\Entity\CategoryMoyens;
+use App\Entity\ChargFige;
 use App\Entity\TypeRecurrance;
 use App\Form\CreationProgType;
 use App\Entity\RecurrancePolym;
@@ -31,6 +32,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\Constraints\Length;
 use Doctrine\ORM\Query\AST\Functions\LengthFunction;
+use PhpParser\Node\Stmt\Foreach_;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
@@ -1735,7 +1737,6 @@ $RapportPcs= new JsonResponse($daty2);
         $DerSem=$jourVisu->format("W");
         //Récupération de la charge SAP sur 1 mois
         $ChargeTot=$repo -> findChargeSem($date,$jourVisu); 
-        dump($date);
         $i=0;
         $j=0;
         foreach($ChargeTot as $charge){
@@ -1786,10 +1787,10 @@ $RapportPcs= new JsonResponse($daty2);
         // Création de la table de répartition des programmes oubliés
         $repo=$this->getDoctrine()->getRepository(Charge::class);
         // Date à plus d'un mois
-        $jourFinRetard = date("Y-m-d", strtotime('+ 1000 days'.date('Y') ));
+        $jourFinRetard = date("Y-m-d", strtotime('+ 365 days'.date('Y') ));
         $date=new \datetime($jourFinRetard);
         // Date en retard d'1 an
-        $jourVisu = date("Y-m-d", strtotime('- 1372days'.date('Y') ));
+        $jourVisu = date("Y-m-d", strtotime('- 730days'.date('Y') ));
         $jourVisu=new \datetime($jourVisu);
         $ChargeOubli=$repo -> findChargeMois($jourVisu,$date);
         //dump($ChargeOubli);
@@ -1810,16 +1811,45 @@ $RapportPcs= new JsonResponse($daty2);
         }
 
         $RepartT= new JsonResponse($Tabli);
-        dump($RepartT);
 
         // Création de la charge totale SAP
         $repo=$this->getDoctrine()->getRepository(Charge::class);
         $ChargTot=$repo -> findAll();
-        dump($ChargTot);
         
+    //Création de la planification à long terme avec les chargements figés
+        // Création de la table de répartition des programmes suivant OF SAP lancés sur 1 mois
+        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        // Date à aujourd'hui
+        $jour= new \datetime;
+        // Date à 1 mois
+        $jourVisu = date("Y-m-d", strtotime('+ 30 days'.date('Y') ));
+        $jourVisu=new \datetime($jourVisu);
+        //Récupération de la charge SAP sur 1 mois
+        $ChargeTot=$repo -> findReparChargeW($jour,$jourVisu);
+        $i=0;
+        foreach($ChargeTot as $Creno){
+            //dump($Creno);
+            $TableOT[$i]=$repo -> findBy(['DateDeb' => $Creno['Jour'],'NumProg' => $Creno['Cycles']]);
+            $i = $i + 1;
+            //On récupère l'ID du cycle en cours
+            $STD=$this->getDoctrine()->getRepository(ProgMoyens::class);
+            $IdProg=$STD->findOneBy(['Nom' => $Creno['Cycles']]);
+            //On récupère les chargements figés du cycle en cours
+            $cata=$this->getDoctrine()->getRepository(ChargFige::class);
+            $ChargementsFiG=$cata->findBy(['Programme' =>$IdProg]);
+            //On  sélectionne les chargements figés en fonction du nombre de pièces
+            foreach($ChargementsFiG as $ChargeFiG){
+                //if($Creno['NbrPcs']<$ChargeFiG[''])
+                dump($ChargeFiG);
+            }
+        }
+        dump($TableOT);
+        dump($ChargeTot);
+        dump($jour);
+        dump($jourVisu);
 
         return $this->render('planning_mc/Ordo.html.twig', [
-            'controller_name' => 'PlanningMCController',
+            'controller_name' => 'PlanningOrdo',
             'RepartPcs' => $RepartP->getContent(),
             'RepartRetard'=> $RepartRetard->getContent(),
             'RepartT'=> $RepartT->getContent(),
@@ -1827,6 +1857,9 @@ $RapportPcs= new JsonResponse($daty2);
             'ChargeTot' => $ChargTot,
             'SemUn' => $SemUn,
             'Titres' => $Titres,
+            'datedeb' => $jour,
+            'datefin' => $jourVisu,
+            'tests' => $ChargeTot,
         ]);
     }
 
@@ -1975,7 +2008,7 @@ $RapportPcs= new JsonResponse($daty2);
         if(!$OT){
             $OT=new Outillages();
             $Prog= new ProgMoyens();
-            $OT->addProgramme($Prog);
+            
         }
         $form = $this->createForm(CreationOType::class, $OT);
         
@@ -1991,10 +2024,11 @@ $RapportPcs= new JsonResponse($daty2);
                 //$Prog->setDateModif(new \datetime());
             
             }
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($OT);
+            $entityManager->flush();
             dump($OT);
-            $manager->persist($OT);
-            $manager->flush();
-            
+                        
 
             //return $this->redirectToRoute('ConsultationO');
         }

@@ -59,7 +59,7 @@ class Outillages
     private $CoefAero;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\ProgMoyens", mappedBy="outillages")
+     * @ORM\ManyToMany(targetEntity="App\Entity\ProgMoyens", inversedBy="outillages",cascade={"persist"})
      */
     private $Programme;
 
