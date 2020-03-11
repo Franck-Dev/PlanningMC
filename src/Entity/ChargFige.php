@@ -24,7 +24,10 @@ class ChargFige
     private $Code;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Outillages", inversedBy="chargFiges")
+     * @ORM\ManyToMany(targetEntity="App\Entity\Outillages", inversedBy="chargFiges", cascade={"all"})
+     * @ORM\JoinTable(name="charg_fige_outillages",
+     *         joinColumns = {@ORM\JoinColumn(name="charg_fige_id", referencedColumnName="id", onDelete="CASCADE")},
+     *         inverseJoinColumns={@ORM\JoinColumn(name="outillages_id", referencedColumnName="id")})
      */
     private $OT;
 

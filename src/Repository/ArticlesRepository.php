@@ -47,4 +47,15 @@ class ArticlesRepository extends ServiceEntityRepository
         ;
     }
     */
+
+    public function myFindByOutillage($RefPC){
+        $qb = $this->createQueryBuilder('articles')
+           ->leftJoin ('articles.OutMoulage','t')
+           ->where('t.articles = :ref')
+           ->setParameter('ref', $RefPC);
+         
+        $query = $qb->getQuery();
+        $results = $query->getResult();
+        return $results;
+    }
 }

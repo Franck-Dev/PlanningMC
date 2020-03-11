@@ -38,6 +38,9 @@
 	height: 300px;
 	overflow: auto;
 }
+#PolymAff{
+    height: auto;
+}
 
 </style>
 <nav class="nav nav-tabs" id="myTab" role="tablist">
@@ -142,7 +145,7 @@
   <div class="tab-pane fade in" id="p2" role="tabpanel" aria-labelledby="p2">
     <div class="conteiner-fluid">
         {#<pre>{{dump(tests)}}</pre>#} 
-        <div class="table-responsive">
+        <div class="table-responsive" id="PolymAff">
         <table class="table">
             <thead>		
             </thead>
@@ -168,7 +171,7 @@
                                 <!-- Titre du tableau -->
                                     <th> Id </th>
                                     <th> Cycle </th>
-                                    <th> Date et Heure Début </th>
+                                    <th> Date Prévue </th>
                                     <th> Heure Fin Théo </th>
                                     <th> Nbre OT </th>
                                     <th> ChargeType </th>

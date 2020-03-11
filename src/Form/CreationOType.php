@@ -30,6 +30,11 @@ class CreationOType extends AbstractType
                 'required' => true,
                 'empty_data' => null
             ))
+            ->add('NbIndus', NumberType::class, array(
+                'attr' => array('maxlength' => 1, 'placeholder' => 'Renseigner le nombre d\'outillage porant la même ref et servant au même article'),
+                'required' => true,
+                'empty_data' => null
+            ))
             ->add('NbEmpreinte', NumberType::class, array(
                 'attr' => array('maxlength' => 2, 'placeholder' => 'Renseigner le nombre de pièces(OF) réalisés avec cet outillage'),
                 'required' => true,

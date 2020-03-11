@@ -5,8 +5,10 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Entity\Charge;
 use App\Entity\Moyens;
+use App\Entity\Articles;
 use App\Entity\Demandes;
 use App\Entity\Planning;
+use App\Entity\ChargFige;
 use App\Entity\ConfSmenu;
 use App\Entity\PolymReal;
 use App\Entity\ConfSsmenu;
@@ -15,12 +17,12 @@ use App\Entity\ProgMoyens;
 use App\Form\CreationOType;
 use App\Form\PolymFormType;
 use App\Entity\CategoryMoyens;
-use App\Entity\ChargFige;
 use App\Entity\TypeRecurrance;
 use App\Form\CreationProgType;
 use App\Entity\RecurrancePolym;
 use App\Form\PlanifDemandeType;
 use App\Form\CreationMoyensType;
+use PhpParser\Node\Stmt\Foreach_;
 use Doctrine\ORM\EntityRepository;
 use App\Repository\DefaultRepositoryFactory;
 use Symfony\Component\HttpFoundation\Request;
@@ -32,7 +34,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\Constraints\Length;
 use Doctrine\ORM\Query\AST\Functions\LengthFunction;
-use PhpParser\Node\Stmt\Foreach_;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
@@ -1827,26 +1828,134 @@ $RapportPcs= new JsonResponse($daty2);
         //Récupération de la charge SAP sur 1 mois
         $ChargeTot=$repo -> findReparChargeW($jour,$jourVisu);
         $i=0;
+        dump($ChargeTot);
         foreach($ChargeTot as $Creno){
-            //dump($Creno);
-            $TableOT[$i]=$repo -> findBy(['DateDeb' => $Creno['Jour'],'NumProg' => $Creno['Cycles']]);
-            $i = $i + 1;
+            $TableCTJ[$i]=$repo -> findBy(['DateDeb' => $Creno['Jour'],'NumProg' => $Creno['Cycles']]);            
             //On récupère l'ID du cycle en cours
             $STD=$this->getDoctrine()->getRepository(ProgMoyens::class);
             $IdProg=$STD->findOneBy(['Nom' => $Creno['Cycles']]);
             //On récupère les chargements figés du cycle en cours
             $cata=$this->getDoctrine()->getRepository(ChargFige::class);
             $ChargementsFiG=$cata->findBy(['Programme' =>$IdProg]);
+            $f=0;
             //On  sélectionne les chargements figés en fonction du nombre de pièces
             foreach($ChargementsFiG as $ChargeFiG){
-                //if($Creno['NbrPcs']<$ChargeFiG[''])
-                dump($ChargeFiG);
+                dump($Creno);
+                //Pour chaque chargement figé on récupère sa composition en outillages
+                $listeOT = $this->getDoctrine()->getRepository(Outillages::class)->myFindByCharFiG($ChargeFiG->getCode());
+                dump($listeOT);
+                //On récupère le nombre d'outillages
+                $nbOT=sizeof($listeOT);
+                //On cherche les OT correspondants aux articles du $creno(TableCTJ[$i])
+                $r=0;
+                $TabOTArtOFOP=[];
+                dump($TableCTJ);
+                foreach($TableCTJ[$i] as $OFJ){
+                    //Pour chaque OF on va récupérer l'OT correspondant à l'article de l'OF
+                    $Outill= $this->getDoctrine()->getRepository(Outillages::class)->FindByOutillage($OFJ->getReferencePcs()); 
+                    dump($Outill);
+                    if(sizeof($Outill)>1){
+                        $ArtMultiIndus=True;
+                    }
+                    elseif(sizeof($Outill)==0){
+                        //Si pas d'outillage correspondant à l'article, on sort de la boucle
+                        dump('sortie');
+                        break 2;
+                    }
+                    //Suivant le nb d'empreinte on recherche les autres pièces si besoin
+                    if($Outill[0]->getNbEmpreinte()===1){
+                    //L'OT n'a qu'une seule empreinte, on peut créé le couple OT/Article/OF/OP des articles de CTJ
+                        $TabOTArtOFOP[$f][$r][0]=$Outill[0]->getRef();
+                        $TabOTArtOFOP[$f][$r][1]=$OFJ->getReferencePcs();
+                        $TabOTArtOFOP[$f][$r][2]=$OFJ->getOrdreFab();
+                        $TabOTArtOFOP[$f][$r][3]=$OFJ->getPosteW();
+                        $r=$r+1;
+                    }
+                    //Sinon on va regarder si les ref des autres empreintes sont dans CTJ
+                    else{
+                        $NbE=$Outill->getNbEmpreinte();
+                        $TabOTMultiEmp=[$NbE];  //Tableau regroupant tous les articles de l'outillage
+                        dump($TabOTMultiEmp);
+                        foreach($TableCTJ[$i] as $OFJOT){
+                            if($OFJ->getReferencePcs()==$OFJOT->getReferencePcs()){
+                                //C'est le même article, donc on ne le prend pas sauf si plusieurs indus
+                                if($Outill->getNbIndus()>1){
+                                    //Article avec plusieurs indus, donc possibilité d'avoir le même article dans le chargement
+                                    //On vérifie que celà ne soit pas le même OFOP
+                                    if($OFJ->getOF()==$OFJOT->getOF()){
+                                        //Si même OF on ne prend pas l'article
+                                    }
+                                    else{
+                                        //Si OF différent on prend l'article sur la deuxième indus
+
+                                    }
+                                }
+                                else{
+                                    //Une seule indus donc on prend pas l'article
+                                }
+                            }
+                            else{
+                                //C'est un autre article on regarde si l'OT correspond au premier
+                                
+                            }
+                        }
+                        dump($TabOTArtOFOP);   
+                        
+                    }
+                }
+                dump($TabOTArtOFOP);
+                //On vérifie si les chargements figés sont adéquate pour ce $creno(charge en nb de pièce de la journée)
+                foreach($TabOTArtOFOP as $ChargPolym){
+                    dump($ChargPolym);
+                    if(sizeof($ChargPolym)===$Creno['NbrPcs']){
+                        Dump('Chargement figé OK');
+    
+                    }
+                    //Si manque de pièce soit on passe et on va voir plus loin si plus de pièce, soit on vérifie si le chargement >%obj de remplissage
+                    else{
+                        //Il faut trouver les OT manquants dans le chargement figé
+                        
+                        //En premier on vérifie le % de remplissage par le nombre d'OT si < on passe à l'option ajout de la charge des jours suivants
+                        $Remp=(sizeof($ChargPolym)/$nbOT)*100;
+                        if($Remp<50){
+                            //On vérifie si un chargement amont n'a pas été validé à <50%
+                            Dump('Chargement figé NOK car remplissage à '.$Remp.'%');
+    
+                        }
+                        else{
+                            //On va essayer en tirant la charge des jours suivants(7 jours)
+                            Dump('Chargement figé NOK car remplissage à '.$Remp.'%. On va tirer la charge.');
+                            $NJourD=clone $Creno['Jour'];
+                            $jourcyle=$NJourD->modify('+1 day');
+                            $NJourF= clone $Creno['Jour'];
+                            $jour3cycle=$NJourF->modify('+7 day');
+                            $Cyc=$Creno['Cycles'];
+                            //Récupération de tous les OF suivant nouvelles dates et cycle en cours
+                            $ChargePart=$repo -> findReparChargeWCycle($jourcyle,$jour3cycle,$Cyc);
+                            dump($ChargePart);
+                            $j=0;
+                            //On va chercher les articles manquants au chargement figé pour complétude
+                            foreach($ChargePart as $CPart){
+                                //Pour chaque OF en avance de charge
+                                $TabCharPart[$j]=$repo -> findBy(['DateDeb' => $CPart['Jour'],'NumProg' => $Creno['Cycles']]);
+                                dump($TabCharPart);
+                                //On va récupérer l'OT de chaque article
+                                foreach($TabCharPart[$j] as $OFBis ){
+                                    dump($OFBis);
+                                    $OutBis= $this->getDoctrine()->getRepository(Outillages::class)->FindByOutillage($OFBis->getReferencePcs());
+                                    dump($OutBis);
+                                    //On comparer pour trouver les outillages manquants du chargement figé
+                                    
+                                }
+                                $j=$j+1;
+                                
+                            }
+                        }
+                    }
+                }
             }
+        $i = $i + 1;
         }
-        dump($TableOT);
-        dump($ChargeTot);
-        dump($jour);
-        dump($jourVisu);
 
         return $this->render('planning_mc/Ordo.html.twig', [
             'controller_name' => 'PlanningOrdo',
@@ -1973,7 +2082,7 @@ $RapportPcs= new JsonResponse($daty2);
     {
         $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'PROGRAMMATION']);
-        dump($Titres);
+        //dump($Titres);
         
         return $this->render('planning_mc/charg_fige/edit.html.twig',[
             'Titres' => $Titres,

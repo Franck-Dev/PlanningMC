@@ -98,6 +98,16 @@ class Outillages
      */
     private $articles;
 
+    /**
+     * @ORM\Column(type="smallint")
+     */
+    private $NbIndus;
+
+    /**
+     * @ORM\Column(type="date", nullable=true)
+     */
+    private $DateDispo;
+
     public function __construct()
     {
         $this->Programme = new ArrayCollection();
@@ -345,6 +355,30 @@ class Outillages
             $this->articles->removeElement($article);
             $article->removeOutMoulage($this);
         }
+
+        return $this;
+    }
+
+    public function getNbIndus(): ?int
+    {
+        return $this->NbIndus;
+    }
+
+    public function setNbIndus(int $NbIndus): self
+    {
+        $this->NbIndus = $NbIndus;
+
+        return $this;
+    }
+
+    public function getDateDispo(): ?\DateTimeInterface
+    {
+        return $this->DateDispo;
+    }
+
+    public function setDateDispo(?\DateTimeInterface $DateDispo): self
+    {
+        $this->DateDispo = $DateDispo;
 
         return $this;
     }

@@ -37,6 +37,7 @@ class ArticlesType extends AbstractType
                 'multiple' => true,
                 'label' => 'Veuillez sélectionner le ou les outillage(s) lié(s) à cet atrticle'
             ))
+            ->add('Serie')
         ;
     }
 

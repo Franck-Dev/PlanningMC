@@ -94,11 +94,30 @@ class ChargeRepository extends ServiceEntityRepository
         $query = $entityManager -> createQuery (
             'SELECT p.DateDeb as Jour, count(p.ReferencePcs) as NbrPcs, p.NumProg as Cycles
             FROM App\Entity\Charge p 
-            WHERE p.DateDeb > :dateD AND  p.DateDeb < :dateF
-            GROUP BY Cycles'
+            WHERE p.DateDeb > :dateD AND  p.DateDeb < :dateF AND p.Statut = :stat
+            GROUP BY Jour,Cycles'
         );
         $query-> setParameter ( 'dateD' , $dateD );
         $query-> setParameter ('dateF' , $dateF);
+        $query-> setParameter ('stat' , 'CHARGE');
+        // returns an array of Product objects
+        return $query -> execute ();
+    }
+    
+    public function findReparChargeWCycle ( $dateD,$dateF,$cycle ) : array
+    {
+        $entityManager = $this -> getEntityManager ();
+    
+        $query = $entityManager -> createQuery (
+            'SELECT p.DateDeb as Jour, count(p.ReferencePcs) as NbrPcs
+            FROM App\Entity\Charge p 
+            WHERE p.DateDeb > :dateD AND  p.DateDeb < :dateF AND p.NumProg = :cycle AND p.Statut = :stat
+            GROUP BY Jour'
+        );
+        $query-> setParameter ( 'dateD' , $dateD);
+        $query-> setParameter ('dateF' , $dateF);
+        $query-> setParameter ('cycle' , $cycle);
+        $query-> setParameter ('stat' , 'CHARGE');
         // returns an array of Product objects
         return $query -> execute ();
     }

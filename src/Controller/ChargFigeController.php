@@ -79,7 +79,7 @@ class ChargFigeController extends AbstractController
     {
         $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'PROGRAMMATION']);
-        
+        dump($chargFige);
         $form = $this->createForm(ChargFigeType::class, $chargFige);
         $form->handleRequest($request);
 
