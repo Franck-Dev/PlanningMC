@@ -1783,8 +1783,6 @@ $RapportPcs= new JsonResponse($daty2);
         }
 
         $RepartRetard= new JsonResponse($Tablos);
-        //dump($RepartRetard);
-
         // Création de la table de répartition des programmes oubliés
         $repo=$this->getDoctrine()->getRepository(Charge::class);
         // Date à plus d'un mois
@@ -1794,7 +1792,6 @@ $RapportPcs= new JsonResponse($daty2);
         $jourVisu = date("Y-m-d", strtotime('- 730days'.date('Y') ));
         $jourVisu=new \datetime($jourVisu);
         $ChargeOubli=$repo -> findChargeMois($jourVisu,$date);
-        //dump($ChargeOubli);
         $i=0;
         $j=0;
         foreach($ChargeOubli as $charge){
@@ -1802,7 +1799,6 @@ $RapportPcs= new JsonResponse($daty2);
             $DebSem = new \DateTime();
             $DebSem->setISOdate($charge['Annee'], $charge['Mois']);
             $JDebSem=strtotime($DebSem->format("Y-m-d"))*1000;
-            //dump($lundi->format("WY"));
             $TboDati[$j]=['x'=> $JDebSem,'y'=>$y];
             $Tabli[$i]=['type'=>"stackedColumn",'name'=>$charge['Cycles'],'showInLegend'=>"true",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboDati];
                 $i = $i + 1;
@@ -1823,14 +1819,15 @@ $RapportPcs= new JsonResponse($daty2);
         // Date à aujourd'hui
         $jour= new \datetime;
         // Date à 1 mois
-        $jourVisu = date("Y-m-d", strtotime('+ 30 days'.date('Y') ));
+        $jourVisu = date("Y-m-d", strtotime('+ 31 days'.date('Y') ));
         $jourVisu=new \datetime($jourVisu);
         //Récupération de la charge SAP sur 1 mois
         $ChargeTot=$repo -> findReparChargeW($jour,$jourVisu);
         $i=0;
         dump($ChargeTot);
         foreach($ChargeTot as $Creno){
-            $TableCTJ[$i]=$repo -> findBy(['DateDeb' => $Creno['Jour'],'NumProg' => $Creno['Cycles']]);            
+            $TableCTJ[$i]=$repo -> findBy(['DateDeb' => $Creno['Jour'],'NumProg' => $Creno['Cycles']]);
+            dump($Creno['Cycles']);          
             //On récupère l'ID du cycle en cours
             $STD=$this->getDoctrine()->getRepository(ProgMoyens::class);
             $IdProg=$STD->findOneBy(['Nom' => $Creno['Cycles']]);
@@ -1838,9 +1835,9 @@ $RapportPcs= new JsonResponse($daty2);
             $cata=$this->getDoctrine()->getRepository(ChargFige::class);
             $ChargementsFiG=$cata->findBy(['Programme' =>$IdProg]);
             $f=0;
+            dump($ChargementsFiG);
             //On  sélectionne les chargements figés en fonction du nombre de pièces
             foreach($ChargementsFiG as $ChargeFiG){
-                dump($Creno);
                 //Pour chaque chargement figé on récupère sa composition en outillages
                 $listeOT = $this->getDoctrine()->getRepository(Outillages::class)->myFindByCharFiG($ChargeFiG->getCode());
                 dump($listeOT);
@@ -1852,14 +1849,15 @@ $RapportPcs= new JsonResponse($daty2);
                 dump($TableCTJ);
                 foreach($TableCTJ[$i] as $OFJ){
                     //Pour chaque OF on va récupérer l'OT correspondant à l'article de l'OF
-                    $Outill= $this->getDoctrine()->getRepository(Outillages::class)->FindByOutillage($OFJ->getReferencePcs()); 
+                    dump($OFJ->getReferencePcs());
+                    $Outill= $this->getDoctrine()->getRepository(Outillages::class)->myFindByOutillage($OFJ->getReferencePcs()); 
                     dump($Outill);
                     if(sizeof($Outill)>1){
                         $ArtMultiIndus=True;
                     }
                     elseif(sizeof($Outill)==0){
                         //Si pas d'outillage correspondant à l'article, on sort de la boucle
-                        dump('sortie');
+                        dump('Aucun outillage trouvé');
                         break 2;
                     }
                     //Suivant le nb d'empreinte on recherche les autres pièces si besoin
@@ -1917,19 +1915,21 @@ $RapportPcs= new JsonResponse($daty2);
                         
                         //En premier on vérifie le % de remplissage par le nombre d'OT si < on passe à l'option ajout de la charge des jours suivants
                         $Remp=(sizeof($ChargPolym)/$nbOT)*100;
-                        if($Remp<50){
+                        if($Remp>75){
                             //On vérifie si un chargement amont n'a pas été validé à <50%
                             Dump('Chargement figé NOK car remplissage à '.$Remp.'%');
     
                         }
                         else{
                             //On va essayer en tirant la charge des jours suivants(7 jours)
-                            Dump('Chargement figé NOK car remplissage à '.$Remp.'%. On va tirer la charge.');
+                            Dump($Creno);
                             $NJourD=clone $Creno['Jour'];
                             $jourcyle=$NJourD->modify('+1 day');
                             $NJourF= clone $Creno['Jour'];
                             $jour3cycle=$NJourF->modify('+7 day');
                             $Cyc=$Creno['Cycles'];
+                            Dump($jourcyle);
+                            Dump($jour3cycle);
                             //Récupération de tous les OF suivant nouvelles dates et cycle en cours
                             $ChargePart=$repo -> findReparChargeWCycle($jourcyle,$jour3cycle,$Cyc);
                             dump($ChargePart);
@@ -1939,10 +1939,10 @@ $RapportPcs= new JsonResponse($daty2);
                                 //Pour chaque OF en avance de charge
                                 $TabCharPart[$j]=$repo -> findBy(['DateDeb' => $CPart['Jour'],'NumProg' => $Creno['Cycles']]);
                                 dump($TabCharPart);
-                                //On va récupérer l'OT de chaque article
+                                //On va récupérer le n° OT de chaque article
                                 foreach($TabCharPart[$j] as $OFBis ){
-                                    dump($OFBis);
-                                    $OutBis= $this->getDoctrine()->getRepository(Outillages::class)->FindByOutillage($OFBis->getReferencePcs());
+                                    dump($OFBis->getReferencePcs());
+                                    $OutBis= $this->getDoctrine()->getRepository(Outillages::class)->myFindByOutillage($OFBis->getReferencePcs());
                                     dump($OutBis);
                                     //On comparer pour trouver les outillages manquants du chargement figé
                                     

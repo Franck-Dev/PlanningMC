@@ -59,7 +59,7 @@ class OutillagesRepository extends ServiceEntityRepository
         return $results;
     }
 
-    public function FindByOutillage($RefPC){
+    public function myFindByOutillage($RefPC){
         $qb = $this->createQueryBuilder('outillages')
            ->leftJoin ('outillages.articles','t')
            ->where('t.Reference = :ref')

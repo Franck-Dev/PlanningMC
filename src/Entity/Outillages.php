@@ -94,7 +94,7 @@ class Outillages
     private $chargFiges;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Articles", mappedBy="OutMoulage")
+     * @ORM\ManyToMany(targetEntity="App\Entity\Articles", mappedBy="OutMoulage", cascade={"persist"})
      */
     private $articles;
 

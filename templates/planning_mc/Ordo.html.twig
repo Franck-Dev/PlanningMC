@@ -142,6 +142,7 @@
         </div>
     </div>
   </div>
+  {# Onglet prévisualisation des polymérisations #}
   <div class="tab-pane fade in" id="p2" role="tabpanel" aria-labelledby="p2">
     <div class="conteiner-fluid">
         {#<pre>{{dump(tests)}}</pre>#} 
@@ -171,7 +172,7 @@
                                 <!-- Titre du tableau -->
                                     <th> Id </th>
                                     <th> Cycle </th>
-                                    <th> Date Prévue </th>
+                                    <th> Départ </th>
                                     <th> Heure Fin Théo </th>
                                     <th> Nbre OT </th>
                                     <th> ChargeType </th>
@@ -192,12 +193,12 @@
                             >
                             <td></td>
                             <td>{{ test.Cycles }}</td>
-                            <td>{{ test.Jour|date('d/m/Y') }}</td>
+                            <td>{{ test.Jour|date('H:i:s') }}</td>
                             <td></td>
                             <td>{{ test.NbrPcs }}</td>
                             <td></td>
                             <td></td>
-                            <td></td>
+                            <td><b ref=""  id="btn-success" class="btn btn-success" style="border-radius:40px;background-color:blue;color:white" onclick=''>Enregistrer</b></td>
                             <td></td>
                         </tr>
                     {% endfor %}

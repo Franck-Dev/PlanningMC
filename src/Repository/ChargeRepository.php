@@ -94,12 +94,11 @@ class ChargeRepository extends ServiceEntityRepository
         $query = $entityManager -> createQuery (
             'SELECT p.DateDeb as Jour, count(p.ReferencePcs) as NbrPcs, p.NumProg as Cycles
             FROM App\Entity\Charge p 
-            WHERE p.DateDeb > :dateD AND  p.DateDeb < :dateF AND p.Statut = :stat
+            WHERE p.DateDeb > :dateD AND  p.DateDeb < :dateF AND p.Statut IS NULL
             GROUP BY Jour,Cycles'
         );
         $query-> setParameter ( 'dateD' , $dateD );
         $query-> setParameter ('dateF' , $dateF);
-        $query-> setParameter ('stat' , 'CHARGE');
         // returns an array of Product objects
         return $query -> execute ();
     }
@@ -111,13 +110,13 @@ class ChargeRepository extends ServiceEntityRepository
         $query = $entityManager -> createQuery (
             'SELECT p.DateDeb as Jour, count(p.ReferencePcs) as NbrPcs
             FROM App\Entity\Charge p 
-            WHERE p.DateDeb > :dateD AND  p.DateDeb < :dateF AND p.NumProg = :cycle AND p.Statut = :stat
+            WHERE p.DateDeb > :dateD AND  p.DateDeb <= :dateF AND p.NumProg = :cycle 
             GROUP BY Jour'
         );
         $query-> setParameter ( 'dateD' , $dateD);
         $query-> setParameter ('dateF' , $dateF);
         $query-> setParameter ('cycle' , $cycle);
-        $query-> setParameter ('stat' , 'CHARGE');
+        //$query-> setParameter ('stat' , '');//Mettre le statut CHARGE pour différencier les OF libres ou planifiés
         // returns an array of Product objects
         return $query -> execute ();
     }
