@@ -725,12 +725,19 @@ class PlanningMCController extends Controller
         $DateAnCours = date("l", strtotime('first day of January '.date('Y') ));
         $dateAn= new \datetime();
         $dateAn->modify('First day of january this year'); 
+        //Recherche de la date du début de semaine dernière
+        $currentMonthDateTime = new \DateTime();
+        $DateSem = $currentMonthDateTime->modify('first day of this week');
         //Recherche date de la veille
         $DateJour = new \DateTime();
         $hier = $DateJour->modify('yesterday');
         //$hier = date("l", strtotime('yesterday '.date('Y-m-d H:i') ));
         //Recherche date du jour
         $DateJour = new \DateTime();
+        $jour=$DateJour->modify('today');
+        //Recherche date en cours sur les 13 mois pour comparaison du mois en cours
+        $DateEncours = date("Y m d", strtotime('- 13 months'.date('Y') ));
+        //Recherche du début et de la fin de semaine en cours
         $currentMonthDateTime = new \DateTime();
         $FinSem = $currentMonthDateTime->modify('sunday this week');
         $currentMonthDateTime = new \DateTime();
@@ -740,6 +747,8 @@ class PlanningMCController extends Controller
         //Recherche du numéro de semaine en cours
         $NumSem= date("W", strtotime('today '.date('Y') ));
         $SemDer=date("W", strtotime('- 1 week '.date('Y') ));
+        //Tps de capacité machine en 3x8 VSD SD
+        $TpsOuv=intval(24*7*11);
         //Recherche sur x semaines dans le passé
         $SemAvant = date("Y-m-d", strtotime('- 10 weeks'.date('Y') ));
         $SemAvant=new \datetime($SemAvant);
@@ -1118,7 +1127,7 @@ class PlanningMCController extends Controller
      * @Route("/Planification", name="Planification")
      * @Security("has_role('ROLE_PLANIF')")
      */
-    public function Planification(request $requette,Demandes $demande=null, FunctIndic $test)
+    public function Planification(request $requette,Demandes $demande=null, FunctIndic $indic)
     {
 //Création des indicateurs
     //Recherche du début et de la fin de semaine à plannifier
@@ -1128,14 +1137,14 @@ class PlanningMCController extends Controller
         $DebSem = $currentMonthDateTime->modify('monday next week');
     //Création de la variable charge totale sur la semaine
         $repo=$this->getDoctrine()->getRepository(Planning::class);
-        $CharTot= $test->chargTot($repo, $FinSem, $DebSem);
+        $CharTot= $indic->chargTot($repo, $FinSem, $DebSem);
 
     $TpsOuvParMach=intval(24*7);
         
     //Création de la variable charge de chaque machine sur la semaine encours
-       $result=$test->chargMachsem($repo, $FinSem, $DebSem, $TpsOuvParMach, $CharTot);
-       $ChargeMoy= new JsonResponse($result['datu']);
-       $ReparCharg= new JsonResponse($result['datrix']);
+       $result=$indic->chargMachsem($repo, $FinSem, $DebSem, $TpsOuvParMach, $CharTot);
+       $ChargeMoy= new JsonResponse($result[0]);
+       $ReparCharg= new JsonResponse($result[1]);
         
 //Chargement d'une variable pour toutes les demandes créées
         $test = $this->getDoctrine()
