@@ -1,0 +1,192 @@
+{% extends '/indicateurs/Frames/Layout.html.twig' %}
+{% block body %}
+<style>
+</style>
+<div class="container-fluid">
+    <div class="card shadow">
+        <div class="card-header">
+            <div class="row m-b-1">
+                <h4 class="col-xl-8" id='Cycle'>TRS et Nbr Polym sur {{Cycle|raw}}</h4>
+                <select class="col-xl-4" id='Type' OnChange=MaJGraph('{{ path('indic_TRSJour_NbPolymJour') }}')>
+                    <option value='Jour'selected>Jour</option>
+                    <option value='Semaine'>Semaine</option>
+                    <option value='Mois'>Mois</option>
+                    <option value='Annee'>Année</option>
+                </select>
+            </div>
+        </div>
+        <div class="card-block">
+            <div id="chartTRSVolJours"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block javascripts %}
+<script src="{{ asset('build/jquery.min.js') }}"></script>
+<script src="{{ asset('build/canvasjs.min.js') }}"></script>
+<script type="text/javascript">
+//Graphique sur la répartition des pcs svt programmes et machine
+    $(function () {
+        realGraph();
+            
+    })
+    function toggleDataSeries(e) {
+                    if(typeof(e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+                            e.dataSeries.visible = false;
+                    }
+                    else {
+                            e.dataSeries.visible = true;
+                    }
+                    chart.render();
+    }
+function realGraph() {
+     //canvasjs barchart vertical Nbr Polym and line TRS
+            var chart = new CanvasJS.Chart("chartTRSVolJours", {
+                exportEnabled: true,
+                animationEnabled: true,
+                title:{
+                    text: ""
+                },
+                subtitles: [{
+                    text: ""
+                }], 
+                axisX: {
+                    title: "{{Titre|raw}}",
+                    valueFormatString: "{{Format|raw}}",
+                    interval: 1,
+                    intervalType: "{{Type|raw}}"
+
+                },
+                axisY: {
+                    title: "Quantité",
+                    titleFontColor: "#4F81BC",
+                    lineColor: "#4F81BC",
+                    labelFontColor: "#4F81BC",
+                    tickColor: "#4F81BC"
+                },
+                axisY2: {
+                    title: "%",
+                    titleFontColor: "#C0504E",
+                    lineColor: "#C0504E",
+                    labelFontColor: "#C0504E",
+                    tickColor: "#C0504E"
+                },
+                toolTip: {
+                    shared: true
+                },
+                legend: {
+                    cursor: "pointer",
+                    itemclick: toggleDataSeries
+                },
+                data: [{
+                    type: "column",
+                    name: "Nbr Polym",
+                    showInLegend: true,
+                    xValueType: "dateTime",      
+                    yValueFormatString: "#,##0.# Polyms",
+                    dataPoints: {{ProgSem|raw}}
+                },
+                {
+                    type: "line",
+                    name: "TRS",
+                    axisYType: "secondary",
+                    xValueType: "dateTime", 
+                    showInLegend: true,
+                    yValueFormatString: "#.#"/100,
+                    dataPoints: {{TRSem|raw}}
+                },
+                {
+                    type: "line",
+                    name: "Taux remplissage",
+                    axisYType: "secondary",
+                    xValueType: "dateTime",
+                    showInLegend: true,
+                    yValueFormatString: "#.#"/100,
+                    dataPoints: {{TxSem|raw}}
+                }]
+            });
+            chart.render();
+}
+</script>
+<script type="text/javascript">
+//Mise à jour de l'indicateur d'occupation moyen à chaque click
+function MaJGraph(Url){
+    //console.log(document.getElementById(id));
+    var Types=document.getElementById('Type').value;
+     $(document).ready(function () {
+        $.ajax({
+                method: "POST",
+                data: {Type: Types},
+                url: Url,
+                success: function(dat){
+                    var chart = new CanvasJS.Chart("chartTRSVolJours", {
+                        exportEnabled: true,
+                        animationEnabled: true,
+                        title:{
+                            text: ""
+                        },
+                        subtitles: [{
+                            text: ""
+                        }], 
+                        axisX: {
+                            title: dat.Titre,
+                            valueFormatString: dat.Format,
+                            interval: 1,
+                            intervalType: dat.Type
+
+                        },
+                        axisY: {
+                            title: "Quantité",
+                            titleFontColor: "#4F81BC",
+                            lineColor: "#4F81BC",
+                            labelFontColor: "#4F81BC",
+                            tickColor: "#4F81BC"
+                        },
+                        axisY2: {
+                            title: "%",
+                            titleFontColor: "#C0504E",
+                            lineColor: "#C0504E",
+                            labelFontColor: "#C0504E",
+                            tickColor: "#C0504E"
+                        },
+                        toolTip: {
+                            shared: true
+                        },
+                        legend: {
+                            cursor: "pointer",
+                            itemclick: toggleDataSeries
+                        },
+                        data: [{
+                            type: "column",
+                            name: "Nbr Polym",
+                            showInLegend: true,
+                            xValueType: "dateTime",      
+                            yValueFormatString: "#,##0.# Polyms",
+                            dataPoints: dat.ProgSem
+                        },
+                        {
+                            type: "line",
+                            name: "TRS",
+                            axisYType: "secondary",
+                            xValueType: "dateTime", 
+                            showInLegend: true,
+                            yValueFormatString: "#.#"/100,
+                            dataPoints: dat.TRSem
+                        },
+                        {
+                            type: "line",
+                            name: "Taux remplissage",
+                            axisYType: "secondary",
+                            xValueType: "dateTime",
+                            showInLegend: true,
+                            yValueFormatString: "#.#"/100,
+                            dataPoints: dat.TxSem
+                        }]
+                    });
+                    chart.render();
+                    document.getElementById('Cycle').textContent='TRS et Nbr Polym sur ' + dat.Cycle;
+                }})
+        })
+}
+</script
+{% endblock %}

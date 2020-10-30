@@ -1,0 +1,58 @@
+{% extends '/indicateurs/Frames/Layout.html.twig' %}
+{% block body %}
+<style>
+</style>
+<div class="container-fluid">
+    <div class="card shadow">
+        <h4 class="card-header">Répartition nbr pièces par Moyens pour semaine {{DebSem|date('W')}}</h4>
+        <div class="card-block">
+            <div id="ChartProgMoy"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block javascripts %}
+<script src="{{ asset('build/jquery.min.js') }}"></script>
+<script src="{{ asset('build/canvasjs.min.js') }}"></script>
+<script type="text/javascript">
+//Graphique sur la répartition des pcs svt programmes et machine
+    $(function () {
+           //Graphique sur la répartition des pcs svt programmes et machine
+             var chart = new CanvasJS.Chart("ChartProgMoy", {
+                    animationEnabled: true,
+                    exportEnabled: true,
+                    title:{
+                            text: ""
+                    },
+                    axisX: {
+                            valueFormatString: "DDD",
+                            labelFontSize: 24,
+                            interval: 1,
+                            intervalType: "day"
+                            //maximum: new date("14 Jul 2019")//{{FinSem|date('Y-m-d\\TH:i:sP')}}
+                    },
+                    axisY: {
+                            prefix: ""
+                    },
+                    toolTip: {
+                            shared: true
+                    },
+                    legend:{
+                            cursor: "pointer",
+                            itemclick: toggleDataSeries
+                    },
+                    data: {{Productivite|raw}}
+            });
+            chart.render();
+    })
+    function toggleDataSeries(e) {
+                    if(typeof(e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+                            e.dataSeries.visible = false;
+                    }
+                    else {
+                            e.dataSeries.visible = true;
+                    }
+                    chart.render();
+    }
+</script>
+{% endblock %}

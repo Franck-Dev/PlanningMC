@@ -25,6 +25,7 @@ use App\Form\CreationMoyensType;
 use PhpParser\Node\Stmt\Foreach_;
 use Doctrine\ORM\EntityRepository;
 use App\Repository\DefaultRepositoryFactory;
+use App\Services\FunctIndic;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Persistence\ObjectManager;
 use Symfony\Component\HttpFoundation\Response;
@@ -712,58 +713,6 @@ class PlanningMCController extends Controller
         return new JsonResponse(['Message'=>"Vous n'avez pas les droits pour créer une polym",'Code'=>404]);
     }
 
-/**
-     * @Route("/Indicateur/", name="Maj_Indicateur", condition="request.isXmlHttpRequest()")
-     * @Security("has_role('ROLE_PLANIF')")
-     */
-    public function MaJIndicateur(Request $request)
-    {
-     //Création des indicateurs
-        //Si modification de la date, on revoie la période des données
-        if(!$request->get('DatedebPlan')){
-            //Création de la variable charge totale sur la semaine
-            //Recherche du début et de la fin de semaine à plannifier
-            $currentMonthDateTime = new \DateTime();
-            $FinSem = $currentMonthDateTime->modify('sunday this week');
-            $currentMonthDateTime = new \DateTime();
-            $DebSem = $currentMonthDateTime->modify('monday this week');
-        }
-        else{
-            $currentMonthDateTime = new \DateTime($request->get('DatedebPlan'));
-            $FinSem = $currentMonthDateTime->modify('sunday this week');
-            $currentMonthDateTime = new \DateTime($request->get('DatedebPlan'));
-            $DebSem = $currentMonthDateTime->modify('monday this week');
-        }
-       $repo=$this->getDoctrine()->getRepository(Planning::class);
-       $Polyms=$repo -> findCharge($FinSem,$DebSem);
-       foreach($Polyms as $polym){
-           $CharTot=intval($polym['DureTheoPolym']/10000);
-       }
-       $TpsOuvParMach=intval(24*7);
-       //dump($TpsOuvParMach);
-       //Création de la variable charge de chaque machine sur la semaine encours
-       $Polyms=$repo -> findChargeMach($FinSem,$DebSem);
-       $datu = [];
-       $i = 0;
-       
-       foreach($Polyms as $polym){
-           $y=intval($polym['DureTheoPolym']/10000);
-           if ($request->get('NomKPI')==="occupation-moyen"){
-                $RatioC=round(($y/$TpsOuvParMach)*100,1);
-                $datu[$i] = ['y'=> $y,'indexLabel'=> $RatioC.'%',  'label' => $polym['Moyen']];
-                
-            }
-            else {
-                $RatioC=round(($y/$CharTot)*100,1);
-                $datu[$i] = ['y'=> $y,'indexLabel'=> $RatioC.'%',  'label' => $polym['Moyen']];
-                //dump($datu);
-            }
-           $i = $i + 1;
-       }
-
-       return new JsonResponse(['TabVal'=>$datu]);
-    }
-
 	/**
      * @Route("/", name="home")
      */
@@ -776,19 +725,12 @@ class PlanningMCController extends Controller
         $DateAnCours = date("l", strtotime('first day of January '.date('Y') ));
         $dateAn= new \datetime();
         $dateAn->modify('First day of january this year'); 
-        //Recherche de la date du début de semaine dernière
-        $currentMonthDateTime = new \DateTime();
-        $DateSem = $currentMonthDateTime->modify('first day of this week');
         //Recherche date de la veille
         $DateJour = new \DateTime();
         $hier = $DateJour->modify('yesterday');
         //$hier = date("l", strtotime('yesterday '.date('Y-m-d H:i') ));
         //Recherche date du jour
         $DateJour = new \DateTime();
-        $jour=$DateJour->modify('today');
-        //Recherche date en cours sur les 13 mois pour comparaison du mois en cours
-        $DateEncours = date("Y m d", strtotime('- 13 months'.date('Y') ));
-        //Recherche du début et de la fin de semaine en cours
         $currentMonthDateTime = new \DateTime();
         $FinSem = $currentMonthDateTime->modify('sunday this week');
         $currentMonthDateTime = new \DateTime();
@@ -798,313 +740,23 @@ class PlanningMCController extends Controller
         //Recherche du numéro de semaine en cours
         $NumSem= date("W", strtotime('today '.date('Y') ));
         $SemDer=date("W", strtotime('- 1 week '.date('Y') ));
-        //Tps de capacité machine en 3x8 VSD SD
-        $TpsOuv=intval(24*7*11);
-
-// Création de la variable pour la répartition des programmes svt format ci-dessous
-        //{ x: new Date("1 Jan 2015"), y: 868800 },
-        //{ x: new Date("1 Feb 2015"), y: 1071550 },
-        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
-        $Polyms=$repo -> findAllPcsByDate($dateAn);
-        $data = [];
-        $i = 0;
-        foreach($Polyms as $polym){ 
-
-            //$DateMoisenCours=new \datetime( $Annee.'-'.$polym['Mois'].'-01');
-            //$NewFormatDMC=date("Y-m-d\TH:i.v\Z",strtotime($Annee.'-'.$polym['Mois'].'-01'));
-            //$DateMoisenCours='01 '.$NewFormatDMC.' 2019';  
-            $y=intval($polym[1]);
-            //dump(strtotime($DateMoisenCours));
-            $data[$i] = ['x'=> strtotime($Annee.'-'.$polym['Mois'].'-01')*1000, 'y'=> $y];
-            $i = $i + 1;
-            //dump($polym['Dossier']);
-            //dump(sizeof(explode(';',$polym['Dossier'],4)));
-        }
-        $RepartP= new JsonResponse($data);
-
-//Création des variables pour le rapport charge/nbrs de pièces par semaine svt format ci dessous
-// { label: "New Jersey",  y: 19034.5 },
-//{ label: "Texas", y: 20015 },
-//{ label: "Oregon", y: 25342 },
-//{ label: "Montana",  y: 20088 },
-//{ label: "Massachusetts",  y: 28234 }
-        //Création de la date du premier jour de l'année
-    $Polyms=$repo -> findRapportPcsH($dateAn);
-    $daty = [];
-    $i = 0;
-    foreach($Polyms as $polym){
-        $y=intval($polym['DureTotPolyms']/3600);
-        $daty[$i] = ['label'=> $polym['semaine'],'y'=> $y];
-        $i = $i + 1;
-    }
-    $daty2 = [];
-    $i = 0;
-    $HProdSem=$y;
-    foreach($Polyms as $polym){
-        $y=intval($polym['NbrPcs']);
-        $daty2[$i] = ['label'=> $polym['semaine'],'y' => $y];
-        $i = $i + 1;
-    }
-    $PProdSem=$y;
-    $RapportPH=round($PProdSem/$HProdSem,2);
-$RapportH= new JsonResponse($daty);
-$RapportPcs= new JsonResponse($daty2);
-        
-// Création de la variable pour la répartition des pièces suivant les programmes lancées
-        //{ y: 47, color: "#c70000", toolTipContent: "United States: " },
-        //{ y: 53, color: "#424242", toolTipContent: null }
-        //dump($jour);
-        $Polyms=$repo -> findRepartPcssvtProg($jour,$hier);
-        //dump($Polyms);
-        $dati = [];
-        $i = 0;
-        $NbPolymJour=0;
-        foreach($Polyms as $polym){
-            $y=intval($polym[2]);
-            $NbPolymJour=$NbPolymJour+intval($polym[1]);
-            //dump($y);
-            $dati[$i] = ['y'=> $y,'name'=> $polym['Nom']];
-            $i = $i + 1;
-        }
-        $RepartPcs= new JsonResponse($dati);
-        //dump($RepartP->getContent());
-
-// Création de la variable pour le nombre total de pcs sur 13 mois
-        $Polyms=$repo -> findAllPcs ($dateAn);
-        foreach($Polyms as $polym){
-            $TotPcs=intval($polym[1]);
-            //dump($TotPcs);
-        }
-
-// Création de la variable pour le TRS par moyen svt format 
-        //{ y: 47, color: "#c70000", toolTipContent: "United States: " },
-        //{ y: 53, color: "#424242", toolTipContent: null }
-        //dump($jour);
-        $Polyms=$repo -> findTRSMachine($jour,$hier);
-        //dump($Polyms);
-        $dato = [];
-        $i = 0;
-        foreach($Polyms as $polym){
-            $y=intval($polym[2]/3600);
-            //dump($y);
-            $dato[$i] = ['y'=> $y,'name'=> $polym['Nom']];
-            $i = $i + 1;
-        }
-        $TRS= new JsonResponse($dato);
-        //dump($RepartP->getContent());
-
-// Création de la variable pour le TRS global svt format 
-        //{ y: 47, color: "#c70000", toolTipContent: "United States: " },
-        //{ y: 53, color: "#424242", toolTipContent: null }
-        //dump($jour);
-        $Polyms=$repo -> findTRS($jour,$hier);
-        //dump($Polyms);
-        $dato = [];
-        $datix = [];
-        $i = 0;
-        foreach($Polyms as $polym){
-            $y=intval($polym['DureePolym']/3600);
-            $x=11*24;
-            $z=$polym['PourVol'];
-            $dato[$i] = ['y'=> ($y/$x)*100,'color' => "#c70000"];
-            $datix[$i]= ['y'=> $z,'color' => "#c70000"];
-            $i = $i + 1;
-            $dato[$i] = ['y'=> 100-($y/$x)*100,'color' => "#424242"];
-            $datix[$i]= ['y'=> 100-$z,'color' => "#424242"];
-            $RatioP=round(($y/$x)*100,1);
-            $RatioV=round(($polym['PourVol']),1);
-            
-        }
-        $TRS= new JsonResponse($dato);
-        $VolCharg= new JsonResponse($datix);
-
-//Création de la variable charge de chaque machine sur la semaine encours
-        //{   type: "stackedBar",
-        //    name: "Dolouet",
-        //    showInLegend: "true",
-        //    xValueFormatString: "DD, MMM",
-        //    yValueFormatString: "###",
-        //     dataPoints: [
-        //            { x: new Date(2017, 0, 30), y: 56 },
-        //            { x: new Date(2017, 0, 31), y: 45 },
-        //            { x: new Date(2017, 1, 1), y: 71 },
-        //            { x: new Date(2017, 1, 2), y: 41 },
-        //            { x: new Date(2017, 1, 3), y: 60 },
-        //            { x: new Date(2017, 1, 4), y: 75 },
-        //            { x: new Date(2017, 1, 5), y: 98 }
-        //    ]},
-        $Polyms=$repo ->findCharSem($FinSem,$DebSem);
-        $Tablo = [];
-        $i = 0;
-        foreach($Polyms as $polym){
-            $currentMonthDateTime = new \DateTime();
-            $JourDep = $currentMonthDateTime->modify('monday this week');
-            $TboData = [];
-            $j = 0;
-            $PMoy=$repo ->findCharMachSem($FinSem,$DebSem,$polym['moyen']);
-            //dump($PMoy);    //$Annee.'-'.$polym['Mois'].'-01')
-            foreach($PMoy as $pmoy){
-                $y=intval($pmoy['NbrPcs']);
-                $TboData[$j]=['x'=> strtotime($pmoy['annee'].'-'.$pmoy['mois'].'-'.$pmoy['jour'])*1000,'y'=>$y];
-                $j = $j + 1;
-            };
-            $Tablo[$i]=['type'=>"stackedBar",'name'=>$polym['moyen'],'showInLegend'=>"true",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboData];
-            $i = $i + 1;
-            //$CharTot=intval($polym['DureTheoPolym']/10000);
-        }
-        $Productivite= new JsonResponse($Tablo);
-        
-//Création de la variable TRS moyen et nbr de polym par semaine,
-       
+        //Recherche sur x semaines dans le passé
         $SemAvant = date("Y-m-d", strtotime('- 10 weeks'.date('Y') ));
         $SemAvant=new \datetime($SemAvant);
-        $Polyms=$repo ->findCharJourSem($SemAvant);
-        $daty = [];
-        $daty2 = [];
-
-        $i = 0;
-        foreach($Polyms as $polym){
-            $y=intval($polym['DureTotPolyms']/3600);
-            $daty[$i] = ['label'=> $polym['semaine'],'y'=> ($y/$TpsOuv)*100];
-            $y2=intval($polym['NbrProg']);
-            $daty2[$i] = ['label'=> $polym['semaine'],'y' => $y2];
-            $i = $i + 1;
-        }
-        $HProdSem=$y;
-        $RapportTRSem= new JsonResponse($daty);
-        $RapportProgSem= new JsonResponse($daty2);
-
-//Création de la variable TRS et Nbr Polym par jour
-         /* data: [{
-            type: "stackedColumn",
-            showInLegend: true,
-            color: "#696661",
-            name: "Q1",
-            dataPoints: [
-                { y: 6.75, x: new Date(2010,0) },
-                { y: 8.57, x: new Date(2011,0) },
-                { y: 10.64, x: new Date(2012,0) },
-                { y: 13.97, x: new Date(2013,0) },
-                { y: 15.42, x: new Date(2014,0) },
-                { y: 17.26, x: new Date(2015,0) },
-                { y: 20.26, x: new Date(2016,0) }
-            ]
-            },
-            {        
-                type: "stackedColumn",
-                showInLegend: true,
-                name: "Q2",
-                color: "#EDCA93",
-                dataPoints: [
-                    { y: 6.82, x: new Date(2010,0) },
-                    { y: 9.02, x: new Date(2011,0) },
-                    { y: 11.80, x: new Date(2012,0) },
-                    { y: 14.11, x: new Date(2013,0) },
-                    { y: 15.96, x: new Date(2014,0) },
-                    { y: 17.73, x: new Date(2015,0) },
-                    { y: 21.5, x: new Date(2016,0) }
-                ]
-            }, */
-        /* foreach($Polyms as $polym){
-            $color=$i % 2 ? '#1e90ff':'#DDDDDD';
-            $SemEncours= $polym['semaine'];
-
-            //Récupérer une date de début et fin de semaine à partir du n° de semaine
-            $currentWeek = new \DateTime($polym['annee'].'-'.$polym['mois'].'-'.$polym['jour']);
-            dump($currentWeek);
-            $DebSem = $currentWeek->modify('monday this week');
-            $FinSem=$currentWeek->modify('sunday this week');
-            dump($FinSem);
-            dump($DebSem);
-            $TboData = [];
-            $j = 0;
-            $PMoy=$repo ->findCharJourSem($FinSem,$DebSem);
-            dump($PMoy);    //$Annee.'-'.$polym['Mois'].'-01')
-            foreach($PMoy as $pmoy){
-                $y=intval($pmoy['DureTotPolyms']);
-                $TboData[$j]=['y'=>$y,'x'=> strtotime($pmoy['annee'].'-'.$pmoy['mois'].'-'.$pmoy['jour'])*1000];
-                $j = $j + 1;
-            };
-            //dump($TboData);
-            $Tablo[$i]=['type'=>"stackedColumn",'name'=>$polym['jour'],'showInLegend'=>"true",'name'=>$polym['semaine'],'color'=> $color,'dataPoints'=>$TboData];
-            $i = $i + 1;
-            //$CharTot=intval($polym['DureTheoPolym']/10000);
-            //dump($Tablo);
-        }*/
-        $JourAvant = date("Y-m-d", strtotime('- 15 days'.date('Y') ));
-        $JourAvant=new \datetime($JourAvant);
-        dump($DateJour);
-        $Polyms=$repo ->findTRSJour($DateJour,$JourAvant);
-        $datuy = [];
-        $datuy1 = [];
-        $datuy2 = [];
-        $i = 0;
-        $x=11*24;
-        foreach($Polyms as $polym){
-            $y=intval($polym['DureePolym']/3600);
-            $datuy[$i] = ['x'=> strtotime($polym['annee'].'-'.$polym['mois'].'-'.$polym['jour'])*1000,'y'=> ($y/$x)*100];
-            $y1=intval($polym['PourVol']);
-            $datuy1[$i] = ['x'=> strtotime($polym['annee'].'-'.$polym['mois'].'-'.$polym['jour'])*1000,'y' => $y1];
-            $y2=intval($polym['NbrProg']);
-            $datuy2[$i] = ['x'=> strtotime($polym['annee'].'-'.$polym['mois'].'-'.$polym['jour'])*1000,'y' => $y2];
-            $i = $i + 1;
-        }
-        $TRSem= new JsonResponse($datuy); 
-        $TxSem= new JsonResponse($datuy1);
-        $ProgSem= new JsonResponse($datuy2);
-
-//Création de la variable charge totale sur la semaine
-        $repo=$this->getDoctrine()->getRepository(Planning::class);
-        $Polyms=$repo -> findCharge($FinSem,$DebSem);
-        foreach($Polyms as $polym){
-            $CharTot=intval($polym['DureTheoPolym']/10000);
-        }
-        
-//Création de la variable charge de chaque machine sur la semaine encours
-//{ y: 2,  indexLabel: "2%",  label: "Etuve2" },
-//{ y: 4,  indexLabel: "4%",  label: "Etuve3" },        
-        $Polyms=$repo -> findChargeMach($FinSem,$DebSem);
-        $datu = [];
-        $i = 0;
-        foreach($Polyms as $polym){
-            $y=intval($polym['DureTheoPolym']/10000);
-            $RatioC=round(($y/$CharTot)*100,1);
-            $datu[$i] = ['y'=> $y,'indexLabel'=> $RatioC.'%',  'label' => $polym['Moyen']];
-            $i = $i + 1;
-        }
-        $ChargeMoy= new JsonResponse($datu);
 
 
         return $this->render('planning_mc/home.html.twig',[
             'controller_name' => 'PlanningMCController',
             'Titres' => $Titres,
-            'RapportPcs' => $RapportPcs->getContent(),
+            'dateAn' => $dateAn,
+            'Annee' => $Annee,
             'Jour' => $hier,
-            'RapportH' => $RapportH->getContent(),
             'Semaine' => $NumSem,
-            'RepartPcs' => $RepartP->getContent(),
-            'TotPcs' => $TotPcs,
-            'TRS' => $TRS->getcontent(),
-            'VolCharg' => $VolCharg->getcontent(),
             'SemDer' => $SemDer,
-            'TRSem' => $TRSem->getcontent(),
-            'PercentTRS' => $RatioP,
-            'TxSem' => $TxSem->getcontent(),
-            //'VolSem' => $VolSem->getcontent(),
-            'PercentVol' => $RatioV,
-            'Productivite' => $Productivite->getContent(),
-            'CapaMach' => $x,
-            'ChargeMoy' =>$ChargeMoy->getContent(),
-            'CharTot' => $CharTot,
-            'RepartPolyms' => $RepartPcs->getContent(),
-            'PProdSem' => $PProdSem,
-            'RapportTRSem' => $RapportTRSem->getcontent(),
-            'HProdSem' => $HProdSem,
-            'RapportNbrProg' => $RapportProgSem->getcontent(),
-            'RapportPH' => $RapportPH,
-            'ProgSem' => $ProgSem->getcontent(),
-            'NbPolymJ' => $NbPolymJour,
-            'FinSem' => $FinSem
+            'FinSem' => $FinSem,
+            'DebSem' => $DebSem,
+            'DateJour' => $DateJour,
+            'SemAvant' => $SemAvant
         ]);
         
     }
@@ -1466,38 +1118,24 @@ $RapportPcs= new JsonResponse($daty2);
      * @Route("/Planification", name="Planification")
      * @Security("has_role('ROLE_PLANIF')")
      */
-    public function Planification(request $requette,Demandes $demande=null)
+    public function Planification(request $requette,Demandes $demande=null, FunctIndic $test)
     {
 //Création des indicateurs
-    //Création de la variable charge totale sur la semaine
-        //Recherche du début et de la fin de semaine à plannifier
+    //Recherche du début et de la fin de semaine à plannifier
         $currentMonthDateTime = new \DateTime();
         $FinSem = $currentMonthDateTime->modify('sunday next week');
         $currentMonthDateTime = new \DateTime();
         $DebSem = $currentMonthDateTime->modify('monday next week');
+    //Création de la variable charge totale sur la semaine
+        $repo=$this->getDoctrine()->getRepository(Planning::class);
+        $CharTot= $test->chargTot($repo, $FinSem, $DebSem);
 
-       $repo=$this->getDoctrine()->getRepository(Planning::class);
-       $Polyms=$repo -> findCharge($FinSem,$DebSem);
-       foreach($Polyms as $polym){
-           $CharTot=intval($polym['DureTheoPolym']/10000);
-       }
-       $TpsOuvParMach=intval(24*7);
+    $TpsOuvParMach=intval(24*7);
         
-       //Création de la variable charge de chaque machine sur la semaine encours
-       $Polyms=$repo -> findChargeMach($FinSem,$DebSem);
-       $datu = [];
-       $datrix=[];
-       $i = 0;
-       foreach($Polyms as $polym){
-           $y=intval($polym['DureTheoPolym']/10000);
-           $RatioC=round(($y/$TpsOuvParMach)*100,1);
-           $RatioR=round(($y/$CharTot)*100,1);
-           $datu[$i] = ['y'=> $y,'indexLabel'=> $RatioC.'%',  'label' => $polym['Moyen']];
-           $datrix[$i] = ['y'=> $y,'indexLabel'=> $RatioR.'%',  'label' => $polym['Moyen']];
-           $i = $i + 1;
-       }
-       $ChargeMoy= new JsonResponse($datu);
-       $ReparCharg= new JsonResponse($datrix);
+    //Création de la variable charge de chaque machine sur la semaine encours
+       $result=$test->chargMachsem($repo, $FinSem, $DebSem, $TpsOuvParMach, $CharTot);
+       $ChargeMoy= new JsonResponse($result['datu']);
+       $ReparCharg= new JsonResponse($result['datrix']);
         
 //Chargement d'une variable pour toutes les demandes créées
         $test = $this->getDoctrine()
@@ -1512,16 +1150,12 @@ $RapportPcs= new JsonResponse($daty2);
         $lastDateTime = $lastDateTime->modify('23 hours');
     }
     else{
-        //$currentMonthDateTime = new \DateTime(strtotime($requette->get('DatedebPlan')));
-        //$sem = date("w", strtotime($requette->get('DatedebPlan').date('Y-m-d') ));
-        //$firstDateTime = $currentMonthDateTime->modify('Monday next week');
         $firstDateTime=date("Y-m-d",strtotime($requette->get('DatedebPlan')));
         $currentMonthDateTime = new \DateTime($firstDateTime);
         $lastDateTime = $currentMonthDateTime->modify('Sunday this week');
         $lastDateTime = $lastDateTime->modify('23 hours');
     }
-        //dump($firstDateTime);
-        //dump($lastDateTime);
+
 //Recherche des moyens à afficher sur planning
         $repos=$this->getDoctrine()->getRepository(Moyens::class);
         $moyens=$repos -> findBy(['Id_Service' => '8','Activitees' => 'Plannifie']);
@@ -1561,9 +1195,7 @@ $RapportPcs= new JsonResponse($daty2);
         
 //Chargement des éléments du nav-bar menu
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
-
         $Titres=$repo -> findAll();
-        dump($Titres);
 //Envoie au template Plannification
         return $this->render('planning_mc/Planification.html.twig',[
             'Titres' => $Titres,

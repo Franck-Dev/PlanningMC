@@ -1,0 +1,87 @@
+{% extends '/indicateurs/Frames/Layout.html.twig' %}
+{% block body %}
+<style>
+</style>
+<div class="container-fluid">
+    <div class="card shadow">
+        <h4 class="card-header">TRS et Taux remplissage du : {{Jour| date('d/m/Y')}} <span class="tag tag-success" id="revenue-tag">(Capa: {{CapaMach|raw}}H)</span></h4>
+        <div class="card-block" class="multicharts">
+            <div class="row m-b-1">
+                <div class="col-xl-6" id="sales-doughnut-chart-us"></div>
+                <div class="col-xl-5" id="chartVolCharg"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block javascripts %}
+<script src="{{ asset('build/jquery.min.js') }}"></script>
+<script src="{{ asset('build/canvasjs.min.js') }}"></script>
+<script type="text/javascript">
+//Graphique sur la répartition des pcs svt programmes et machine
+    $(function () {
+           // CanvasJS doughnut chart to show annual sales percentage from United States(US)
+                var salesDoughnutChartUS = new CanvasJS.Chart("sales-doughnut-chart-us", { 
+                    animationEnabled: true,
+                    exportEnabled: true,
+                    theme: "theme2",
+                    title: {
+                            fontColor: "#848484",
+                            fontSize: 50,
+                            horizontalAlign: "center",
+                            text: {{PercentTRS|raw}}+"%",
+                            verticalAlign: "center"
+                    },
+                    toolTip: {
+                            backgroundColor: "#ffffff",
+                            borderThickness: 0,
+                            cornerRadius: 0,
+                            fontColor: "#424242"
+                    },
+                    data: [
+                            {
+                                    explodeOnClick: false,
+                                    innerRadius: "76%",
+                                    radius: "70%",
+                                    startAngle: 270,
+                                    type: "doughnut",
+                                    dataPoints: {{TRS|raw}}
+                            }
+                    ]
+                });
+                
+                salesDoughnutChartUS.render();
+
+                var chartVolCharg = new CanvasJS.Chart("chartVolCharg", { 
+                    animationEnabled: true,
+                    exportEnabled: true,
+                    theme: "theme2",
+                    title: {
+                            fontColor: "#848484",
+                            fontSize: 50,
+                            horizontalAlign: "center",
+                            text: {{PercentVol|raw}}+"%",
+                            verticalAlign: "center"
+                    },
+                    toolTip: {
+                            backgroundColor: "#ffffff",
+                            borderThickness: 0,
+                            cornerRadius: 0,
+                            fontColor: "#424242"
+                    },
+                    data: [
+                            {
+                                    explodeOnClick: false,
+                                    innerRadius: "76%",
+                                    radius: "70%",
+                                    startAngle: 270,
+                                    type: "doughnut",
+                                    dataPoints: {{VolCharg|raw}}
+                            }
+                    ]
+                });
+                
+                chartVolCharg.render();
+    })
+</script>
+{% endblock %}

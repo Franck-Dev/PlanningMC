@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{% block title %}APAMC{% endblock %}</title>
+        {% block stylesheets %}
+        <style type="text/css">
+            .body{
+                position:   sticky;
+            }
+        </style>
+        {% endblock %}
+    </head>
+    <body>
+        <div class="conteiner" >
+			{% block body %}{% endblock %}
+		</div>
+		{% block javascripts %}
+		{% endblock %}
+        {% block mesJavascripts %}
+        {% endblock %}
+    </body>
+</html>
