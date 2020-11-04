@@ -810,9 +810,8 @@ class PlanningMCController extends Controller
             }
             else{
                 $demande = new Demandes();
-                $demande->setDatepropose(new \Datetime($datejour));
+                $demande->setDatepropose(new \Datetime($requette->get('datejour')));
                 $newdemande=true; 
-                //dump($demande);
             }
         }
         else{
@@ -891,7 +890,7 @@ class PlanningMCController extends Controller
                 $manager->persist($demande);
                 $manager->flush();
                 
-                $requette->getSession()->getFlashbag()->add('success', 'Votre demande a bien été enregistré.');
+                $requette->getSession()->getFlashbag()->add('success', 'La demande'. $demande->getId() . 'a bien été enregistré.');
 
                 if($mode==false){
                     //dump($demande);
@@ -899,6 +898,7 @@ class PlanningMCController extends Controller
                     return $this->redirectToRoute('Demandes');
                 }
                 else{
+                    dump($demande);
                     //return $this->redirectToRoute('Demandes');
                 }
             }
@@ -936,18 +936,18 @@ class PlanningMCController extends Controller
         }
 
 //Visualisation des demandes en cours
-    $demande=new Demandes();
-           
-            if(!$demande){
-                $cycles = $this->getDoctrine()
-                ->getRepository(Demandes::class)
-                ->findAll();
-            }
-            else{
-                $cycles = $this->getDoctrine()
-                ->getRepository(Demandes::class)
-                ->findAll();
-            }
+    $demande=new Demandes();  
+        if(!$demande){
+            $cycles = $this->getDoctrine()
+            ->getRepository(Demandes::class)
+            ->findAll();
+        }
+        else{
+            $cycles = $this->getDoctrine()
+            ->getRepository(Demandes::class)
+            ->findAll();
+        }
+        dump($cycles); 
     //Recherche des moyens à afficher sur planning
         $repos=$this->getDoctrine()->getRepository(Moyens::class);
         $moyens=$repos -> findBy(['Id_Service' => '8','Activitees' => 'Plannifie']);
@@ -994,7 +994,6 @@ class PlanningMCController extends Controller
     else{
         $DemRec=$repo -> findBy(['Reccurance'=>'1','UserCrea'=>$requette->get('UtilisateursCE'),'Plannifie'=>'1','RecurValide'=>'0']);
     }
-    dump($DemRec);
     //$DemRec=$repo ->findDemRecur($lastDateTime,$firstDateTime,$user->getUsername());
 //Récupération des CE du moulage pour listing
     $repo=$this->getDoctrine()->getRepository(User::class);    

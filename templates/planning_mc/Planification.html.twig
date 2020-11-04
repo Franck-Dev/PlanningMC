@@ -509,8 +509,7 @@ var options = {
                         beforeSend : function() { // traitements JS à faire AVANT l'envoi AJAX
                          //Mettre à jour la date dans l'input pour l'url
                         },
-                        success: function(data){
-                            console.log(data);                           
+                        success: function(data){                          
                             $('#Modale').html(data); // affichage des résultats dans la modal
                             $('#Modale').show();
                         }

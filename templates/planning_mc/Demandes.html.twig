@@ -93,19 +93,19 @@
 	</div>
 		<h1>Demandes en cours ✅</h1>
 	{% for Moyen in Moyens %}
-    	{%set moy ={id:  Moyen.id ,content: Moyen.Libelle}%}
+    	{% set moy ={id:  Moyen.id ,content: Moyen.Libelle} %}
 	{% endfor %}
 		<!-- Modal -->
-		<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalTitle" aria-hidden="true">
+		<div class="modal" id="exampleModal" aria-hidden="true">
 			<div class="modal-dialog" role="document">
-					{#<pre>{{dump(data-id)}}</pre>#} 
+					{# <pre>{{dump('myDat')}}</pre>  #}
 				<div class="modal-content">
 					<div class="modal-header">
 						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
 							<span aria-hidden="true">&times;</span>
 						</button>
-							</div>
-					<div class="modal-body">
+					</div>
+					<div class="modal-body" id="content">
 						{{ render(controller('App\\Controller\\PlanningMCController::DemandesCrea',{ 'datejour':  datedeb|date('Y-m-d'), 'user': app.user })) }}
 					</div>
 				</div>
@@ -123,23 +123,24 @@
 				{% set myDate = datedeb|date_modify(['+',jour,'days']|join) %}
 				{% set myDa = myDate|localizeddate('none', 'none', null, null, 'EEEE') %}
 				{% set myDat = myDate|date('d/m/y')|upper %}
+				{% set myDateJour = myDate|date('Y-m-d') %}
 				<tr>
 					<td colspan="11">
 						<button type="button" class="btn btn-info btn-block">
-							<a href="" data-toggle="modal" data-target="#exampleModal" data-id={{ myDat }}>
+							<a href="" data-toggle="modal" data-target="#exampleModal" data-jour={{ myDateJour|date('Y-m-d') }}>
 									<span>CREER UNE DEMANDE POUR LE {{myDa}} {{myDat}}</span></a>
 						</button>
 					</td>
 				</tr>
 				<thead>
 						<tr> 
-								<th> Jour </th>	
+								<th> Statut </th>	
 								<th> Id </th>
 								<th> Cycle </th>
 								<th> Date Proposée </th>
 								<th> Heure Proposée </th>
 								<th> Outillages </th>
-								<th> Plannification </th>
+								<th> Réccurent </th>
 								<th> Commentaires </th>
 								<th> Date de création </th>
 								<th> Date de modification </th>
@@ -150,13 +151,18 @@
 				{% for cycle in Cycles if cycle.datePropose|date('d/m/Y') == myDate|date('d/m/Y') %}					
 					<tbody class="text-primary">
 					<tr>
-						<td> </td>
+						<td>{% if cycle.plannifie == 1 %}
+							{# <i class="fa fa-calendar-check"></i> #}
+							<span style="color : Green"><i class="fa fa-thumbs-up"></i></span>
+						{% else %}
+							<i class="fa fa-pause-circle"></i>
+						{% endif %} </td>
 						<td>{{ cycle.id  }}</td>
 						<td>{{ cycle.cycle.nom }}</td>
 						<td>{{ cycle.datePropose ?  cycle.datePropose|date('d/m/Y') : ''  }}</td>
 						<td>{{ cycle.heurePropose ? cycle.heurePropose|date('H:i:s') : '' }}</td>
 						<td>{{ cycle.outillages  }}</td>
-						<td>{{ cycle.plannifie ? 'OUI' : 'NON'}}</td>
+						<td>{{ cycle.reccurance ? 'OUI' : 'NON'}}</td>
 						<td>{{ cycle.commentaires }}</td>
 						<td>{{ cycle.dateCreation ? cycle.dateCreation|date('d/m/Y H:i:s') : '' }}</td>
 						<td>{{ cycle.dateModif ? cycle.dateModif|date('d/m/Y H:i:s') : '' }}</td>
@@ -183,8 +189,8 @@
 {% block javascripts %}
 <script src="{{ asset('build/vis.js') }}"></script>
 <script src="{{ asset('build/handlebars.min.js') }}"></script>
-    <script src="{{ asset('build/prototype.js') }}"></script>
-    <script src="{{ asset('build/sweetalert.min.js') }}"></script>
+	<script src="{{ asset('build/prototype.js') }}"></script>
+	<script src="{{ asset('build/sweetalert.min.js') }}"></script>
     <script id="item-template" type="text/x-handlebars-template">
             <table class="infos">
                 <tr>
@@ -225,6 +231,27 @@ var options = {
 			zoomKey: "ctrlKey",
             orientation: 'top'};
 var timeline = new vis.Timeline (conteneur, items, groups, options);
+</script>
+
+<script src="{{ asset('build/jquery.min.js') }}"></script>
+<script type="text/javascript">   
+	$("a[data-toggle=modal]").click(function() 
+    { 	
+	var jour = $(this).attr('data-jour');
+	console.log(jour);
+	$.ajax({
+		cache: false,
+		type: 'POST',
+		data: {datejour: jour},
+		url: "{{ path('Crea_Demandes') }}",
+		success: function(data) 
+		{
+			console.log(data);
+			$('#exampleModal').show();
+            $('#content').show().html(data);
+		}
+	});
+});
 
 function Changeheure()
 {
