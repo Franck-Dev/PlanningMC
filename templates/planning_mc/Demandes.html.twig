@@ -143,12 +143,12 @@
 								<th> Commentaires </th>
 								<th> Date de création </th>
 								<th> Date de modification </th>
-								<th> Action </th>
+								<th> Actions </th>
 				
 							</tr>
 				</thead>
 				{% for cycle in Cycles if cycle.datePropose|date('d/m/Y') == myDate|date('d/m/Y') %}					
-					<tbody>
+					<tbody class="text-primary">
 					<tr>
 						<td> </td>
 						<td>{{ cycle.id  }}</td>
@@ -161,8 +161,13 @@
 						<td>{{ cycle.dateCreation ? cycle.dateCreation|date('d/m/Y H:i:s') : '' }}</td>
 						<td>{{ cycle.dateModif ? cycle.dateModif|date('d/m/Y H:i:s') : '' }}</td>
 						<td>
-							{% if app.user.username == cycle.UserCrea %}
-								<a href="{{ path('Modif_Demandes', {'id': cycle.id}) }}">Modifier</a>
+							{% if app.user.username == cycle.UserCrea and cycle.plannifie == 0 %}
+								<a href="{{ path('Modif_Demandes', {'id': cycle.id}) }}" class="text-warning"><span class="m-1" style="font-size: 1.3em; 
+								color: Orange;"><i class="fa fa-pencil"></i></span>Modifier</a>
+								<a href="{{ path('Sup_Demandes', {'id': cycle.id}) }}"><span class="m-3" style="font-size: 1.3em; color: Tomato;"><i class="fa fa-trash"></i></span></a>
+							{% elseif  app.user.username == cycle.UserCrea %}
+								<a href="{{ path('Deprog_Demandes', {'id': cycle.id}) }}" class="text-danger"><span class="m-1" style="font-size: 1.3em;
+								 color: Tomato;"><i class="fa fa-envelope-o"></i></span>Déprogrammation</a>
 							{% endif %}
 						</td>
 					</tr>
@@ -207,16 +212,9 @@ const locale = (lang && lang !== undefined) ? lang.match(/^\w{2}/)[0] :
         console.log(template)
 var conteneur = document.getElementById ('visualization');
 
-var groupspold = {{Moyens|raw}};
-
-var groups = new vis.DataSet();
-      
-groups.add({{Moyens|raw}});
-groups.add({{Ssmoyen|raw}});
+var groups = {{Moyens|raw}};
 
 var items = new vis.DataSet ({{taches|raw}});
-var groupIds = groups.getIds();
-var randomGroupId = groupIds[Math.floor(Math.random() * groupIds.length)];
 
 var options = {
 			template:template,

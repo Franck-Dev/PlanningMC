@@ -777,7 +777,7 @@ class PlanningMCController extends Controller
     public function DemandesCrea( Request $requette,RequestStack $requestStack,ObjectManager $manager,Demandes $demande=null,$datejour=null, userInterface $user=null)
     {
 //Si la demande n'est pas déjà faite(modification), on l'a crée
-        //dump($demande);    
+        //dump($datejour);    
         if(!$demande){
             //Création automatique par CE_POLYM
             if($requette->get('Demandes')){
@@ -838,8 +838,8 @@ class PlanningMCController extends Controller
                             'OUI' => true]])
                       ->getForm();
             }
-            else{
-                    $form = $this -> createFormBuilder($demande)
+            else{   
+                $form = $this -> createFormBuilder($demande)
                       -> add('cycle', EntityType::class, [
                           'class' => ProgMoyens::class,
                           'choice_label' => 'nom'
@@ -929,9 +929,6 @@ class PlanningMCController extends Controller
             $lastDateTime = $lastDateTime->modify('23 hours');
         }
         else{
-            //$currentMonthDateTime = new \DateTime(strtotime($requette->get('DatedebPlan')));
-            //$sem = date("w", strtotime($requette->get('DatedebPlan').date('Y-m-d') ));
-            //$firstDateTime = $currentMonthDateTime->modify('Monday next week');
             $firstDateTime=date("Y-m-d",strtotime($requette->get('DatedebPlan')));
             $currentMonthDateTime = new \DateTime($firstDateTime);
             $lastDateTime = $currentMonthDateTime->modify('Sunday this week');
@@ -951,34 +948,20 @@ class PlanningMCController extends Controller
                 ->getRepository(Demandes::class)
                 ->findAll();
             }
-            //dump($demande); 
-//Chargement de la variable qui récupère tous les moyens suivant un service, içi 8 (a modifier pour variable)
+    //Recherche des moyens à afficher sur planning
         $repos=$this->getDoctrine()->getRepository(Moyens::class);
-        $moyens=$repos -> findAllMoyensSvtService ( intval('8') );
-        $item=$moyens;   
+        $moyens=$repos -> findBy(['Id_Service' => '8','Activitees' => 'Plannifie']);
+        $item=$moyens;
+        //$serializer = new Serializer();
+        //$jsonContent = $serializer->serialize($moyen, 'json');        
         $data = [];
-        $TbEtat=[];
         $i = 0;
-        $a=0;
         foreach($moyens as $moyen){
-            if ($moyen['SousTitres']==2){
-                $Etats=$repos -> findBy(['Libelle' => $moyen['Moyen']]);
-                // On rajoute les notions d'activitees au moyen pour créer 2 lignes sur planning
-                foreach($Etats as $etat){
-                    if ($moyen['id']!=$etat->getId()){
-                        $TbEtat[$a]=['id'=>$etat->getId(), 'content'=>$etat->getActivitees()];
-                        $a=$a+1;
-                    }
-                }
-                //dump($TbEtat[$a-1]['id']);
-                $data[$i] = ['id'=> $moyen['id'],  'content'=> $moyen['Moyen'], 'nestedGroups' => [$TbEtat[$a-1]['id']]];
-            }
-            else{
-                $data[$i] = ['id'=> $moyen['id'],  'content'=> $moyen['Moyen']];
-            }
+            $color=$i % 2 ? '#1e90ff':'#DDDDDD';
+            $data[$i] = ['id'=> $moyen->getId(),  'content'=> $moyen->getLibelle(), 'style'=> 'background:'.$color];
             $i = $i + 1;
+            //On affecte un élément $item à $data
         }
-        $Ssmoyen= new JsonResponse($TbEtat);
         $moyen= new JsonResponse($data);
 //Chargement d'une variable pour la réalisation de la nav-bar du menu et des sous-titres
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
@@ -1023,12 +1006,35 @@ class PlanningMCController extends Controller
            'datefin' => $lastDateTime,
            'Cycles'=>$cycles,
            'Moyens' => $moyen->getContent(),
-           'Ssmoyen' => $Ssmoyen->getContent(),
+           //'Ssmoyen' => $Ssmoyen->getContent(),
            'taches' => $taches->getContent(),
            'DemRec' => $DemRec,
            'utilisateurs' => $utilisateurs,
            'reqet' => $requette
         ]);   
+    }
+
+    /**
+     * @Route("/Demandes/Supression/{id}", name="Sup_Demandes")
+     */
+    public function demandeSup(ObjectManager $manager,Demandes $demande=null)
+    {
+        $manager = $this->getDoctrine()->getManager();
+            $manager->remove($demande);
+            $manager->flush();
+        return $this->redirectToRoute('Demandes');
+    }
+
+    /**
+     * @Route("/Demandes/Deprogrammation/{id}", name="Deprog_Demandes")
+     */
+    public function demandeDeprog(ObjectManager $manager,Demandes $demande=null)
+    {
+        // $manager = $this->getDoctrine()->getManager();
+        //     $manager->remove($demande);
+        //     $manager->flush();
+        //Envoyer un mail pour faire la demande de modification
+        return $this->redirectToRoute('Demandes');
     }
 
     /**
@@ -1050,7 +1056,6 @@ class PlanningMCController extends Controller
         $moyen = $this->getDoctrine()
             ->getRepository(Moyens::class)
             ->findBy(['Libelle' => $requette->get('Moyen'.$demande->getId('id'))]);
-            //dump($moyen);
 //Récupération du numéro d'action (içi le cycle)
         $action->setAction($cycles[0]->getNom($demande->getCycle('id')));
         $action->setNumDemande($demande);
@@ -1074,13 +1079,11 @@ class PlanningMCController extends Controller
         $action->setStatut('PLANNIFIE');
         $form= $this->createForm(PolymFormType::class, $action);
         $content = $requette->attributes->get('demande');
-        //$form->handleRequest($requette);
         $form->submit($form->getName());
         $errors = $validator -> validate ($form); 
-        //dump($errors);      
+ 
 //On vérifie la validité des données avant de persister en base
         if ( $form -> isSubmitted () ) {
-            //dump($demande[500]);
             if(!$demande->getId()){
                 $demande->setDateCreation(new \datetime());
                  $mode=true;
@@ -1090,25 +1093,20 @@ class PlanningMCController extends Controller
                 $mode=false;
             }
             $manager = $this->getDoctrine()->getManager();
-            //dump($demande);
             if(!$demande->getPlanning()){
                 $manager->persist($action);
                 $manager->flush();
-                //dump($action);
                 $manager->persist($demande);
                 $manager->flush();
             }
             else{
-                //dump($action);
                 $manager->remove($demande->getPlanning());
                 $manager->flush();
             }
-                //dump($demande);
             
             $requette->getSession()->getFlashbag()->add('success', 'Votre polym a été enregistré.');
                 
             if($mode==false){
-                //dump($demande);
                     
                 return $this->redirectToRoute('Planification');
             }
@@ -1179,7 +1177,6 @@ class PlanningMCController extends Controller
             $i = $i + 1;
 			//On affecte un élément $item à $data
         }
-        //dump($data);
         $moyen= new JsonResponse($data);
 //Chargement d'une variable pour les tâches déjà plannifiées
         $repo=$this->getDoctrine()->getRepository(Planning::class);
