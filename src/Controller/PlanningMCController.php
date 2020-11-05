@@ -575,6 +575,10 @@ class PlanningMCController extends Controller
                         'choice_label' => 'libelle',))
                     -> add('cycle', EntityType::class, [
                           'class' => ProgMoyens::class,
+                          'query_builder' => function (EntityRepository $er) {
+                            return $er->createQueryBuilder('u')
+                                ->orderBy('u.Nom', 'ASC');
+                        },
                           'choice_label' => 'nom'
                       ])
                       -> add('date_propose', DateType::class)
@@ -682,7 +686,7 @@ class PlanningMCController extends Controller
             if ($request->isMethod('POST')) {
                 $planning = new Planning();
                 $idPolym=substr($request->get('PolymId'),1,strlen($request->get('PolymId'))-1);
-                //dump($idPolym);
+                dump($idPolym);
                 $PolymPla = $this->getDoctrine()
                     ->getRepository(Planning::class)
                     ->findBy(['id' => $idPolym]);
@@ -703,11 +707,12 @@ class PlanningMCController extends Controller
                 $Demande->setRecurValide(0);
                 $Demande->setPlannifie(0);
                 $Demande->setMoyenUtilise(Null);
+                dump($planning);
 
                 $manager = $this->getDoctrine()->getManager();
                     $manager->persist($Demande);
                     $manager->flush();
-                    //dump($planning);
+                    dump($planning);
             }
         }
         return new JsonResponse(['Message'=>"Vous n'avez pas les droits pour créer une polym",'Code'=>404]);
