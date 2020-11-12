@@ -53,6 +53,85 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 class PlanningMCController extends Controller
 {
     /**
+     * @Route("/Planning/Edit", name="Planning_Edit")
+     * @Security("is_granted('ROLE_REGLEUR')")
+     */
+    public function planningEdit()
+    {
+        //Chargement d'une variable pour les tâches déjà plannifiées
+        $repo=$this->getDoctrine()->getRepository(Planning::class);
+        $Taches=$repo -> findAll();
+        $data = [];
+        $i = 0;
+        //On créé le pourcentage de volumetrie en test, a changer par le réel avec nb outillage
+        $Pourc=10;
+        $repos=$this->getDoctrine()->getRepository(Moyens::class);
+        foreach($Taches as $tache){
+            //On cherche le moyen attribué à la polym suivant la demande et l'activité Plannification
+            $commentaires=$tache->getNumDemande()->getCommentaires()."/".$tache->getNumDemande()->getOutillages();
+            $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification(),'Activitees'=> 'Plannifie']);
+            if($Pourc<75){
+                $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires,'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%; background:red"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
+            }
+            else{
+                $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires, 'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
+            }
+            
+            $i = $i + 1;
+            //dump($MoyUtil=$repos -> )findBy(['Libelle' => $tache->getIdentification()]));
+            //dump($MoyUtil[0]->getId());
+            //dump($Taches);
+            //dump($tache->getNumDemande()->getCycle()->getCouleur());
+        }
+        //Implémentation dans la variable des polyms créées
+        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+        $Polyms=$repo -> findAll();
+        //dump($Polyms);
+        foreach($Polyms as $polym){ 
+            if(!$polym->getPourcVolCharge()){
+                $Pourc==10;
+            }               
+            else{
+                $Pourc=$polym->getPourcVolCharge();
+            }    
+            if($Pourc<75){
+                $data[$i] = ['id'=>  '2'.$polym->getId(),'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym(),'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%; background:red"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
+            }
+            else{
+                $data[$i] = ['id'=>  '2'.$polym->getId(),'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym(),'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
+            }
+            $i = $i + 1;
+        }
+        $repos=$this->getDoctrine()->getRepository(Moyens::class);
+        $moyens=$repos -> findAllMoyensSvtService ( intval('8') );  
+        $dati = [];
+        $TbEtat=[];
+        $i = 0;
+        $a=0;
+        foreach($moyens as $moyen){
+            // Si le moyen à 2 sous fonctions (ex: "plannifié et réalisé")
+            if ($moyen['SousTitres']==2){
+                $Etats=$repos -> findBy(['Libelle' => $moyen['Moyen']]);
+                // On rajoute les notions d'activitees au moyen pour créer 2 lignes sur planning
+                foreach($Etats as $etat){
+                    if ($moyen['id']!=$etat->getId()){
+                        $TbEtat[$a]=['id'=>$etat->getId(), 'content'=>$etat->getActivitees()];
+                        $a=$a+1;
+                    }
+                }
+                //dump($TbEtat[$a-1]['id']);
+                $dati[$i] = ['id'=> $moyen['id'],  'content'=> $moyen['Moyen'], 'className'=> 'gris', 'nestedGroups' => [$TbEtat[$a-1]['id']]];
+            }
+            else{
+                $dati[$i] = ['id'=> $moyen['id'],  'content'=> $moyen['Moyen']];
+            }
+            $i = $i + 1;
+			//On affecte un élément $item à $data
+        }
+
+        return new JsonResponse(['Taches'=> $data, 'moyen'=> $dati, 'Ssmoyen'=> $TbEtat]);
+    }    
+    /**
      * @Route("/Planning", name="Planning")
      * @Security("is_granted('ROLE_REGLEUR')")
      */
@@ -98,8 +177,7 @@ class PlanningMCController extends Controller
         }
         $Ssmoyen= new JsonResponse($TbEtat);
         $moyen= new JsonResponse($data);
-        //dump($Ssmoyen);
-        //dump($moyen);
+
 //Chargement d'une variable pour les tâches déjà plannifiées
         $repo=$this->getDoctrine()->getRepository(Planning::class);
         $Taches=$repo -> findAll();
@@ -214,7 +292,7 @@ class PlanningMCController extends Controller
                         $DureCycM="+".$DureCycM."Minutes";
                         $DateFin=date_modify($DateFinH,$DureCycM);
                         $Planning->setFinDate($DateFin);
-                        //dump($Planning);
+                        dump($demande);
                         $Planning->setIdentification($demande->getMoyenUtilise()->getLibelle());
                         $Planning->setAction($demande->getCycle()->getNom());
                         $Planning->setNumDemande($demande);
@@ -255,10 +333,11 @@ class PlanningMCController extends Controller
             return $this->redirectToRoute('Planning');
     } 
      /**
-     * @Route("/PlanningMC/Creation/", name="CreaDemPolymf")
+     * @Route("/PlanningMC/Creation/", name="CreaDemPolymf", condition="request.isXmlHttpRequest()")
      */
     public function CreaDemPolymf(Request $request,RequestStack $requestStack, userInterface $user=null)
     {
+        
         if($requestStack->getParentRequest()){
             $request=$requestStack->getParentRequest();
             if ($request->isMethod('POST')) {
@@ -346,9 +425,10 @@ class PlanningMCController extends Controller
                         //return $this->redirectToRoute('Planning');
                         //Si polym avec un recurrance, création de cette dernière
                         //dump($demande->getRecurValide());
+                        dump($demande);
                         if($demande->getRecurValide() == "true"){
                             $recur= new RecurrancePolym;
-
+                            
                             //Récupération du type de récurrence(à modifier pour automatisation)
                             $TypRecur = $this->getDoctrine()
                             ->getRepository(TypeRecurrance::class)
@@ -367,8 +447,9 @@ class PlanningMCController extends Controller
                             $manager->flush();
                         }
                     }
-                }
-                else{
+                    $request->getSession()->getFlashbag()->add('success', 'Votre polym a été enregistré.');
+                    //return $this->redirectToRoute('demandes');
+                }else{
                     //dump(count($TabDem));
                     $planning = new Planning();
                     //$demande->setDatePropose($request->get('DatePropose'));
@@ -385,13 +466,10 @@ class PlanningMCController extends Controller
                     $manager = $this->getDoctrine()->getManager();
                         $manager->persist($planning);
                         $manager->flush();
-                       // dump($planning);
                 }            
             }
         }
-        $Titres=[];
-        return $this->render('planning_mc/ModifPolym.html.twig', [
-            'Titres' => $Titres]);
+        return new JsonResponse(['Message'=>"Modification de l'item n° effectuée avec succès",'Code'=>200]);
     }
 
      /**
@@ -667,10 +745,10 @@ class PlanningMCController extends Controller
                 $manager = $this->getDoctrine()->getManager();
                     $manager->persist($planning);
                     $manager->flush();
-
+                    $request->getSession()->getFlashbag()->add('success', 'Création de la polym n°' . $planning->getId() . ' réalisée');
             }
         }
-        $request->getSession()->getFlashbag()->add('success', '1');
+        
         return new JsonResponse(['Message'=>"Vous n'avez pas les droits pour créer une polym",'Code'=>404]);
     }
     
@@ -952,7 +1030,7 @@ class PlanningMCController extends Controller
             ->getRepository(Demandes::class)
             ->findAll();
         }
-        dump($cycles); 
+        //dump($cycles); 
     //Recherche des moyens à afficher sur planning
         $repos=$this->getDoctrine()->getRepository(Moyens::class);
         $moyens=$repos -> findBy(['Id_Service' => '8','Activitees' => 'Plannifie']);
