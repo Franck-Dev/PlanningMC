@@ -626,7 +626,7 @@
         timeline.setWindow(new Date(), new Date(1000*60*60*24*7 + (new Date()).valueOf()));
         }
         document.getElementById('jour').onclick = function() {
-        timeline.setWindow(new Date(), new Date(1000*60*60*24 + (new Date()).valueOf()));
+        timeline.setWindow(new Date(1000*60*60*5+ (new Date()).valueOf()), new Date(1000*60*60*29 + (new Date()).valueOf()));
         }
         document.getElementById('semaine-1').onclick = function() {
         timeline.setWindow(new Date( (new Date()).valueOf())-1000*60*60*24*7,new Date() );
