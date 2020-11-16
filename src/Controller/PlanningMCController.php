@@ -129,7 +129,7 @@ class PlanningMCController extends Controller
 			//On affecte un élément $item à $data
         }
 
-        return new JsonResponse(['Taches'=> $data, 'moyen'=> $dati, 'Ssmoyen'=> $TbEtat]);
+        //return new JsonResponse(['Taches'=> $data, 'moyen'=> $dati, 'Ssmoyen'=> $TbEtat]);
     }    
     /**
      * @Route("/Planning", name="Planning")
