@@ -161,13 +161,14 @@ class PlanningMCController extends Controller
                 $Etats=$repos -> findBy(['Libelle' => $moyen['Moyen']]);
                 // On rajoute les notions d'activitees au moyen pour créer 2 lignes sur planning
                 foreach($Etats as $etat){
-                    if ($moyen['id']!=$etat->getId()){
+                    if ($etat->getActivitees() == 'Plannifie') {
+                        $MoyPla = $etat->getId();
+                    } else {
                         $TbEtat[$a]=['id'=>$etat->getId(), 'content'=>$etat->getActivitees()];
-                        $a=$a+1;
+                         $a=$a+1;
                     }
                 }
-                //dump($TbEtat[$a-1]['id']);
-                $data[$i] = ['id'=> $moyen['id'],  'content'=> $moyen['Moyen'], 'className'=> 'gris', 'nestedGroups' => [$TbEtat[$a-1]['id']]];
+                $data[$i] = ['id'=> $MoyPla, 'style'=>  "color:white;", 'content'=> $moyen['Moyen'], 'className'=> 'gris', 'nestedGroups' => [$TbEtat[$a-1]['id']]];
             }
             else{
                 $data[$i] = ['id'=> $moyen['id'],  'content'=> $moyen['Moyen']];
@@ -186,8 +187,9 @@ class PlanningMCController extends Controller
         //On créé le pourcentage de volumetrie en test, a changer par le réel avec nb outillage
         $Pourc=10;
         foreach($Taches as $tache){
+            //On construit l'info bulle(tooltip) avec certaines données de la polym plannifiée
+            $commentaires=nl2br("Départ: ". ($tache->getDebutDate())->format('G:i') . "\n" .$tache->getNumDemande()->getCommentaires()."\n".$tache->getNumDemande()->getOutillages() ."\n" . "Fin à : " . ($tache->getFinDate())->format('G:i'));
             //On cherche le moyen attribué à la polym suivant la demande et l'activité Plannification
-            $commentaires=$tache->getNumDemande()->getCommentaires()."/".$tache->getNumDemande()->getOutillages();
             $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification(),'Activitees'=> 'Plannifie']);
             if($Pourc<75){
                 $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires,'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%; background:red"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
