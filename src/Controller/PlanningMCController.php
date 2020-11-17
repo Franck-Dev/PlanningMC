@@ -696,7 +696,7 @@ class PlanningMCController extends Controller
             ->getRepository(Planning::class)
             ->findBy(['id' => $idPolym]);
         //$planning->setMoyenUtilise($PolymPla[0]);
-        //dump($PolymPla);
+        dump($PolymPla);
         $form = $this -> createFormBuilder($PolymPla[0])
         -> add('id')
         -> add('identification')
