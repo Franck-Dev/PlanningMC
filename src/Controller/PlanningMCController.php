@@ -16,6 +16,7 @@ use App\Entity\Outillages;
 use App\Entity\ProgMoyens;
 use App\Form\CreationOType;
 use App\Form\PolymFormType;
+use App\Services\FunctIndic;
 use App\Entity\CategoryMoyens;
 use App\Entity\TypeRecurrance;
 use App\Form\CreationProgType;
@@ -25,7 +26,6 @@ use App\Form\CreationMoyensType;
 use PhpParser\Node\Stmt\Foreach_;
 use Doctrine\ORM\EntityRepository;
 use App\Repository\DefaultRepositoryFactory;
-use App\Services\FunctIndic;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Persistence\ObjectManager;
 use Symfony\Component\HttpFoundation\Response;
@@ -37,6 +37,7 @@ use Symfony\Component\Validator\Constraints\Length;
 use Doctrine\ORM\Query\AST\Functions\LengthFunction;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
@@ -46,6 +47,7 @@ use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 
 //use Symfony\Component\HttpFoundation\Session\Session ;
 //use Symfony\Component\Serializer\Serializer;
@@ -129,7 +131,7 @@ class PlanningMCController extends Controller
 			//On affecte un élément $item à $data
         }
 
-        //return new JsonResponse(['Taches'=> $data, 'moyen'=> $dati, 'Ssmoyen'=> $TbEtat]);
+        return new JsonResponse(['Taches'=> $data, 'moyen'=> $dati, 'Ssmoyen'=> $TbEtat]);
     }    
     /**
      * @Route("/Planning", name="Planning")
@@ -149,7 +151,7 @@ class PlanningMCController extends Controller
 
 //Recherche des moyens à afficher sur planning
         $repos=$this->getDoctrine()->getRepository(Moyens::class);
-        $moyens=$repos -> findAllMoyensSvtService ( intval('8') );
+        $moyens=$repos -> findAllMoyensSvtService ( intval('8'), intval('1') );
         $item=$moyens;   
         $data = [];
         $TbEtat=[];
@@ -188,7 +190,7 @@ class PlanningMCController extends Controller
         $Pourc=10;
         foreach($Taches as $tache){
             //On construit l'info bulle(tooltip) avec certaines données de la polym plannifiée
-            $commentaires=nl2br("Départ: ". ($tache->getDebutDate())->format('G:i') . "\n" .$tache->getNumDemande()->getCommentaires()."\n".$tache->getNumDemande()->getOutillages() ."\n" . "Fin à : " . ($tache->getFinDate())->format('G:i'));
+            $commentaires=nl2br("Demande n° ". $tache->getNumDemande()->getId()." / ID Plannif : ". $tache->getId()."\n" ."Départ: ". ($tache->getDebutDate())->format('G:i') . "\n" .$tache->getNumDemande()->getCommentaires()."\n".$tache->getNumDemande()->getOutillages() ."\n" . "Fin à : " . ($tache->getFinDate())->format('G:i'));
             //On cherche le moyen attribué à la polym suivant la demande et l'activité Plannification
             $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification(),'Activitees'=> 'Plannifie']);
             if($Pourc<75){
@@ -455,7 +457,6 @@ class PlanningMCController extends Controller
                     //dump(count($TabDem));
                     $planning = new Planning();
                     //$demande->setDatePropose($request->get('DatePropose'));
-                    //dump($TabDem);
                     //Récupération de l'objet polym suivant l'id concerné
                     $PolymPla = $this->getDoctrine()
                         ->getRepository(Planning::class)
@@ -696,11 +697,33 @@ class PlanningMCController extends Controller
             ->getRepository(Planning::class)
             ->findBy(['id' => $idPolym]);
         //$planning->setMoyenUtilise($PolymPla[0]);
-        dump($PolymPla);
+        dump($PolymPla[0]);
         $form = $this -> createFormBuilder($PolymPla[0])
-        -> add('id')
-        -> add('identification')
-        -> add('action')
+        ->add('id', HiddenType::class, [
+            'label' => 'ID',
+        ])
+        ->add('identification', TextType::class, [
+            'label' => 'Moyen',
+            'disabled'=>true,
+        ])
+        ->add('action', TextType::class, [
+            'label' => 'Programme',
+            'disabled'=>true,
+        ])
+        -> add('num_demande', EntityType::class,[
+            'class' =>Demandes::class,
+            'query_builder' => function ( EntityRepository $er ) {
+                return $er -> createQueryBuilder ( 'u' )
+                ->Where('u.id = :id')
+                //->andWhere('u.Activitees = :val')
+                ->setParameter('id', 'id' );
+            },
+            'choice_label' => 'Commentaires',
+            'label' => 'Commentaires'
+        ])
+        // ->add('num_demande', TextType::class, [
+        //     'label' => 'Outillages',
+        // ])
         -> add('debut_date', DateTimeType::class,['disabled'=>true])
         -> add('fin_date', DateTimeType::class,['disabled'=>true])
         -> add('statut', ChoiceType::class, [
@@ -921,6 +944,7 @@ class PlanningMCController extends Controller
                             'NON' => false,
                             'OUI' => true]])
                       ->getForm();
+                $ExDem = true;
             }
             else{   
                 $form = $this -> createFormBuilder($demande)
@@ -938,6 +962,7 @@ class PlanningMCController extends Controller
                             'NON' => false,
                             'OUI' => true]])
                       ->getForm();
+                $ExDem = false;
             }
 //Si la demande existe c'est une modification , sinon une création
         if($newdemande==false){
@@ -993,6 +1018,7 @@ class PlanningMCController extends Controller
 
         return $this->render('planning_mc/CreationDemandes.html.twig',[
            'Titres' => $Titres,
+           'existDem' => $ExDem,
            'formDemande' => $form->createView()
         ]);
         
@@ -1409,7 +1435,7 @@ class PlanningMCController extends Controller
         $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
 
         $Titres=$repo -> findBy(['Description' => 'PROGRAMMATION']);
-        dump($Titres);
+
         return $this->render('planning_mc/PROGRAMMATION.html.twig',[
             'Titres' => $Titres,
         ]);
@@ -1747,7 +1773,6 @@ class PlanningMCController extends Controller
     {
         $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'PE']);
-        dump($Titres);
         
         return $this->render('planning_mc/articles/edit.html.twig',[
             'Titres' => $Titres,

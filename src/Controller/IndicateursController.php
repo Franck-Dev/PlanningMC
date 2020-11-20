@@ -346,14 +346,20 @@ class IndicateursController extends AbstractController
                 $Cycle = "mois " . $MoisDer . " à " . $MoisEC;
                 $Type = "week";
                 $Titre = "Semaines";
-                $Format = "WW";
+                $Format = "D/M";
                 $x=11*24*7;
                 break;
             case 'Mois':
-                $CycleAnal = "- 13 months";
                 //Recherche du numéro des mois recherchés
+                $unjouran= new \datetime();
+                $unjouran->modify('First day of january this year');
+                $CycleAnal = "- 12 months";
                 $MoisEC = date("M/Y", strtotime('today '.date('Y') ));
                 $MoisDer = date("M/Y", strtotime($CycleAnal.date('Y') ));
+                if ($MoisDer < $unjouran) {
+                    $MoisDer = date("M/Y", strtotime('First day of january this year '.date('Y') ));
+                    $CycleAnal = date_diff(new \datetime, $unjouran)->format('%R%m months');
+                }
                 //Création des paramètres types pour graphique
                 $Cycle = "mois " . $MoisDer . " à " . $MoisEC;
                 $Type = "month";
@@ -407,7 +413,6 @@ class IndicateursController extends AbstractController
             $datuy2[$i] = ['x'=> strtotime($polym['Annees'].'-'.$polym['Mois'].'-'.$polym['jour'])*1000,'y' => $y2];
             $i = $i + 1;
         }
-        
         $TRSem= new JsonResponse($datuy); 
         $TxSem= new JsonResponse($datuy1);
         $ProgSem= new JsonResponse($datuy2);

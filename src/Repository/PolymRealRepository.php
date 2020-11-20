@@ -208,7 +208,7 @@ public function findTRSJour ( $dateF, $dateD, $type ) : array
     $query = $entityManager -> createQuery (
         'SELECT SUM(TIMETOSEC(TIMEDIFF(p.FinPolym, p.DebPolym))) as DureePolym, avg(p.PourcVolCharge) as PourVol, count(p.Programmes) as NbrProg, DAY(p.DebPolym) as jour,MONTH(p.DebPolym) as Mois, YEAR(p.DebPolym) as Annees, DATE_FORMAT (p.DebPolym,\'%j\') as Journees, DATE_FORMAT (p.DebPolym,\'%v\') as Semaines
         FROM App\Entity\PolymReal p   
-        WHERE p.DebPolym > :dateD AND p.DebPolym < :dateF
+        WHERE p.DebPolym > :dateD AND p.DebPolym < :dateF  
         GROUP BY '.$type);
     $query-> setParameter ( 'dateD' , $dateD );
     $query-> setParameter ('dateF' , $dateF);

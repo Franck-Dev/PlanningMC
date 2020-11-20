@@ -18,10 +18,16 @@
 	{{form_row(formDemande.commentaires, {'attr' : {'placeholder' : "Entrez vos commentaires si besoin" }}) }}
 	{{form_row(formDemande.Reccurance, {'attr' : {'placeholder' : "True ou False" }}) }}
 	
-	<button type="submit" class="btn btn-success">
-		Enregistrer la Demande
-	</button>
-	
+	{% if existDem == true %}
+		<button type="submit" class="btn btn-warning">
+			Modifier la Demande
+		</button>
+	{% else %}
+		<button type="submit" class="btn btn-success">
+			Enregistrer la Demande
+		</button>
+	{% endif %}
+
 	{{ form_end(formDemande) }}
 
 

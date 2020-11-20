@@ -47,18 +47,29 @@ class MoyensRepository extends ServiceEntityRepository
         ;
     }
     */
-    public function findAllMoyensSvtService ( $IdService ) : array
+    public function findAllMoyensSvtService ( $IdService, $statut=null ) : array
 {
     $entityManager = $this -> getEntityManager ();
-
-    $query = $entityManager -> createQuery (
-        'SELECT DISTINCT p.Libelle as Moyen, p.id, count(p.Activitees) as SousTitres
-        FROM App\Entity\Moyens p
-        WHERE p.Id_Service = :service
-        GROUP BY Moyen'
-    ) -> setParameter ( 'service' , $IdService );
-    // returns an array of Product objects
-    return $query -> execute ();
+    if (!$statut) {
+        $query = $entityManager -> createQuery (
+            'SELECT DISTINCT p.Libelle as Moyen, p.id, count(p.Activitees) as SousTitres
+            FROM App\Entity\Moyens p
+            WHERE p.Id_Service = :service
+            GROUP BY Moyen'
+        ) -> setParameter ( 'service' , $IdService );
+        // returns an array of Product objects
+        return $query -> execute ();
+    } else {
+        $query = $entityManager -> createQuery (
+            'SELECT DISTINCT p.Libelle as Moyen, p.id, count(p.Activitees) as SousTitres
+            FROM App\Entity\Moyens p
+            WHERE p.Id_Service = :service AND p.Operationnel = :stat
+            GROUP BY Moyen'
+        ) -> setParameter ( 'service' , $IdService )
+        -> setParameter ( 'stat' , $statut );
+        // returns an array of Product objects
+        return $query -> execute ();
+    }
 }
 //Trouver les moyens correspondant au critères
 public function findMoyens ( $IdService,$IdCate ) : array

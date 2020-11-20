@@ -13,9 +13,8 @@
             width: 600px;
         }
         .gris{
-            background: rgb(106, 160, 182);
-            border-color: red;
-            background-color: blue;
+            background: rgb(0, 50, 95);
+            border-color: rgb(230, 0, 50);
         }
         .vis-time-axis .vis-text {
             color: white;
@@ -222,9 +221,6 @@
                         {% if is_granted('ROLE_CE_POLYM') %}
                             <div id="Content" class="modal-body">
                                 {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolymf',{'user': app.user}) )}}
-                                {# <button type="button" class="success" value="dutqusd" onclick=Planning()>
-                                        <span aria-hidden="true"></span>
-                                </button> #}
                             </div>
                         {% elseif is_granted('ROLE_REGLEUR') %}
                             <div id="Content" class="modal-body">
@@ -656,8 +652,8 @@
                     console.log(conteneur);
                     var timeline = new vis.Timeline (conteneur, items, groups, options);
                 }
-                //$(document).reload(true); 
             });
+            //$(document).reload(true); 
         }
     </script>
 <div class="sweet-overlay" tabindex="-1" style="opacity: -0.02; display: none;"></div><div class="sweet-alert hideSweetAlert" data-custom-class="" data-has-cancel-button="true" data-has-confirm-button="true" data-allow-outside-click="false" data-has-done-function="true" data-animation="pop" data-timer="null" style="display: none; margin-top: -200px; opacity: -0.01;"><div class="sa-icon sa-error" style="display: none;">
