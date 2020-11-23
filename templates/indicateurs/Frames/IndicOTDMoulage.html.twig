@@ -1,0 +1,52 @@
+{% extends '/indicateurs/Frames/Layout.html.twig' %}
+{% block body %}
+<style>
+</style>
+<div class="container-fluid">
+    <div class="card shadow">
+    <h4 class="card-header">OTD Moulage</h4>
+        <div class="card-block">
+            <div id="orders-spline-chart"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block javascripts %}
+<script src="{{ asset('build/jquery.min.js') }}"></script>
+<script src="{{ asset('build/canvasjs.min.js') }}"></script>
+<script type="text/javascript">
+//Graphique sur le suivi des OTD moulage/polym
+    $(function () {
+            
+            //CanvasJS spline chart to show orders from Jan 2015 to Dec 2015
+            var ordersSplineChart = new CanvasJS.Chart("orders-spline-chart", {
+                animationEnabled: true,
+                exportEnabled: true,
+                theme: "theme2",
+                toolTip: {
+                    borderThickness: 0,
+                    cornerRadius: 0
+                },
+                axisX: {
+                    labelFontSize: 14,
+                    maximum: new Date("31 Dec 2019"),
+                    valueFormatString: "MMM YYYY"
+                },
+                axisY: {
+                    gridThickness: 0,
+                    labelFontSize: 14,
+                    lineThickness: 2
+                },
+                data: [
+                    {
+                        type: "spline",
+                        dataPoints: {{OTD|raw}}
+                    }
+                ]
+            });
+
+            ordersSplineChart.render();      
+            
+        });
+</script>
+{% endblock %}

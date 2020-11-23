@@ -1,0 +1,55 @@
+{% extends '/indicateurs/Frames/Layout.html.twig' %}
+{% block body %}
+<style>
+</style>
+<div class="container-fluid">
+    <div class="card shadow">
+    <h4 class="card-header">Qté Produite au {{Jour| date('d/m/Y')}} : {{TotPcs|raw}} <span class="tag tag-success" id="revenue-tag">pcs</span></h4>
+        <div class="card-block">
+            <div id="revenue-column-chart"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block javascripts %}
+<script src="{{ asset('build/jquery.min.js') }}"></script>
+<script src="{{ asset('build/canvasjs.min.js') }}"></script>
+<script type="text/javascript">
+//Graphique sur la répartition des pcs svt programmes et machine
+    $(function () {
+            //var totalRevenue = 15341110;
+            //var totalUsers = 7687036;
+            // CanvasJS column chart to show revenue from Jan 2015 - Dec 2015
+            var revenueColumnChart = new CanvasJS.Chart("revenue-column-chart", {
+                animationEnabled: true,
+                exportEnabled: true,
+                backgroundColor: "transparent",
+                theme: "theme2",
+                axisX: {
+                    labelFontSize: 14,
+                    valueFormatString: "MM YY",
+                    interval: 1,
+                    intervalType: "month"
+                },
+                axisY: {
+                    labelFontSize: 14,
+                    prefix: ""
+                },
+                toolTip: {
+                    borderThickness: 0,
+                    cornerRadius: 0
+                },
+                data: [
+                    {
+                        type: "column",
+                        yValueFormatString: "####",
+                        xValueType: "dateTime",
+                        dataPoints: {{RepartPcs|raw}}
+                    }
+                ]
+            });
+
+            revenueColumnChart.render();
+    })
+</script>
+{% endblock %}

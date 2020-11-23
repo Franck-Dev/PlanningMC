@@ -13,7 +13,111 @@
             width: 600px;
         }
         .gris{
-            background: rgb(106, 160, 182);
+            background: rgb(0, 50, 95);
+            border-color: rgb(230, 0, 50);
+        }
+        .vis-time-axis .vis-text {
+            color: white;
+        }
+        .vis-time-axis .vis-grid.vis-h5 {
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h6{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h7{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h8{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h9{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h10{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h11{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h12{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h13{
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h14{
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h15{
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h16{
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h17{
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h18 {
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h19 {
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h20 {
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h21 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h22 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h23 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h0 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h1 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h2 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h3 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h4 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-text.vis-saturday,
+        .vis-time-axis .vis-text.vis-sunday {
+        color: black;
         }
         .progress-wrapper {
             background: white;
@@ -38,14 +142,9 @@
             z-index: 1;
         }
 
-        .modal, .modal-header { 
-            z-index: 10000;
-            opacity:    1;
-            width: 400px;
-            height: 700px;
-            position: absolute;
-            margin: 10% auto;
-            background: blue;
+        .modal-body { 
+            background: rgb(0, 50, 95);
+            color:  white;
         }
         .button{
             display:    block;
@@ -100,31 +199,34 @@
                 <input type="button" id="semaine" value="Semaine en cours" class="col-xs-2">
                 <input type="button" id="semaine+1" value="Semaine suivante" class="col-xs-2">
                 <!--<h2 class="col-lg-2">Planning de la semaine </h2>-->  
+                <a href="" class="btn btn-success" onclick=Planning()>Refresh</a>
                 {% if is_granted('ROLE_PLANIF') %}
-                    <a href="{{ path('CreaPolymRecur', {'user': app.user}) }}" class="btn_valid">Plannification</a>
+                    <a href="{{ path('CreaPolymRecur', {'user': app.user}) }}" class="btn btn-success">Plannification</a>
                 {% endif %}
             </div>
            <!-- Modal -->  
             <div id="Modale" class="modal" aria-hidden="true">
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
-                        <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <div class="modal-header bg-primary">
+                            <span class="logo-lg">
+                                <img src="{{ asset('build/images/LOGO_DAHER.png') }}" width="117" height="46"/>
+                            </span>
+                            <button type="button" class="close bg-alert" data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
                         {% if is_granted('ROLE_CE_POLYM') %}
-                            <div id="Modale" class="modal-body"></div>
-                            {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolymf',{'user': app.user}) )}}
-                            <button type="button" class="success" value="Valider">
-                                    <span aria-hidden="true"></span>
-                            </button>
+                            <div id="Content" class="modal-body">
+                                {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolymf',{'user': app.user}) )}}
+                            </div>
                         {% elseif is_granted('ROLE_REGLEUR') %}
-                            <div id="Modale" class="modal-body"></div>
-                            {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolym',{'user': app.user}) )}}
-                            <button type="button" class="success" value="Modifier">
-                                    <span aria-hidden="true"></span>
-                            </button>
+                            <div id="Content" class="modal-body">
+                                {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolym',{'user': app.user}) )}}
+                                <button type="button" class="success" value="Modifier">
+                                        <span aria-hidden="true"></span>
+                                </button>
+                            </div>
                         {% endif %}
                     </div>
                 </div>
@@ -165,13 +267,12 @@
             </table>
     </script>
     <script type="text/javascript">
-    const lang = navigator.language; // "de_DE"; // "en_US"; // 
+    const lang = navigator.language; // "fr_FR"; // "en_US"; // 
     const locale = (lang && lang !== undefined) ? lang.match(/^\w{2}/)[0] : 
     (lang === "de" || lang === "fr" || lang === "it" || lang === "nl") ? lang : "en"; // "en"; // "de"; //
         // create a handlebars template
         var source = document.getElementById('item-template').innerHTML;
         var template = Handlebars.compile(source);
-        console.log(source)
         var conteneur = document.getElementById ('visualization');
         
         var groupsold = {{Moyens|raw}};
@@ -194,6 +295,9 @@
         ]);
 
         var options = {
+            locale: 'fr',
+            zoomMin: 60000000,
+            zoomMax: 20160000000,
             template:template ,
             stack: true,
             start: new Date(),
@@ -232,7 +336,6 @@
                         data: {id: item.id, olddatedeb: items._data[item.id].start, olddatefin: items._data[item.id].end, moyen: item.group, cycle: item.programmes, newdatedeb: DateDeb, newdatefin: DateFin},
                         url: "{{ path('Modif_Polym_Pla') }}",
                         success: function(dat){
-                            console.log(dat);
                         }
                     });
                 });
@@ -247,10 +350,10 @@
                         beforeSend : function() { // traitements JS à faire AVANT l'envoi AJAX
                          //Mettre à jour la date dans l'input pour l'url
                         },
-                        success: function(data){
-                            console.log(data);                           
-                            $('#Modale').html(data); // affichage des résultats dans la modal
-                            $('#Modale').show();
+                        success: function(data){                        
+                            // affichage des résultats dans la modal
+                            $('#Content').show().html(data);
+                            $("#Modale").modal('show');
                         }
                     });
                 });
@@ -302,16 +405,15 @@
                         data: {DateDeb: DateDeb ,Hdeb: HeureDeb, Moyen: item.group},
                         url: "{{ path('Polym_Edit') }}",
                         beforeSend : function() { // traitements JS à faire AVANT l'envoi AJAX
-                         //Mettre à jour la date dans l'input pour l'url
+                        //Mettre à jour la date dans l'input pour l'url
                         },
-                        success: function(data){
-                            console.log(data);                           
-                            $('#Modale').html(data); // affichage des résultats dans la modal
-                            $('#Modale').show();
+                        success: function(data){                       
+                            $('#Content').html(data); // affichage des résultats dans la modal
+                            // $('#Modale').show();
+                            $("#Modale").modal('show');
                         }
                     });
-                });
-                    
+                });       
             },
 
             tooltip: {
@@ -518,16 +620,41 @@
         } 
 
         document.getElementById('semaine').onclick = function() {
-        timeline.setWindow(new Date(), new Date(1000*60*60*24*7 + (new Date()).valueOf()));
+        timeline.setWindow(new Date(new Date().valueOf()-(new Date().getDay())*(new Date().getHours())*60*60*1000), new Date(1000*60*60*24*(8-new Date().getDay()) + (new Date()).valueOf()));
         }
         document.getElementById('jour').onclick = function() {
-        timeline.setWindow(new Date(), new Date(1000*60*60*24 + (new Date()).valueOf()));
+        timeline.setWindow(new Date().setHours(4), new Date(1000*60*60*24 + (new Date().setHours(4)).valueOf()));
         }
         document.getElementById('semaine-1').onclick = function() {
         timeline.setWindow(new Date( (new Date()).valueOf())-1000*60*60*24*7,new Date() );
         }
         document.getElementById('semaine+1').onclick = function() {
         timeline.setWindow(new Date(1000*60*60*24*7 + (new Date()).valueOf()), new Date(1000*60*60*24*14 + (new Date()).valueOf()));
+        }
+        function Planning(){
+            $.ajax({
+                method: "POST",
+                data: {},
+                url: "{{ path('Planning_Edit') }}",
+                beforeSend : function() { // traitements JS à faire AVANT l'envoi AJAX
+                    //Mettre à jour la date dans l'input pour l'url
+                },
+                success: function(data){
+                    var items = new vis.DataSet (data.Taches);
+                    var groups = new vis.DataSet();
+      
+                    groups.add(data.moyen);
+                    groups.add(data.Ssmoyen);
+
+                    var groupIds = groups.getIds();
+                    var randomGroupId = groupIds[Math.floor(Math.random() * groupIds.length)];
+                    var conteneur = document.getElementById ('visualization');
+                    console.log(items);
+                    console.log(conteneur);
+                    var timeline = new vis.Timeline (conteneur, items, groups, options);
+                }
+            });
+            //$(document).reload(true); 
         }
     </script>
 <div class="sweet-overlay" tabindex="-1" style="opacity: -0.02; display: none;"></div><div class="sweet-alert hideSweetAlert" data-custom-class="" data-has-cancel-button="true" data-has-confirm-button="true" data-allow-outside-click="false" data-has-done-function="true" data-animation="pop" data-timer="null" style="display: none; margin-top: -200px; opacity: -0.01;"><div class="sa-icon sa-error" style="display: none;">

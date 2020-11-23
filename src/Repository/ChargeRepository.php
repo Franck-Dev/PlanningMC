@@ -86,6 +86,41 @@ class ChargeRepository extends ServiceEntityRepository
         return $query -> execute ();
     }
 
+    // Calcul de la charge polym par semaine
+    public function findReparChargeW ( $dateD,$dateF ) : array
+    {
+        $entityManager = $this -> getEntityManager ();
+    
+        $query = $entityManager -> createQuery (
+            'SELECT p.DateDeb as Jour, count(p.ReferencePcs) as NbrPcs, p.NumProg as Cycles
+            FROM App\Entity\Charge p 
+            WHERE p.DateDeb > :dateD AND  p.DateDeb < :dateF AND p.Statut IS NULL
+            GROUP BY Jour,Cycles'
+        );
+        $query-> setParameter ( 'dateD' , $dateD );
+        $query-> setParameter ('dateF' , $dateF);
+        // returns an array of Product objects
+        return $query -> execute ();
+    }
+    
+    public function findReparChargeWCycle ( $dateD,$dateF,$cycle ) : array
+    {
+        $entityManager = $this -> getEntityManager ();
+    
+        $query = $entityManager -> createQuery (
+            'SELECT p.DateDeb as Jour, count(p.ReferencePcs) as NbrPcs
+            FROM App\Entity\Charge p 
+            WHERE p.DateDeb > :dateD AND  p.DateDeb <= :dateF AND p.NumProg = :cycle 
+            GROUP BY Jour'
+        );
+        $query-> setParameter ( 'dateD' , $dateD);
+        $query-> setParameter ('dateF' , $dateF);
+        $query-> setParameter ('cycle' , $cycle);
+        //$query-> setParameter ('stat' , '');//Mettre le statut CHARGE pour différencier les OF libres ou planifiés
+        // returns an array of Product objects
+        return $query -> execute ();
+    }
+
     /*
     public function findOneBySomeField($value): ?Charge
     {

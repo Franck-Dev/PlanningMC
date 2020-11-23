@@ -2,25 +2,25 @@
 
 namespace App\Repository;
 
-use App\Entity\ChargFige;
+use App\Entity\ChargeFige;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Persistence\ManagerRegistry;
 
 /**
- * @method ChargFige|null find($id, $lockMode = null, $lockVersion = null)
- * @method ChargFige|null findOneBy(array $criteria, array $orderBy = null)
- * @method ChargFige[]    findAll()
- * @method ChargFige[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method ChargeFige|null find($id, $lockMode = null, $lockVersion = null)
+ * @method ChargeFige|null findOneBy(array $criteria, array $orderBy = null)
+ * @method ChargeFige[]    findAll()
+ * @method ChargeFige[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class ChargFigeRepository extends ServiceEntityRepository
+class ChargeFigeRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, ChargFige::class);
+        parent::__construct($registry, ChargeFige::class);
     }
 
     // /**
-    //  * @return ChargFige[] Returns an array of ChargFige objects
+    //  * @return ChargeFige[] Returns an array of ChargeFige objects
     //  */
     /*
     public function findByExampleField($value)
@@ -37,7 +37,7 @@ class ChargFigeRepository extends ServiceEntityRepository
     */
 
     /*
-    public function findOneBySomeField($value): ?ChargFige
+    public function findOneBySomeField($value): ?ChargeFige
     {
         return $this->createQueryBuilder('c')
             ->andWhere('c.exampleField = :val')

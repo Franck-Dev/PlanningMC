@@ -121,14 +121,9 @@
         #volet_droit:target a.fermer {
             display: block;
         }
-        .modal, .modal-header { 
-            z-index: 10000;
-            opacity:    1;
-            width: 400px;
-            height: auto;
-            position: fixed;
-            margin: 10% auto;
-            background: blue;
+        .modal-body { 
+            background: rgb(0, 50, 95);
+            color:  white;
         }
 	</style>
 {% endblock %}
@@ -157,7 +152,7 @@
                 </div>
             </div>
         </div>	
-		<a href="#volet" class="ouvrir" aria-hidden="true" onclick=MaJkpiRC("repartition-charge",'{{ path('Maj_Indicateur') }}')>Répartion Charge !</a>
+		<a href="#volet" class="ouvrir" aria-hidden="true" onclick=MaJkpiRC("repartition-charge",'{{ path('Maj_Indicateur') }}')>Répartition Charge !</a>
         <a href="#volet_clos" class="fermer" aria-hidden="true">fermer !</a>
 	</div>
 </div>
@@ -175,6 +170,24 @@
 		<a href="#volet_droit" class="ouvrir" aria-hidden="true" onclick=MaJkpi("occupation-moyen",'{{ path('Maj_Indicateur') }}')>Taux Occupation !</a>
         <a href="#volet_clos_droit" class="fermer" aria-hidden="true">fermer !</a>
 	</div>
+</div>
+<!-- Modal -->  
+<div id="Modale" class="modal" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="logo-lg">
+                    <img src="{{ asset('build/images/LOGO_DAHER.png') }}" width="117" height="46"/>
+                </span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div id="Modale" class="modal-body">
+                {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolym',{'user': app.user}) )}}
+            </div>
+        </div>
+    </div>
 </div>
  {#<pre>{{dump(items)}}</pre>#}  
  {#<pre> {{ dump(app.request.attributes.get("demande")) }} </pre>#}    
@@ -291,21 +304,7 @@
             <h1>Prévisualisation des créneaux de polymérisations ✅</h1>
  		<div id="visualization">
     
-            <!-- Modal -->  
-                <div id="Modale" class="modal" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <div id="Modale" class="modal-body">
-                                {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolym',{'user': app.user}) )}}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            
 
 		</div>	  
 </div>

@@ -59,7 +59,7 @@ class Outillages
     private $CoefAero;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\ProgMoyens", mappedBy="outillages")
+     * @ORM\ManyToMany(targetEntity="App\Entity\ProgMoyens", inversedBy="outillages",cascade={"persist"})
      */
     private $Programme;
 
@@ -93,10 +93,26 @@ class Outillages
      */
     private $chargFiges;
 
+    /**
+     * @ORM\ManyToMany(targetEntity="App\Entity\Articles", mappedBy="OutMoulage", cascade={"persist"})
+     */
+    private $articles;
+
+    /**
+     * @ORM\Column(type="smallint")
+     */
+    private $NbIndus;
+
+    /**
+     * @ORM\Column(type="date", nullable=true)
+     */
+    private $DateDispo;
+
     public function __construct()
     {
         $this->Programme = new ArrayCollection();
         $this->chargFiges = new ArrayCollection();
+        $this->articles = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -311,6 +327,58 @@ class Outillages
             $this->chargFiges->removeElement($chargFige);
             $chargFige->removeOT($this);
         }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Articles[]
+     */
+    public function getArticles(): Collection
+    {
+        return $this->articles;
+    }
+
+    public function addArticle(Articles $article): self
+    {
+        if (!$this->articles->contains($article)) {
+            $this->articles[] = $article;
+            $article->addOutMoulage($this);
+        }
+
+        return $this;
+    }
+
+    public function removeArticle(Articles $article): self
+    {
+        if ($this->articles->contains($article)) {
+            $this->articles->removeElement($article);
+            $article->removeOutMoulage($this);
+        }
+
+        return $this;
+    }
+
+    public function getNbIndus(): ?int
+    {
+        return $this->NbIndus;
+    }
+
+    public function setNbIndus(int $NbIndus): self
+    {
+        $this->NbIndus = $NbIndus;
+
+        return $this;
+    }
+
+    public function getDateDispo(): ?\DateTimeInterface
+    {
+        return $this->DateDispo;
+    }
+
+    public function setDateDispo(?\DateTimeInterface $DateDispo): self
+    {
+        $this->DateDispo = $DateDispo;
 
         return $this;
     }

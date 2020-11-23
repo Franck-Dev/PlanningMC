@@ -89,15 +89,17 @@ class PolymRealRepository extends ServiceEntityRepository
     // returns an array of Product objects
     return $query -> execute ();
 }
-// Calcul de nombre total de pcs sur 13 mois
-public function findAllPcs ( $date ) : array
+// Calcul de nombre total de pcs sur une durée
+public function findAllPcs ( $dateDeb, $dateFin ) : array
 {
     $entityManager = $this -> getEntityManager ();
     $query = $entityManager -> createQuery (
         'SELECT sum(p.NbrPcs)
         FROM App\Entity\PolymReal p LEFT OUTER JOIN  App\Entity\ProgMoyens g WITH g.id = p.Programmes 
-        WHERE p.DebPolym > :date'
-    ) -> setParameter ( 'date' , $date );
+        WHERE p.DebPolym > :dateDeb AND p.DebPolym < :dateFin'
+    );
+    $query-> setParameter ( 'dateDeb' , $dateDeb );
+    $query-> setParameter ( 'dateFin' , $dateFin );
     // returns an array of Product objects
     return $query -> execute ();
 }
@@ -191,16 +193,23 @@ public function findRapportPcsH ( $date  ) : array
     // returns an array of Product objects
     return $query -> execute ();
 }
-// Calcul du TRS par jour
-public function findTRSJour ( $dateF,$dateD ) : array
+
+/**
+ * Calcul du TRS par jour
+ *
+ * @param  date $dateF
+ * @param  date $dateD
+ * @return array
+ */
+public function findTRSJour ( $dateF, $dateD, $type ) : array
 {
     $entityManager = $this -> getEntityManager ();
 
     $query = $entityManager -> createQuery (
-        'SELECT SUM(TIMETOSEC(TIMEDIFF(p.FinPolym, p.DebPolym))) as DureePolym, avg(p.PourcVolCharge) as PourVol, count(p.Programmes) as NbrProg, DAY(p.DebPolym) as jour,MONTH(p.DebPolym) as mois, YEAR(p.DebPolym) as annee, DATE_FORMAT (p.DebPolym,\'%j\') as journee
+        'SELECT SUM(TIMETOSEC(TIMEDIFF(p.FinPolym, p.DebPolym))) as DureePolym, avg(p.PourcVolCharge) as PourVol, count(p.Programmes) as NbrProg, DAY(p.DebPolym) as jour,MONTH(p.DebPolym) as Mois, YEAR(p.DebPolym) as Annees, DATE_FORMAT (p.DebPolym,\'%j\') as Journees, DATE_FORMAT (p.DebPolym,\'%v\') as Semaines
         FROM App\Entity\PolymReal p   
-        WHERE p.DebPolym > :dateD AND p.DebPolym < :dateF
-        GROUP BY journee');
+        WHERE p.DebPolym > :dateD AND p.DebPolym < :dateF  
+        GROUP BY '.$type);
     $query-> setParameter ( 'dateD' , $dateD );
     $query-> setParameter ('dateF' , $dateF);
     // returns an array of Product objects

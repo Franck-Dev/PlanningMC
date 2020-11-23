@@ -1,0 +1,72 @@
+{% extends '/indicateurs/Frames/Layout.html.twig' %}
+{% block body %}
+<style>
+</style>
+<div class="container-fluid">
+    <div class="card shadow">
+        <h4 class="card-header">Productivité de la semaine {{Semaine|raw}} : {{RapportPH|raw}} pcs/H</h4>
+        <div class="card-block">
+            <div id="Rapport-Heures-pieces"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block javascripts %}
+<script src="{{ asset('build/jquery.min.js') }}"></script>
+<script src="{{ asset('build/canvasjs.min.js') }}"></script>
+<script type="text/javascript">
+//Graphique sur la répartition des pcs svt programmes et machine
+    $(function () {
+            // CanvasJS bar chart secondery axis
+            var chart = new CanvasJS.Chart("Rapport-Heures-pieces", {
+                exportEnabled: true,
+                animationEnabled: true,
+                title:{
+                    text: ""
+                },
+                subtitles: [{
+                    text: ""
+                }], 
+                axisX: {
+                    title: "Semaines"
+                },
+                axisY: {
+                    title: "Heures",
+                    titleFontColor: "#4F81BC",
+                    lineColor: "#4F81BC",
+                    labelFontColor: "#4F81BC",
+                    tickColor: "#4F81BC"
+                },
+                axisY2: {
+                    title: "Pièces",
+                    titleFontColor: "#C0504E",
+                    lineColor: "#C0504E",
+                    labelFontColor: "#C0504E",
+                    tickColor: "#C0504E"
+                },
+                toolTip: {
+                    shared: true
+                },
+                legend: {
+                    cursor: "pointer"
+                },
+                data: [{
+                    type: "column",
+                    name: "Heures Prod",
+                    showInLegend: true,      
+                    //yValueFormatString: "#,##0.# Units",
+                    dataPoints: {{RapportH|raw}}
+                },
+                {
+                    type: "column",
+                    name: "Nbr Pcs",
+                    axisYType: "secondary",
+                    showInLegend: true,
+                    yValueFormatString: "#,##0.# Pièces",
+                    dataPoints: {{RapportPcs|raw}}
+                }]
+            });
+            chart.render();
+    })
+</script>
+{% endblock %}

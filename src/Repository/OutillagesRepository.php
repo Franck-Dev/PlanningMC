@@ -47,4 +47,27 @@ class OutillagesRepository extends ServiceEntityRepository
         ;
     }
     */
+        
+    public function myFindByCharFiG($ChargeFiG){
+        $qb = $this->createQueryBuilder('outillages')
+           ->leftJoin ('outillages.chargFiges','t')
+           ->where('t.Code = :code')
+           ->setParameter('code', $ChargeFiG);
+         
+        $query = $qb->getQuery();
+        $results = $query->getResult();
+        return $results;
+    }
+
+    public function myFindByOutillage($RefPC){
+        $qb = $this->createQueryBuilder('outillages')
+           ->leftJoin ('outillages.articles','t')
+           ->where('t.Reference = :ref')
+           ->setParameter('ref', $RefPC);
+         
+        $query = $qb->getQuery();
+        $results = $query->getResult();
+        return $results;
+    }
+
 }
