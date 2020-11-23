@@ -14,6 +14,7 @@ use App\Entity\PolymReal;
 use App\Entity\ConfSsmenu;
 use App\Entity\Outillages;
 use App\Entity\ProgMoyens;
+use App\Form\ComOutilType;
 use App\Form\CreationOType;
 use App\Form\PolymFormType;
 use App\Services\FunctIndic;
@@ -41,13 +42,13 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
-use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 
 //use Symfony\Component\HttpFoundation\Session\Session ;
 //use Symfony\Component\Serializer\Serializer;
@@ -338,6 +339,7 @@ class PlanningMCController extends Controller
     } 
      /**
      * @Route("/PlanningMC/Creation/", name="CreaDemPolymf", condition="request.isXmlHttpRequest()")
+     * @Security("has_role('ROLE_CE_POLYM')")
      */
     public function CreaDemPolymf(Request $request,RequestStack $requestStack, userInterface $user=null)
     {
@@ -391,7 +393,6 @@ class PlanningMCController extends Controller
 
                     //Récupération de l'ID de la demande pour plannifier la polym en suivant
                     $DemVal = $demande->getId();
-
                     //On créé la polym si une demande a été réalisé
                     if ($DemVal){
                         $Planning=new Planning();
@@ -428,11 +429,8 @@ class PlanningMCController extends Controller
 
                         //return $this->redirectToRoute('Planning');
                         //Si polym avec un recurrance, création de cette dernière
-                        //dump($demande->getRecurValide());
-                        dump($demande);
                         if($demande->getRecurValide() == "true"){
                             $recur= new RecurrancePolym;
-                            
                             //Récupération du type de récurrence(à modifier pour automatisation)
                             $TypRecur = $this->getDoctrine()
                             ->getRepository(TypeRecurrance::class)
@@ -454,21 +452,23 @@ class PlanningMCController extends Controller
                     $request->getSession()->getFlashbag()->add('success', 'Votre polym a été enregistré.');
                     //return $this->redirectToRoute('demandes');
                 }else{
-                    //dump(count($TabDem));
                     $planning = new Planning();
                     //$demande->setDatePropose($request->get('DatePropose'));
                     //Récupération de l'objet polym suivant l'id concerné
                     $PolymPla = $this->getDoctrine()
                         ->getRepository(Planning::class)
                         ->findBy(['id' =>$TabDem['id']]);
-                    //dump($PolymPla);
                     $planning=$PolymPla[0];
-                    //dump($planning);
+
+                    $demande= $planning->getNumDemande();
+                    $demande->setOutillages($TabDem["num_demande"]["Outillages"]);
+                    $demande->setCommentaires($TabDem["num_demande"]["Commentaires"]);
+
                     $planning->setStatut($TabDem['statut']);
-                    //dump($planning);
+
                     $manager = $this->getDoctrine()->getManager();
-                        $manager->persist($planning);
-                        $manager->flush();
+                    $manager->persist($planning);
+                    $manager->flush();
                 }            
             }
         }
@@ -697,7 +697,7 @@ class PlanningMCController extends Controller
             ->getRepository(Planning::class)
             ->findBy(['id' => $idPolym]);
         //$planning->setMoyenUtilise($PolymPla[0]);
-        dump($PolymPla[0]);
+        //dump($PolymPla[0]);
         $form = $this -> createFormBuilder($PolymPla[0])
         ->add('id', HiddenType::class, [
             'label' => 'ID',
@@ -710,20 +710,7 @@ class PlanningMCController extends Controller
             'label' => 'Programme',
             'disabled'=>true,
         ])
-        -> add('num_demande', EntityType::class,[
-            'class' =>Demandes::class,
-            'query_builder' => function ( EntityRepository $er ) {
-                return $er -> createQueryBuilder ( 'u' )
-                ->Where('u.id = :id')
-                //->andWhere('u.Activitees = :val')
-                ->setParameter('id', 'id' );
-            },
-            'choice_label' => 'Commentaires',
-            'label' => 'Commentaires'
-        ])
-        // ->add('num_demande', TextType::class, [
-        //     'label' => 'Outillages',
-        // ])
+        -> add('num_demande', ComOutilType::class)
         -> add('debut_date', DateTimeType::class,['disabled'=>true])
         -> add('fin_date', DateTimeType::class,['disabled'=>true])
         -> add('statut', ChoiceType::class, [
@@ -733,7 +720,6 @@ class PlanningMCController extends Controller
                 'REMPLACER' => 'REMPLACER',
             ]])
         ->add('save', SubmitType::class, ['label' => 'Modifier'])
-        /* -> add('commentaires') */
         ->getForm();
         $form->handleRequest($request);
         //dump($form);
@@ -756,7 +742,7 @@ class PlanningMCController extends Controller
             
             $request=$requestStack->getParentRequest();
             if ($request->isMethod('POST') and $request->request->get('form')) {
-                dump($request);
+                $demande= new Demandes();
                 $planning = new Planning();
                 //$demande->setDatePropose($request->get('DatePropose'));
                 $TabDem=$request->request->get('form');
@@ -767,9 +753,14 @@ class PlanningMCController extends Controller
                     ->findBy(['id' =>$TabDem['id']]);
                 $planning=$PolymPla[0];
                 $planning->setStatut($TabDem['statut']);
+
+                $demande=$planning->getNumDemande();
+                $demande->setOutillages($TabDem["num_demande"]["Outillages"]);
+                $demande->setCommentaires($TabDem["num_demande"]["Commentaires"]);
+
                 $manager = $this->getDoctrine()->getManager();
-                    $manager->persist($planning);
-                    $manager->flush();
+                $manager->persist($planning);
+                $manager->flush();
                     $request->getSession()->getFlashbag()->add('success', 'Création de la polym n°' . $planning->getId() . ' réalisée');
             }
         }

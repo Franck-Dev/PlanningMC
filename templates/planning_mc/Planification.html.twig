@@ -121,14 +121,9 @@
         #volet_droit:target a.fermer {
             display: block;
         }
-        .modal, .modal-header, .modal-body { 
-            z-index: 10000;
-            opacity:    1;
-            width: 400px;
-            height: 100%;
-            position: sticky;
-            margin: 10% auto;
-            background: blue;
+        .modal-body { 
+            background: rgb(0, 50, 95);
+            color:  white;
         }
 	</style>
 {% endblock %}
@@ -181,6 +176,9 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
+                <span class="logo-lg">
+                    <img src="{{ asset('build/images/LOGO_DAHER.png') }}" width="117" height="46"/>
+                </span>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>

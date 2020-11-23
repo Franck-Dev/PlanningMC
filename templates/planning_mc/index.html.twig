@@ -142,14 +142,9 @@
             z-index: 1;
         }
 
-        .modal, .modal-body, .modal-body { 
-            z-index: 10000;
-            opacity:    1;
-            width: 400px;
-            height: 600px;
-            position: absolute;
-            margin: 10% auto;
-            background: blue;
+        .modal-body { 
+            background: rgb(0, 50, 95);
+            color:  white;
         }
         .button{
             display:    block;
@@ -204,8 +199,8 @@
                 <input type="button" id="semaine" value="Semaine en cours" class="col-xs-2">
                 <input type="button" id="semaine+1" value="Semaine suivante" class="col-xs-2">
                 <!--<h2 class="col-lg-2">Planning de la semaine </h2>-->  
+                <a href="" class="btn btn-success" onclick=Planning()>Refresh</a>
                 {% if is_granted('ROLE_PLANIF') %}
-                    <a href="" class="btn btn-success" onclick=Planning()>Refresh</a>
                     <a href="{{ path('CreaPolymRecur', {'user': app.user}) }}" class="btn btn-success">Plannification</a>
                 {% endif %}
             </div>
@@ -213,8 +208,11 @@
             <div id="Modale" class="modal" aria-hidden="true">
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
-                        <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <div class="modal-header bg-primary">
+                            <span class="logo-lg">
+                                <img src="{{ asset('build/images/LOGO_DAHER.png') }}" width="117" height="46"/>
+                            </span>
+                            <button type="button" class="close bg-alert" data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
@@ -297,6 +295,9 @@
         ]);
 
         var options = {
+            locale: 'fr',
+            zoomMin: 60000000,
+            zoomMax: 20160000000,
             template:template ,
             stack: true,
             start: new Date(),
@@ -335,7 +336,6 @@
                         data: {id: item.id, olddatedeb: items._data[item.id].start, olddatefin: items._data[item.id].end, moyen: item.group, cycle: item.programmes, newdatedeb: DateDeb, newdatefin: DateFin},
                         url: "{{ path('Modif_Polym_Pla') }}",
                         success: function(dat){
-                            console.log(dat);
                         }
                     });
                 });
@@ -350,9 +350,10 @@
                         beforeSend : function() { // traitements JS à faire AVANT l'envoi AJAX
                          //Mettre à jour la date dans l'input pour l'url
                         },
-                        success: function(data){                         
-                            $('#Modale').html(data); // affichage des résultats dans la modal
-                            $('#Modale').show();
+                        success: function(data){                        
+                            // affichage des résultats dans la modal
+                            $('#Content').show().html(data);
+                            $("#Modale").modal('show');
                         }
                     });
                 });
