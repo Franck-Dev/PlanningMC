@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Repository\PlanningRepository;
 use App\Repository\PolymRealRepository;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class FunctIndic
 {
