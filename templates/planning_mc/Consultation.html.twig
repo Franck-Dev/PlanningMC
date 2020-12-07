@@ -47,7 +47,7 @@
                         <td>{{ cycle.datecreation  ? cycle.datecreation|date('Y/m/d H:i:s') : '' }}</td>
                         <td>{{ cycle.datemodif ? cycle.datemodif|date('Y/m/d H:i:s') : '' }}</td>
                         <td>
-                            <a href="{{ path('Modification', {'id': cycle.id}) }}">Editer</a>
+                            <a href="{{ path('Modification_PRP', {'id': cycle.id}) }}">Editer</a>
                         </td>
                     </tr>
                 {% else %}

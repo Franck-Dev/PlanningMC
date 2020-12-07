@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Repository\ChargeRepository;
 use App\Repository\PlanningRepository;
 use App\Repository\PolymRealRepository;
 
@@ -58,5 +59,49 @@ class FunctIndic
             $TotPcs=intval($polym[1]);
         }
         return $TotPcs;
+    }
+
+    public function ordoUnMois(ChargeRepository $repo, $fin, $debut) {
+        //Récupération de la charge SAP sur 1 mois
+        $ChargeTot=$repo -> findChargeSem($debut,$fin); 
+        $i=0;
+        $j=0;
+        foreach($ChargeTot as $charge){
+            $y=intval($charge['NbrRef']);
+            $lundi = new \DateTime();
+            $lundi->setISOdate($charge['Annee'], $charge['Semaine']);
+            $jour=strtotime($lundi->format("Y-m-d"))*1000;
+            //dump($lundi->format("WY"));
+            $TboData[$j]=['x'=> $jour,'y'=>$y];
+            $Tablo[$i]=['type'=>"stackedColumn",'name'=>$charge['Cycles'],'showInLegend'=>"true",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboData];
+                $i = $i + 1;
+            //$Tablo[$i]=['type'=>"stackedColumn",'name'=>$charge['Cycles'],'showInLegend'=>"false",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboData];
+            
+            //$CharTot=intval($polym['DureTheoPolym']/10000);
+        }
+        return $Tablo;
+        //dump($RepartP);
+    }
+
+    public function ordoRetardUnMois(ChargeRepository $repo, $fin, $debut) {
+
+        $ChargeTard=$repo -> findChargeSem($fin,$debut);
+        //dump($ChargeTard);
+        $i=0;
+        $j=0;
+        foreach($ChargeTard as $charge){
+            $y=intval($charge['NbrRef']);
+            $DebSem = new \DateTime();
+            $DebSem->setISOdate($charge['Annee'], $charge['Semaine']);
+            $JDebSem=strtotime($DebSem->format("Y-m-d"))*1000;
+            //dump($lundi->format("WY"));
+            $TboDatas[$j]=['x'=> $JDebSem,'y'=>$y];
+            $Tablos[$i]=['type'=>"stackedColumn",'name'=>$charge['Cycles'],'showInLegend'=>"true",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboDatas];
+                $i = $i + 1;
+            //$Tablo[$i]=['type'=>"stackedColumn",'name'=>$charge['Cycles'],'showInLegend'=>"false",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboData];
+            
+            //$CharTot=intval($polym['DureTheoPolym']/10000);
+        }
+        return $Tablos;
     }
 }

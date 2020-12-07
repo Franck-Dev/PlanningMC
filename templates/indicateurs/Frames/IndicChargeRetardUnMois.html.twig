@@ -1,0 +1,49 @@
+{% extends '/indicateurs/Frames/Layout.html.twig' %}
+{% block body %}
+<style>
+</style>
+<div class="container-fluid">
+    <div class="card shadow">
+    <h4 class="card-header">Retard Charge SAP -1 mois</h4>
+        <div class="card-block">
+            <div id="chart-Charge-Retard"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block javascripts %}
+<script src="{{ asset('build/jquery.min.js') }}"></script>
+<script src="{{ asset('build/canvasjs.min.js') }}"></script>
+<script type="text/javascript">
+//Graphique sur la répartition des OF svt programmes 
+ //Graph de la charge retard de 1 mois de SAP
+ $(function () {
+			var Chart = new CanvasJS.Chart("chart-Charge-Retard", {
+                animationEnabled: true,
+                exportEnabled: true,
+                backgroundColor: "transparent",
+                theme: "light2",
+                axisX: {
+                    labelFontSize: 14,
+                    valueFormatString: "D MMM Y",
+                    interval: 1,
+                    intervalType: "week"
+                },
+                axisY: {
+                    labelFontSize: 14,
+                    prefix: ""
+				},
+				legend: {
+					maxHeight: 50,
+					fontSize: 10,
+				},
+                toolTip: {
+                    shared: true
+                },
+                data: {{RepartRetard|raw}}
+            });
+
+            Chart.render();
+    })
+</script>
+{% endblock %}

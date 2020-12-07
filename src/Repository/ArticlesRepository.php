@@ -58,4 +58,15 @@ class ArticlesRepository extends ServiceEntityRepository
         $results = $query->getResult();
         return $results;
     }
+
+    public function myFindByOT($OT){
+        $qb = $this->createQueryBuilder('articles')
+           ->leftJoin ('articles.OutMoulage','t')
+           ->where('t.Ref = :refOT')
+           ->setParameter('refOT', $OT);
+         
+        $query = $qb->getQuery();
+        $results = $query->getResult();
+        return $results;
+    }
 }

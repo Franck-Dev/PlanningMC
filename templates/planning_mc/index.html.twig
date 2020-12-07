@@ -231,6 +231,10 @@
                                         <span aria-hidden="true"></span>
                                 </button>
                             </div>
+                        {% else %}
+                            <div id="Content" class="modal-body">
+
+                            </div>
                         {% endif %}
                     </div>
                 </div>
@@ -365,6 +369,10 @@
                         },
                         success: function(data){                        
                             // affichage des résultats dans la modal
+                            if(typeof data.Message == 'string') {
+                                console.log(data.Message);
+                                data=$('form').append(data.Message);
+                            }
                             $('#Content').show().html(data);
                             $("#Modale").modal('show');
                         }

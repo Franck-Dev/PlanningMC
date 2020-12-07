@@ -13,8 +13,12 @@ class ComOutilType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('Commentaires', TextType::class)
-            ->add('Outillages', TextType::class)
+            ->add('Commentaires', TextType::class, [
+                'required'   => false,
+                'help' => 'Insérer un commentaire concernant cette polymérisation.'])
+            ->add('Outillages', TextType::class, [
+                'required'   => false,
+                'help' => 'Insérer les outillages à passer dans cette polymérisation.'])
         ;
     }
 

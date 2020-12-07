@@ -2,14 +2,15 @@
 
 namespace App\Controller;
 
+use App\Entity\Charge;
 use App\Entity\Planning;
 use App\Entity\PolymReal;
 use App\Services\FunctIndic;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class IndicateursController extends AbstractController
 {
@@ -487,6 +488,95 @@ class IndicateursController extends AbstractController
         return $this->render('indicateurs/Frames/IndicOTDMoulage.html.twig', [
             'controller_name' => 'IndicateursController',
             'OTD' => $OTD->getcontent()
+        ]);
+    }
+
+     /**
+     * @Route("/indicateur/ChargeSAPUnMois", name="indic_ChargeSAP_UnMois")
+     * 
+     */
+    public function indicChargeSAPUnMois(Request $request, FunctIndic $indic)
+    {
+        // Création de la table de répartition des programmes suivant OF SAP lancés sur 1 mois
+        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        // Date à aujourd'hui
+        $jour= new \datetime;
+        $date=$jour;
+        $SemUn=$jour->format("W");
+        // Date à 1 mois
+        $jourVisu = date("Y-m-d", strtotime('+ 30 days'.date('Y') ));
+        $jourVisu=new \datetime($jourVisu);
+        $DerSem=$jourVisu->format("W");
+        $result=$indic->ordoUnMois($repo, $jourVisu, $jour);
+
+        $RepartP= new JsonResponse($result);
+
+        return $this->render('indicateurs/Frames/IndicChargeSAPUnMois.html.twig', [
+            'controller_name' => 'IndicateursController',
+            'RepartPcs' => $RepartP->getContent(),
+            'DerSem' => $DerSem,
+            'SemUn' => $SemUn,
+            'datedeb' => $jour,
+            'datefin' => $jourVisu,
+        ]);
+    } 
+    
+     /**
+     * @Route("/indicateur/ChargeRetardUnMois", name="indic_ChargeRetard_UnMois")
+     * 
+     */
+    public function indicChargeRetardUnMois(Request $request, FunctIndic $indic)
+    {
+        // Création de la table de répartition des programmes en retard suivant OF SAP lancés 
+        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        // Date à hier
+        $jourFinRetard = date("Y-m-d", strtotime('- 1 days'.date('Y') ));
+        $date=new \datetime($jourFinRetard);
+        // Date en retard d'1 mois
+        $jourVisu = date("Y-m-d", strtotime('- 31 days'.date('Y') ));
+        $jourVisu=new \datetime($jourVisu);
+        // Date à aujourd'hui
+        $jour= new \datetime;
+        $result=$indic->ordoRetardUnMois($repo, $jourVisu, $date);
+        $RepartRetard= new JsonResponse($result);
+
+        return $this->render('indicateurs/Frames/IndicChargeRetardUnMois.html.twig', [
+            'controller_name' => 'PlanningOrdo',
+            'RepartRetard'=> $RepartRetard->getContent(),
+            'datedeb' => $jour,
+            'datefin' => $jourVisu,
+        ]);
+    }
+
+     /**
+     * @Route("/indicateur/ChargeSAPRetard", name="indic_ChargeSAP")
+     * 
+     */
+    public function indicChargeSAPRetard(Request $request, FunctIndic $indic)
+    {
+        // Création de la table de répartition des programmes oubliés
+        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        $ChargTot=$repo -> findAll();
+        // Date à plus d'un mois
+        $jourFinRetard = date("Y-m-d", strtotime('+ 365 days'.date('Y') ));
+        $date=new \datetime($jourFinRetard);
+        $SemUn=$date->format("W");
+        // Date en retard d'1 an
+        $jourVisu = date("Y-m-d", strtotime('- 730days'.date('Y') ));
+        $jourVisu=new \datetime($jourVisu);
+        $DerSem=$jourVisu->format("W");
+        $result=$indic->ordoUnMois($repo, $jourFinRetard, $jourVisu);
+
+        $RepartT= new JsonResponse($result);
+
+        return $this->render('indicateurs/Frames/IndicChargeRetard.html.twig', [
+            'controller_name' => 'IndicateursController',
+            'RepartT' => $RepartT->getContent(),
+            'ChargeTot' => $ChargTot,
+            'DerSem' => $DerSem,
+            'SemUn' => $SemUn,
+            'datedeb' => $jourVisu,
+            'datefin' => $jourFinRetard,
         ]);
     }
 }
