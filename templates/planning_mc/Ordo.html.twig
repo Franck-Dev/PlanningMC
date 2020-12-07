@@ -7,7 +7,8 @@
 <style>
 .card {
         border: 0rem;
-        border-radius: 0rem;
+        border-radius: 3rem;
+        opacity:    0.8;
     }
     
     .card-header {
@@ -40,6 +41,10 @@
 }
 #PolymAff{
     height: auto;
+}
+.scroll {
+    max-height: 100vh;
+    overflow-y: auto;
 }
 
 </style>
@@ -128,68 +133,236 @@
     </div>
   </div>
   {# Onglet prévisualisation des polymérisations #}
-  <div class="tab-pane fade in" id="p2" role="tabpanel" aria-labelledby="p2">
-    <div class="conteiner-fluid">
-        {#<pre>{{dump(tests)}}</pre>#} 
-        <div class="table-responsive" id="PolymAff">
-        <table class="table">
-            <thead>		
-            </thead>
-                <table class="table">	
-                {% set start_jour = datedeb | date('d') %}<!-- Recherche du n° du jour de départ de la semaine n+1-->
-                {% set end_jour = datefin | date('d') %}<!-- Recherche du n° du jour de fin de la semaine n+1 -->
-                {% for day in  start_jour .. start_jour+31  %}<!-- Boucle sur la semaine concernée -->
-                    {% set jour = day-start_jour %}<!-- Variable permettant de recaler l'offset dût à la boucle -->
-                    {% set myDate = datedeb|date_modify(['+',jour,'days']|join) %}<!-- On prend en compte l'offset pour retrouver le premier jour de la semaine -->
-                    {% set myDa = myDate|localizeddate('none', 'none', null, null, 'EEEE') %}<!-- Nom des jours de la semaine -->
-                    {% set myDat = myDate|date('d/m/y')|upper %}<!-- Mise en forme des jours -->
-                    <tr>
-                        <!-- Mise en forme du bouton de validation groupé de la plannification -->
-                        <td colspan="11">
+    <div class="tab-pane fade in" id="p2" role="tabpanel" aria-labelledby="p2">
+        <!-- Begin Page Content -->
+        <div class="container-fluid">
 
-                                <i href="" data-toggle="modal" class="btn btn-info btn-block" font="white" data-target="" data-id={{ myDat }} onclick=ValidJour('{{day}}')>
-                                        <span>VALIDATION SUGGESTIONS DU {{myDa}} {{myDat}}</span>
+            <!-- Page Heading -->
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Visualisation Planning</h1>
+                <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
+                        class="fas fa-download fa-sm text-white-50"></i> Export SAP</a>
+            </div>
 
-                        </td>
-                    </tr>
-                    <thead>
-                            <tr> 
-                                <!-- Titre du tableau -->
-                                    <th> Id </th>
-                                    <th> Cycle </th>
-                                    {# <th> Départ </th> #}
-                                    <th> Nbre OT </th>
-                                    <th> ChargeType </th>
-                                    <th> Valide</th>
-                                    <th> Action </th>
-                                    <th></th>
-                    
-                            </tr>
-                    </thead
-                    {% for test in tests if test.PlanningSAP.Jour|date('d/m/Y') == myDate|date('d/m/Y') %}  
-                    <tbody>
-                        <tr id="{{ test.PlanningSAP.Cycles }}" 
-                            {% if (test.PlanningSAP.NbrPcs == 0) %}
-                                style="background-color:green"
-                            {% else %}
-                                style="background-color:red"
-                            {% endif %} 
-                            >
-                            <td></td>
-                            <td>{{ test.PlanningSAP.Cycles }}</td>
-                            {# <td>{{ test.Jour|date('H:i:s') }}</td> #}
-                            <td>{{ test.PlanningSAP.NbrPcs }}</td>
-                            <td></td>
-                            <td></td>
-                            <td><b ref=""  id="btn-success" class="btn btn-success" style="border-radius:40px;background-color:blue;color:white" onclick=''>Valider</b></td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                {% endfor %}
-            </table>
-        </di>
+            <!-- Content Row -->
+            <div class="row m-b-1">
+
+                <!-- Earnings (Monthly) Card Example -->
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-primary shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        QUANTITE PIECES (Mois)</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">1500 pcs</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fa fa-calendar fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Earnings (Monthly) Card Example -->
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        TAUX PLANNIFICATION</div>
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col-auto">
+                                            <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">80%</div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="progress progress-sm mr-2">
+                                                <div class="progress-bar bg-info" role="progressbar"
+                                                    style="width: 80%" aria-valuenow="80" aria-valuemin="0"
+                                                    aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fa fa-dollar-sign fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Earnings (Monthly) Card Example -->
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-info shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">TAUX DE REMPLISSAGE
+                                    </div>
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col-auto">
+                                            <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">50%</div>
+                                        </div>
+                                        <div class="col">
+                                            <div class="progress progress-sm mr-2">
+                                                <div class="progress-bar bg-info" role="progressbar"
+                                                    style="width: 50%" aria-valuenow="50" aria-valuemin="0"
+                                                    aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fa fa-clipboard-list fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pending Requests Card Example -->
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-warning shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                        ANOMALIES</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">18</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fa fa-comments fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Row -->
+
+            <div class="row m-b-1">
+
+                <!-- Area Chart -->
+                <div class="col-xl-8 col-lg-7 scroll">
+                    <div class="card shadow mb-4">
+                        <!-- Card Header - Dropdown -->
+                        <div
+                            class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 font-weight-bold text-primary">Charge SAP</h6>
+                            <div class="dropdown no-arrow">
+                                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fa fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                                    aria-labelledby="dropdownMenuLink">
+                                    <div class="dropdown-header">Dropdown Header:</div>
+                                    <a class="dropdown-item" href="#">Action</a>
+                                    <a class="dropdown-item" href="#">Another action</a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="#">Something else here</a>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Card Body -->
+                        <div class="card-body">
+                            <div class="chart-area">
+                                {{ render(controller('App\\Controller\\PlanningMCController::PreviPlannif')) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                    <!-- Pie Chart -->
+                <div class="col-xl-4 col-lg-5">
+                    <div class="row m-1">
+                        <div class="card shadow mb-4">
+                            <!-- Card Header - Dropdown -->
+                            <div
+                                class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                <h6 class="m-0 font-weight-bold text-primary">Charge OF</h6>
+                                <div class="dropdown no-arrow">
+                                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="fa fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                                        aria-labelledby="dropdownMenuLink">
+                                        <div class="dropdown-header">Dropdown Header:</div>
+                                        <a class="dropdown-item" href="#">Action</a>
+                                        <a class="dropdown-item" href="#">Another action</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="#">Something else here</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Card Body -->
+                            <div class="card-body">
+                                <div class="chart-pie pt-4 pb-2">
+                                    <canvas id="myPieChart"></canvas>
+                                </div>
+                                <div class="mt-4 text-center small">
+                                    <span class="mr-2">
+                                        <i class="fa fa-circle text-primary"></i> Direct
+                                    </span>
+                                    <span class="mr-2">
+                                        <i class="fa fa-circle text-success"></i> Social
+                                    </span>
+                                    <span class="mr-2">
+                                        <i class="fa fa-circle text-info"></i> Referral
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row m-1">
+                        <!-- Pie Chart -->
+                        <div class="card shadow mb-4">
+                            <!-- Card Header - Dropdown -->
+                            <div
+                                class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                <h6 class="m-0 font-weight-bold text-primary">Données Techniques</h6>
+                                <div class="dropdown no-arrow">
+                                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="fa fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                                        aria-labelledby="dropdownMenuLink">
+                                        <div class="dropdown-header">Dropdown Header:</div>
+                                        <a class="dropdown-item" href="#">Action</a>
+                                        <a class="dropdown-item" href="#">Another action</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="#">Something else here</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Card Body -->
+                            <div class="card-body">
+                                <div class="chart-pie pt-4 pb-2">
+                                    <canvas id="myPieChart"></canvas>
+                                </div>
+                                <div class="mt-4 text-center small">
+                                    <span class="mr-2">
+                                        <i class="fa fa-circle text-primary"></i> Direct
+                                    </span>
+                                    <span class="mr-2">
+                                        <i class="fa fa-circle text-success"></i> Social
+                                    </span>
+                                    <span class="mr-2">
+                                        <i class="fa fa-circle text-info"></i> Referral
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 {% endblock %}
 {% block javascripts %}

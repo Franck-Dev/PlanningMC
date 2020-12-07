@@ -1368,6 +1368,29 @@ class PlanningMCController extends Controller
         // Date à 1 mois
         $jourVisu = date("Y-m-d", strtotime('+ 31 days'.date('Y') ));
         $jourVisu=new \datetime($jourVisu);
+       
+        return $this->render('planning_mc/Ordo.html.twig', [
+            'controller_name' => 'PlanningOrdo',
+            'ChargeTot' => $ChargTot,
+            'Titres' => $Titres,
+            'datedeb' => $jour,
+            'datefin' => $jourVisu,
+        ]);
+    }
+
+    /**
+     * @Route("/LOGISTIQUE/Plannification", name="PreviPlannif")
+     */
+    public function PreviPlannif(FunctChargPlan $charge)
+    {
+        //Création de la planification à long terme avec les chargements figés
+        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        // Création de la table de répartition des programmes suivant OF SAP lancés sur 1 mois
+        // Date à aujourd'hui
+        $jour= new \datetime;
+        // Date à 1 mois
+        $jourVisu = date("Y-m-d", strtotime('+ 31 days'.date('Y') ));
+        $jourVisu=new \datetime($jourVisu);
         //Récupération de la charge SAP sur 1 mois
         $ChargeTot=$repo -> findReparChargeW($jour,$jourVisu);
         $i=0;
@@ -1386,13 +1409,10 @@ class PlanningMCController extends Controller
         $i = $i + 1;
         }
         dump($TbRepartChargeTot);
-        return $this->render('planning_mc/Ordo.html.twig', [
-            'controller_name' => 'PlanningOrdo',
-            'ChargeTot' => $ChargTot,
-            'Titres' => $Titres,
+        return $this->render('planning_mc/PreviPlannif.html.twig', [
+            'controller_name' => 'PlannificationSAP',
             'datedeb' => $jour,
             'datefin' => $jourVisu,
-            //'tests' => $ChargeTot,
             'tests' => $TbRepartChargeTot,
         ]);
     }

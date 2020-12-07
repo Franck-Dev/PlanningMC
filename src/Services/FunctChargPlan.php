@@ -116,11 +116,12 @@ class FunctChargPlan
             //Pour chaque chargement figé on récupère sa composition en outillages
             $listeOT = $Out->myFindByCharFiG($ChargeFiG->getCode());
             if ($listeOT) {
-                //dump($listeOT);
                 //Doit remonter la liste de pcs(OF) contenu dans le chargement
                 $test=$this->checkOTOF($listeOT, $TbCTJ, $repo, $Out, $Art, $Creno, $i, $f);
             }
-            $TbDatasCTO[$q]=['Nom'=>$ChargeFiG->getCode(), 'Contenu'=>$test];
+            //On va tester le remplissage
+            $Remp=(sizeof($test)/sizeof($listeOT))*100;
+            $TbDatasCTO[$q]=['Nom'=>$ChargeFiG->getCode(), 'Contenu'=>$test, 'Remplissage'=>$Remp];
             $q++;
         }
         //dump($TbDatasCTO);
