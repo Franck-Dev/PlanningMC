@@ -28,6 +28,13 @@
 {% endblock %}
 
 {% block body %}
+{% if app.session.flashBag.has('Annulation') %}
+        <div class="alert alert-success">
+            {% for msg in app.session.flashBag.get('Annulation') %}
+                {{ msg }}
+            {% endfor %}
+        </div>
+    {% endif %}
 	<div class="row">
 		<div class="col-md-8">
 			<h1>Prévisualisation des créneaux de polymérisations de la semaine : {{datedeb|date('W')}}</h1>

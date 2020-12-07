@@ -1,8 +1,10 @@
 {% extends 'base.html.twig' %}
 
 {% block title %}Planning {{ controller_name }}!{% endblock %}
-
+{% block head %}<META HTTP-EQUIV="Refresh" CONTENT="TRUE">{% endblock %}
 {% block stylesheets %}
+    {# <link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet"> #}
+    <link rel="stylesheet" href="{{ asset('build/bootstrap-toggle.min.css') }}">
     <link rel="stylesheet" href="{{ asset('build/vis.css') }}">
     <style type="text/css">
         table {
@@ -187,17 +189,19 @@
     <input type="hidden" id="JourPlannif" value="">
 </div>
 <nav class="nav nav-tabs" id="myTab" role="tablist">
-  <a class="nav-item nav-link active" href="#p1" data-toggle="tab" role="tab" aria-controls="tab-p1" aria-selected="true">Planning Moyens</a>
-  <a class="nav-item nav-link" href="#p2" data-toggle="tab" role="tab" aria-controls="tab-p2" aria-selected="false">Superviseur</a>
+  <a class="nav-item nav-link active text-primary" href="#p1" data-toggle="tab" role="tab" aria-controls="tab-p1" aria-selected="true">Planning Moyens</a>
+  <a class="nav-item nav-link text-primary" href="#p2" data-toggle="tab" role="tab" aria-controls="tab-p2" aria-selected="false">Superviseur</a>
 </nav>
 <div class="tab-content">
   <div class="tab-pane fade show active" id="p1" role="tabpanel" aria-labelledby="p1">
     <div class="conteiner-fluid">
             <div class="button_menu">
                 <input type="button" id="jour" value="Aujourd'hui" class="col-xs-2">
+                <input type="button" id="encours" value="Encours" class="col-xs-2">
                 <input type="button" id="semaine-1" value="Semaine dernière" class="col-xs-2">
                 <input type="button" id="semaine" value="Semaine en cours" class="col-xs-2">
                 <input type="button" id="semaine+1" value="Semaine suivante" class="col-xs-2">
+                <input type="checkbox" id="toggle-visu" data-toggle="toggle" data-onstyle="danger" data-on="Tout Visualiser" data-offstyle="primary" data-off="Plannifié">
                 <!--<h2 class="col-lg-2">Planning de la semaine </h2>-->  
                 <a href="" class="btn btn-success" onclick=Planning()>Refresh</a>
                 {% if is_granted('ROLE_PLANIF') %}
@@ -227,6 +231,10 @@
                                         <span aria-hidden="true"></span>
                                 </button>
                             </div>
+                        {% else %}
+                            <div id="Content" class="modal-body">
+
+                            </div>
                         {% endif %}
                     </div>
                 </div>
@@ -249,10 +257,12 @@
     <script src="{{ asset('build/jquery.min.js') }}"></script>
     <script src="{{ asset('build/bootstrap.min.js') }}"></script> 
     <script src="{{ asset('build/sweetalert.min.js') }}"></script>
+    <script src="{{ asset('build/bootstrap-toggle.min.js') }}"></script>
+    <!-- <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script> -->
     <script id="item-template" type="text/x-handlebars-template"> 
             <table class="table-condensed">
                 <tr>
-                    <td colspan="3" class="programmes" style="font-size: 0.7em">{% verbatim %}{{programmes}}{% endverbatim %}</td>
+                    <td colspan="3" class="programmes" style="font-size: 0.7em"><strong>{% verbatim %}{{programmes}}{% endverbatim %}</strong></td>
                     <th><img id="icone" src="{{asset('build/images/{{statut}}.png')}}" alt="{% verbatim %}{{icone}}{% endverbatim %}"></th>
                     <td colspan="3" class="statut" style="font-size: 0.7em">{% verbatim %}{{statut}}{% endverbatim %}</td>
                 </tr>
@@ -267,22 +277,29 @@
             </table>
     </script>
     <script type="text/javascript">
-    const lang = navigator.language; // "fr_FR"; // "en_US"; // 
-    const locale = (lang && lang !== undefined) ? lang.match(/^\w{2}/)[0] : 
-    (lang === "de" || lang === "fr" || lang === "it" || lang === "nl") ? lang : "en"; // "en"; // "de"; //
+    document.addEventListener('DOMContentLoaded', function() {
+        visuPla({{Moyens|raw}}, {{Ssmoyen|raw}}, {{Taches|raw}});
+    });
+    function visuPla(Moy, ssMoy, Task){
+        const lang = navigator.language; // "fr_FR"; // "en_US"; // 
+        const locale = (lang && lang !== undefined) ? lang.match(/^\w{2}/)[0] : 
+        (lang === "de" || lang === "fr" || lang === "it" || lang === "nl") ? lang : "en"; // "en"; // "de"; //
         // create a handlebars template
         var source = document.getElementById('item-template').innerHTML;
         var template = Handlebars.compile(source);
         var conteneur = document.getElementById ('visualization');
+        if (conteneur.hasChildNodes()) {
+            var oldchild=conteneur.removeChild(conteneur.firstChild);
+        }
         
-        var groupsold = {{Moyens|raw}};
+        //var groupsold = {{Moyens|raw}};
 
         var groups = new vis.DataSet();
       
-        groups.add({{Moyens|raw}});
-        groups.add({{Ssmoyen|raw}});
+        groups.add(Moy);
+        groups.add(ssMoy);
 
-        var items = new vis.DataSet ({{Taches|raw}});
+        var items = new vis.DataSet (Task);
         var groupIds = groups.getIds();
         var randomGroupId = groupIds[Math.floor(Math.random() * groupIds.length)];
         var itemsold = new vis.DataSet ([
@@ -296,12 +313,12 @@
 
         var options = {
             locale: 'fr',
-            zoomMin: 60000000,
+            zoomMin: 80000000,
             zoomMax: 20160000000,
             template:template ,
             stack: true,
             start: new Date(),
-            end: new Date(1000*60*60*24*7 + (new Date()).valueOf()),
+            end: new Date(1000*60*60*24*3 + (new Date()).valueOf()),
 			zoomKey: "ctrlKey",
             orientation: 'top',
             groupOrder: 'content',
@@ -352,6 +369,10 @@
                         },
                         success: function(data){                        
                             // affichage des résultats dans la modal
+                            if(typeof data.Message == 'string') {
+                                console.log(data.Message);
+                                data=$('form').append(data.Message);
+                            }
                             $('#Content').show().html(data);
                             $("#Modale").modal('show');
                         }
@@ -422,7 +443,7 @@
         };
 
         var timeline = new vis.Timeline (conteneur, items, groups, options);
-
+        console.log(timeline);
         document.getElementById('visualization').onclick = function (event) {
             //var props = timeline.getEventProperties(event)
             //console.log(props);
@@ -435,13 +456,33 @@
                 //icon: "success"  
             //});
         }
-        
+        document.getElementById('semaine').onclick = function() {
+        timeline.setWindow(new Date(), new Date(1000*60*60*24*7+(new Date(getMonday(new Date()).setHours(4))).valueOf()));
+        }
+        document.getElementById('jour').onclick = function() {
+        timeline.setWindow(new Date().setHours(4), new Date(1000*60*60*24 + (new Date().setHours(4)).valueOf()));
+        }
+        document.getElementById('semaine-1').onclick = function() {
+        timeline.setWindow(new Date( (new Date()).valueOf())-1000*60*60*24*7,new Date() );
+        }
+        document.getElementById('encours').onclick = function() {
+        timeline.setWindow(new Date().setHours(4), new Date(1000*60*60*24*3 + (new Date().setHours(4)).valueOf()));
+        }
+        document.getElementById('semaine+1').onclick = function() {
+        timeline.setWindow(getMonday(new Date()).setHours(4), new Date(1000*60*60*24*7 + (new Date(getMonday(new Date()).setHours(4))).valueOf()));
+        }
         timeline.on('click', function (event, properties) {
             //var olddatedeb=event.time;
             //console.log(olddatedeb);
             //logEvent(event, properties);
         });
-
+        function getMonday(date) {
+            var day = date.getDay() || 7;  
+            if( day !== 1 ) 
+                date.setHours(24 * (day)); 
+            return date;
+        }
+    }
         function logEvent(event, properties) {
             var log = document.getElementById('log');
             var msg = document.createElement('div');
@@ -615,47 +656,34 @@
 
              
         } 
-        function translate(locale, fr, en) { 
-            return locale === "fr" ? fr : en; 
-        } 
+        // function translate(locale, fr, en) { 
+        //     return locale === "fr" ? fr : en; 
+        // } 
 
-        document.getElementById('semaine').onclick = function() {
-        timeline.setWindow(new Date(new Date().valueOf()-(new Date().getDay())*(new Date().getHours())*60*60*1000), new Date(1000*60*60*24*(8-new Date().getDay()) + (new Date()).valueOf()));
-        }
-        document.getElementById('jour').onclick = function() {
-        timeline.setWindow(new Date().setHours(4), new Date(1000*60*60*24 + (new Date().setHours(4)).valueOf()));
-        }
-        document.getElementById('semaine-1').onclick = function() {
-        timeline.setWindow(new Date( (new Date()).valueOf())-1000*60*60*24*7,new Date() );
-        }
-        document.getElementById('semaine+1').onclick = function() {
-        timeline.setWindow(new Date(1000*60*60*24*7 + (new Date()).valueOf()), new Date(1000*60*60*24*14 + (new Date()).valueOf()));
-        }
-        function Planning(){
+        function Planning(statut){
             $.ajax({
                 method: "POST",
-                data: {},
+                data: {state: statut},
                 url: "{{ path('Planning_Edit') }}",
                 beforeSend : function() { // traitements JS à faire AVANT l'envoi AJAX
                     //Mettre à jour la date dans l'input pour l'url
                 },
                 success: function(data){
-                    var items = new vis.DataSet (data.Taches);
-                    var groups = new vis.DataSet();
-      
-                    groups.add(data.moyen);
-                    groups.add(data.Ssmoyen);
-
-                    var groupIds = groups.getIds();
-                    var randomGroupId = groupIds[Math.floor(Math.random() * groupIds.length)];
-                    var conteneur = document.getElementById ('visualization');
-                    console.log(items);
-                    console.log(conteneur);
-                    var timeline = new vis.Timeline (conteneur, items, groups, options);
+                    visuPla(data.moyen, data.Ssmoyen, data.Taches);
                 }
             });
             //$(document).reload(true); 
         }
+        $(function() {
+            $('#toggle-visu').change(function() {
+                var test = $(this).prop('checked');
+                if (test == true) {
+                    Planning("PLANNIFIE");
+                } else {
+                    Planning();
+                }
+            })
+        })
     </script>
 <div class="sweet-overlay" tabindex="-1" style="opacity: -0.02; display: none;"></div><div class="sweet-alert hideSweetAlert" data-custom-class="" data-has-cancel-button="true" data-has-confirm-button="true" data-allow-outside-click="false" data-has-done-function="true" data-animation="pop" data-timer="null" style="display: none; margin-top: -200px; opacity: -0.01;"><div class="sa-icon sa-error" style="display: none;">
       <span class="sa-x-mark">

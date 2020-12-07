@@ -1,0 +1,103 @@
+{% block title %}Planning Prévisionnel{% endblock %}
+
+{% block stylesheets %}{% endblock %}
+{% block body %}
+<style>
+</style>
+<div class="conteiner-fluid">
+        {#<pre>{{dump(tests)}}</pre>#} 
+    <div class="table-responsive" id="PolymAff">
+        <table class="table">
+            <thead>		
+            </thead>
+            <table class="table">	
+                {% set start_jour = datedeb | date('d') %}<!-- Recherche du n° du jour de départ de la semaine n+1-->
+                {% set end_jour = datefin | date('d') %}<!-- Recherche du n° du jour de fin de la semaine n+1 -->
+                {% for day in  start_jour .. start_jour+31  %}<!-- Boucle sur la semaine concernée -->
+                    {% set jour = day-start_jour %}<!-- Variable permettant de recaler l'offset dût à la boucle -->
+                    {% set myDate = datedeb|date_modify(['+',jour,'days']|join) %}<!-- On prend en compte l'offset pour retrouver le premier jour de la semaine -->
+                    {% set myDa = myDate|localizeddate('none', 'none', null, null, 'EEEE') %}<!-- Nom des jours de la semaine -->
+                    {% set myDat = myDate|date('d/m/y')|upper %}<!-- Mise en forme des jours -->
+                    <tr>
+                        <!-- Mise en forme du bouton de validation groupé de la plannification -->
+                        <td colspan="11">
+
+                                <i href="" data-toggle="modal" class="btn btn-info btn-block" font="white" data-target="" data-id={{ myDat }} onclick=ValidJour('{{day}}')>
+                                        <span>CHARGE DU {{myDa}} {{myDat}}</span>
+
+                        </td>
+                    </tr>
+                    <thead>
+                            <tr> 
+                                <!-- Titre du tableau -->
+                                    <th> Id </th>
+                                    <th> Cycle </th>
+                                    {# <th> Départ </th> #}
+                                    <th> Nbre OT </th>
+                                    <th>Chargements Validés</th>
+                                    <th>Action</th>
+                    
+                            </tr>
+                    </thead
+                    {% for key, test in tests if test.PlanningSAP.Jour|date('d/m/Y') == myDate|date('d/m/Y') %}  
+                    <tbody>
+                        {% set nameTarget = ['#','collapse',loop.index]|join %}
+                        <tr class="accordion-toggle"  data-toggle="collapse" data-target={{nameTarget}} id="{{ test.PlanningSAP.Cycles }}" 
+                            {% if (test.PlanningSAP.NbrPcs == 0) %}
+                                style="background-color:green"
+                            {% else %}
+                                {% if test.CTO %}
+                                    style="background-color:orange"
+                                {% else %}
+                                   style="background-color:red" 
+                                {% endif %}
+                            {% endif %} 
+                            >
+                            <td>{{key}}</td>
+                            <td>{{ test.PlanningSAP.Cycles }}</td>
+                            {# <td>{{ test.Jour|date('H:i:s') }}</td> #}
+                            <td>{{ test.PlanningSAP.NbrPcs }}</td>
+                            <td></td>
+                            <td><b ref=""  id="btn-success" class="btn btn-success" style="border-radius:40px;background-color:blue;color:white" onclick=''>Valider</b></td>
+                        </tr>
+                        <tr>
+                            <td colspan="12">
+                                <div id="{{['collapse',loop.index]|join}}" class="collapse in">
+                                    {% if test.CTO %}
+                                        {% set ChargFig = test.CTO %}
+                                        {% for CTO in ChargFig %}
+                                            <div class="table-responsive" id="PolymAff">
+                                                <table class="table">
+                                                    <thead>	
+                                                        <tr>
+                                                            <th>Nom</th>
+                                                            <th>Qté Pcs(OF)</th>
+                                                            <th>Remplissage</th>
+                                                            <th>Action</th>
+                                                        </tr>	
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>{{CTO.Nom}}</td>
+                                                            <td>{{CTO.Contenu|length}}</td>
+                                                            <td>{{[CTO.Remplissage,"%"]|join}}</td>
+                                                            <td><b ref=""  id="btn-success" class="btn btn-success" style="border-radius:40px;background-color:blue;color:white" onclick=''>Sélectionner</b></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                {% endfor %}
+            </table>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+{% block javascript %}{% endblock %}

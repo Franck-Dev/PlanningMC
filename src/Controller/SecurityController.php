@@ -55,12 +55,14 @@ class SecurityController extends AbstractController
                     if($user->getPoste()->getLibelle() == "Maitrise"){
                         $user->setRoles(['ROLE_CE_MOULAGE']);
                     }elseif($user->getPoste()->getLibelle() == "Responsable"){
-                        $user->setRoles(['ROLE_CE_MOULAGE']);
+                        $user->setRoles(['ROLE_RESP_MOULAGE']);
                     }  
                     else{
                         $user->setRoles(['ROLE_USER']);
                     }
                     break;
+                case "EXTER":
+                    $user->setRoles(['ROLE_USER']);
                 break;
             }
             $user->setIsActive('0');

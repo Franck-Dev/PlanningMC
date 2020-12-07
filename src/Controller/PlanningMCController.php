@@ -23,7 +23,9 @@ use App\Entity\TypeRecurrance;
 use App\Form\CreationProgType;
 use App\Entity\RecurrancePolym;
 use App\Form\PlanifDemandeType;
+use App\Services\FunctPlanning;
 use App\Form\CreationMoyensType;
+use App\Services\FunctChargPlan;
 use PhpParser\Node\Stmt\Foreach_;
 use Doctrine\ORM\EntityRepository;
 use App\Repository\DefaultRepositoryFactory;
@@ -59,86 +61,22 @@ class PlanningMCController extends Controller
      * @Route("/Planning/Edit", name="Planning_Edit")
      * @Security("is_granted('ROLE_REGLEUR')")
      */
-    public function planningEdit()
+    public function planningEdit(Request $request, FunctPlanning $plan)
     {
-        //Chargement d'une variable pour les tâches déjà plannifiées
+        $repos=$this->getDoctrine()->getRepository(Moyens::class);
+        $moyens=$plan->moyens($repos);
+        $statut=$request->request->get('state');
         $repo=$this->getDoctrine()->getRepository(Planning::class);
-        $Taches=$repo -> findAll();
-        $data = [];
-        $i = 0;
-        //On créé le pourcentage de volumetrie en test, a changer par le réel avec nb outillage
-        $Pourc=10;
-        $repos=$this->getDoctrine()->getRepository(Moyens::class);
-        foreach($Taches as $tache){
-            //On cherche le moyen attribué à la polym suivant la demande et l'activité Plannification
-            $commentaires=$tache->getNumDemande()->getCommentaires()."/".$tache->getNumDemande()->getOutillages();
-            $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification(),'Activitees'=> 'Plannifie']);
-            if($Pourc<75){
-                $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires,'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%; background:red"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
-            }
-            else{
-                $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires, 'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
-            }
-            
-            $i = $i + 1;
-            //dump($MoyUtil=$repos -> )findBy(['Libelle' => $tache->getIdentification()]));
-            //dump($MoyUtil[0]->getId());
-            //dump($Taches);
-            //dump($tache->getNumDemande()->getCycle()->getCouleur());
-        }
-        //Implémentation dans la variable des polyms créées
-        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
-        $Polyms=$repo -> findAll();
-        //dump($Polyms);
-        foreach($Polyms as $polym){ 
-            if(!$polym->getPourcVolCharge()){
-                $Pourc==10;
-            }               
-            else{
-                $Pourc=$polym->getPourcVolCharge();
-            }    
-            if($Pourc<75){
-                $data[$i] = ['id'=>  '2'.$polym->getId(),'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym(),'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%; background:red"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
-            }
-            else{
-                $data[$i] = ['id'=>  '2'.$polym->getId(),'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym(),'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
-            }
-            $i = $i + 1;
-        }
-        $repos=$this->getDoctrine()->getRepository(Moyens::class);
-        $moyens=$repos -> findAllMoyensSvtService ( intval('8') );  
-        $dati = [];
-        $TbEtat=[];
-        $i = 0;
-        $a=0;
-        foreach($moyens as $moyen){
-            // Si le moyen à 2 sous fonctions (ex: "plannifié et réalisé")
-            if ($moyen['SousTitres']==2){
-                $Etats=$repos -> findBy(['Libelle' => $moyen['Moyen']]);
-                // On rajoute les notions d'activitees au moyen pour créer 2 lignes sur planning
-                foreach($Etats as $etat){
-                    if ($moyen['id']!=$etat->getId()){
-                        $TbEtat[$a]=['id'=>$etat->getId(), 'content'=>$etat->getActivitees()];
-                        $a=$a+1;
-                    }
-                }
-                //dump($TbEtat[$a-1]['id']);
-                $dati[$i] = ['id'=> $moyen['id'],  'content'=> $moyen['Moyen'], 'className'=> 'gris', 'nestedGroups' => [$TbEtat[$a-1]['id']]];
-            }
-            else{
-                $dati[$i] = ['id'=> $moyen['id'],  'content'=> $moyen['Moyen']];
-            }
-            $i = $i + 1;
-			//On affecte un élément $item à $data
-        }
+        $repi=$this->getDoctrine()->getRepository(PolymReal::class);
+        $task=$plan->planning($repo, $repos, $repi, $statut);
 
-        return new JsonResponse(['Taches'=> $data, 'moyen'=> $dati, 'Ssmoyen'=> $TbEtat]);
+        return new JsonResponse(['Taches'=> $task[0], 'moyen'=> $moyens[1], 'Ssmoyen'=> $moyens[0]]);
     }    
     /**
      * @Route("/Planning", name="Planning")
-     * @Security("is_granted('ROLE_REGLEUR')")
+     * @Security("is_granted('ROLE_USER')")
      */
-    public function index()
+    public function index(FunctPlanning $plan)
     {
         
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
@@ -152,82 +90,16 @@ class PlanningMCController extends Controller
 
 //Recherche des moyens à afficher sur planning
         $repos=$this->getDoctrine()->getRepository(Moyens::class);
-        $moyens=$repos -> findAllMoyensSvtService ( intval('8'), intval('1') );
-        $item=$moyens;   
-        $data = [];
-        $TbEtat=[];
-        $i = 0;
-        $a=0;
-        foreach($moyens as $moyen){
-            // Si le moyen à 2 sous fonctions (ex: "plannifié et réalisé")
-            if ($moyen['SousTitres']==2){
-                $Etats=$repos -> findBy(['Libelle' => $moyen['Moyen']]);
-                // On rajoute les notions d'activitees au moyen pour créer 2 lignes sur planning
-                foreach($Etats as $etat){
-                    if ($etat->getActivitees() == 'Plannifie') {
-                        $MoyPla = $etat->getId();
-                    } else {
-                        $TbEtat[$a]=['id'=>$etat->getId(), 'content'=>$etat->getActivitees()];
-                         $a=$a+1;
-                    }
-                }
-                $data[$i] = ['id'=> $MoyPla, 'style'=>  "color:white;", 'content'=> $moyen['Moyen'], 'className'=> 'gris', 'nestedGroups' => [$TbEtat[$a-1]['id']]];
-            }
-            else{
-                $data[$i] = ['id'=> $moyen['id'],  'content'=> $moyen['Moyen']];
-            }
-            $i = $i + 1;
-			//On affecte un élément $item à $data
-        }
-        $Ssmoyen= new JsonResponse($TbEtat);
-        $moyen= new JsonResponse($data);
+        $moyens=$plan->moyens($repos);
+        $Ssmoyen= new JsonResponse($moyens[0]);
+        $moyen= new JsonResponse($moyens[1]);
+        $item= $moyens[2];
 
 //Chargement d'une variable pour les tâches déjà plannifiées
         $repo=$this->getDoctrine()->getRepository(Planning::class);
-        $Taches=$repo -> findAll();
-        $data = [];
-        $i = 0;
-        //On créé le pourcentage de volumetrie en test, a changer par le réel avec nb outillage
-        $Pourc=10;
-        foreach($Taches as $tache){
-            //On construit l'info bulle(tooltip) avec certaines données de la polym plannifiée
-            $commentaires=nl2br("Demande n° ". $tache->getNumDemande()->getId()." / ID Plannif : ". $tache->getId()."\n" ."Départ: ". ($tache->getDebutDate())->format('G:i') . "\n" .$tache->getNumDemande()->getCommentaires()."\n".$tache->getNumDemande()->getOutillages() ."\n" . "Fin à : " . ($tache->getFinDate())->format('G:i'));
-            //On cherche le moyen attribué à la polym suivant la demande et l'activité Plannification
-            $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification(),'Activitees'=> 'Plannifie']);
-            if($Pourc<75){
-                $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires,'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%; background:red"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
-            }
-            else{
-                $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires, 'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
-            }
-            
-            $i = $i + 1;
-            //dump($MoyUtil=$repos -> )findBy(['Libelle' => $tache->getIdentification()]));
-            //dump($MoyUtil[0]->getId());
-            //dump($Taches);
-            //dump($tache->getNumDemande()->getCycle()->getCouleur());
-        }
-        //Implémentation dans la variable des polyms créées
-        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
-        $Polyms=$repo -> findAll();
-        //dump($Polyms);
-        foreach($Polyms as $polym){ 
-            if(!$polym->getPourcVolCharge()){
-                $Pourc==10;
-            }               
-            else{
-                $Pourc=$polym->getPourcVolCharge();
-            }    
-            if($Pourc<75){
-                $data[$i] = ['id'=>  '2'.$polym->getId(),'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym(),'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%; background:red"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
-            }
-            else{
-                $data[$i] = ['id'=>  '2'.$polym->getId(),'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym(),'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
-            }
-            $i = $i + 1;
-        }
-        $taches= new JsonResponse($data);
-        //dump($taches);
+        $repi=$this->getDoctrine()->getRepository(PolymReal::class);
+        $task=$plan->planning($repo, $repos, $repi);
+        $taches = new JsonResponse($task[0]);
 
         return $this->render('planning_mc/index.html.twig', [
             'controller_name' => 'Moyen Chaud',
@@ -1129,12 +1001,31 @@ class PlanningMCController extends Controller
     /**
      * @Route("/Demandes/Deprogrammation/{id}", name="Deprog_Demandes")
      */
-    public function demandeDeprog(ObjectManager $manager,Demandes $demande=null)
+    public function demandeDeprog(Demandes $demande=null, \Swift_Mailer $mailer, Request $request, userInterface $user=null)
     {
-        // $manager = $this->getDoctrine()->getManager();
-        //     $manager->remove($demande);
-        //     $manager->flush();
+        //On récupère le CE polym
+        $repo=$this->getDoctrine()->getRepository(User::class);
+        //$CEPolym= new User;
+        //$CEPolym=$repo->findBy(['Roles'=> [0=>"ROLE_CE_POLYM"]]);
+        $CEPolym="f.dartois@daher.com";
+
         //Envoyer un mail pour faire la demande de modification
+        $message = (new \Swift_Message('Demande de déprogrammation'))
+            // On attribue l'expéditeur
+            ->setFrom($user->getEmail())
+
+            // On attribue le destinataire
+            ->setTo($CEPolym)
+
+            // On crée le texte avec la vue
+            ->setBody("Déprogrammation de la polymérisation n°...". $demande->getPlanning()->getId(),
+                'text/plain'
+            )
+        ;
+        $mailer->send($message);
+
+        $this->addFlash('Annulation', 'Votre message a été transmis concernant la demande n°'.$demande->getId().' , nous vous répondrons dans les meilleurs délais.'); // Permet un message flash de renvoi
+        
         return $this->redirectToRoute('Demandes');
     }
 
@@ -1461,92 +1352,10 @@ class PlanningMCController extends Controller
     /**
      * @Route("/LOGISTIQUE/Ordonnancement", name="Ordo")
      */
-    public function Ordo()
+    public function Ordo(FunctChargPlan $charge)
         {
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
         $Titres=$repo -> findAll();
-        // Création de la table de répartition des programmes suivant OF SAP lancés sur 1 mois
-        $repo=$this->getDoctrine()->getRepository(Charge::class);
-        // Date à aujourd'hui
-        $jour= new \datetime;
-        $date=$jour;
-        $SemUn=$jour->format("W");
-        // Date à 1 mois
-        $jourVisu = date("Y-m-d", strtotime('+ 30 days'.date('Y') ));
-        $jourVisu=new \datetime($jourVisu);
-        $DerSem=$jourVisu->format("W");
-        //Récupération de la charge SAP sur 1 mois
-        $ChargeTot=$repo -> findChargeSem($date,$jourVisu); 
-        $i=0;
-        $j=0;
-        foreach($ChargeTot as $charge){
-            $y=intval($charge['NbrRef']);
-            $lundi = new \DateTime();
-            $lundi->setISOdate($charge['Annee'], $charge['Semaine']);
-            $jour=strtotime($lundi->format("Y-m-d"))*1000;
-            //dump($lundi->format("WY"));
-            $TboData[$j]=['x'=> $jour,'y'=>$y];
-            $Tablo[$i]=['type'=>"stackedColumn",'name'=>$charge['Cycles'],'showInLegend'=>"true",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboData];
-                $i = $i + 1;
-            //$Tablo[$i]=['type'=>"stackedColumn",'name'=>$charge['Cycles'],'showInLegend'=>"false",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboData];
-            
-            //$CharTot=intval($polym['DureTheoPolym']/10000);
-        }
-        $RepartP= new JsonResponse($Tablo);
-        //dump($RepartP);
-
-        // Création de la table de répartition des programmes en retard suivant OF SAP lancés 
-        $repo=$this->getDoctrine()->getRepository(Charge::class);
-        // Date à hier
-        $jourFinRetard = date("Y-m-d", strtotime('- 1 days'.date('Y') ));
-        $date=new \datetime($jourFinRetard);
-        // Date en retard d'1 mois
-        $jourVisu = date("Y-m-d", strtotime('- 31 days'.date('Y') ));
-        $jourVisu=new \datetime($jourVisu);
-        $ChargeTard=$repo -> findChargeSem($jourVisu,$date);
-        //dump($ChargeTard);
-        $i=0;
-        $j=0;
-        foreach($ChargeTard as $charge){
-            $y=intval($charge['NbrRef']);
-            $DebSem = new \DateTime();
-            $DebSem->setISOdate($charge['Annee'], $charge['Semaine']);
-            $JDebSem=strtotime($DebSem->format("Y-m-d"))*1000;
-            //dump($lundi->format("WY"));
-            $TboDatas[$j]=['x'=> $JDebSem,'y'=>$y];
-            $Tablos[$i]=['type'=>"stackedColumn",'name'=>$charge['Cycles'],'showInLegend'=>"true",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboDatas];
-                $i = $i + 1;
-            //$Tablo[$i]=['type'=>"stackedColumn",'name'=>$charge['Cycles'],'showInLegend'=>"false",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboData];
-            
-            //$CharTot=intval($polym['DureTheoPolym']/10000);
-        }
-
-        $RepartRetard= new JsonResponse($Tablos);
-        // Création de la table de répartition des programmes oubliés
-        $repo=$this->getDoctrine()->getRepository(Charge::class);
-        // Date à plus d'un mois
-        $jourFinRetard = date("Y-m-d", strtotime('+ 365 days'.date('Y') ));
-        $date=new \datetime($jourFinRetard);
-        // Date en retard d'1 an
-        $jourVisu = date("Y-m-d", strtotime('- 730days'.date('Y') ));
-        $jourVisu=new \datetime($jourVisu);
-        $ChargeOubli=$repo -> findChargeMois($jourVisu,$date);
-        $i=0;
-        $j=0;
-        foreach($ChargeOubli as $charge){
-            $y=intval($charge['NbrRef']);
-            $DebSem = new \DateTime();
-            $DebSem->setISOdate($charge['Annee'], $charge['Mois']);
-            $JDebSem=strtotime($DebSem->format("Y-m-d"))*1000;
-            $TboDati[$j]=['x'=> $JDebSem,'y'=>$y];
-            $Tabli[$i]=['type'=>"stackedColumn",'name'=>$charge['Cycles'],'showInLegend'=>"true",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboDati];
-                $i = $i + 1;
-            //$Tablo[$i]=['type'=>"stackedColumn",'name'=>$charge['Cycles'],'showInLegend'=>"false",'xValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboData];
-            
-            //$CharTot=intval($polym['DureTheoPolym']/10000);
-        }
-
-        $RepartT= new JsonResponse($Tabli);
 
         // Création de la charge totale SAP
         $repo=$this->getDoctrine()->getRepository(Charge::class);
@@ -1554,7 +1363,29 @@ class PlanningMCController extends Controller
         
     //Création de la planification à long terme avec les chargements figés
         // Création de la table de répartition des programmes suivant OF SAP lancés sur 1 mois
+        // Date à aujourd'hui
+        $jour= new \datetime;
+        // Date à 1 mois
+        $jourVisu = date("Y-m-d", strtotime('+ 31 days'.date('Y') ));
+        $jourVisu=new \datetime($jourVisu);
+       
+        return $this->render('planning_mc/Ordo.html.twig', [
+            'controller_name' => 'PlanningOrdo',
+            'ChargeTot' => $ChargTot,
+            'Titres' => $Titres,
+            'datedeb' => $jour,
+            'datefin' => $jourVisu,
+        ]);
+    }
+
+    /**
+     * @Route("/LOGISTIQUE/Plannification", name="PreviPlannif")
+     */
+    public function PreviPlannif(FunctChargPlan $charge)
+    {
+        //Création de la planification à long terme avec les chargements figés
         $repo=$this->getDoctrine()->getRepository(Charge::class);
+        // Création de la table de répartition des programmes suivant OF SAP lancés sur 1 mois
         // Date à aujourd'hui
         $jour= new \datetime;
         // Date à 1 mois
@@ -1564,150 +1395,25 @@ class PlanningMCController extends Controller
         $ChargeTot=$repo -> findReparChargeW($jour,$jourVisu);
         $i=0;
         dump($ChargeTot);
+        //Attribution des CTO possible pour chacun des créneaux de polymérisation(Creation listCTO)
+        $TbPcSsOT=[];
+        $TbRepartChargeTot=[];
+        $m=0;
         foreach($ChargeTot as $Creno){
-            $TableCTJ[$i]=$repo -> findBy(['DateDeb' => $Creno['Jour'],'NumProg' => $Creno['Cycles']]);
-            dump($Creno['Cycles']);          
-            //On récupère l'ID du cycle en cours
-            $STD=$this->getDoctrine()->getRepository(ProgMoyens::class);
-            $IdProg=$STD->findOneBy(['Nom' => $Creno['Cycles']]);
-            //On récupère les chargements figés du cycle en cours
             $cata=$this->getDoctrine()->getRepository(ChargFige::class);
-            $ChargementsFiG=$cata->findBy(['Programme' =>$IdProg]);
-            $f=0;
-            dump($ChargementsFiG);
-            //On  sélectionne les chargements figés en fonction du nombre de pièces
-            foreach($ChargementsFiG as $ChargeFiG){
-                //Pour chaque chargement figé on récupère sa composition en outillages
-                $listeOT = $this->getDoctrine()->getRepository(Outillages::class)->myFindByCharFiG($ChargeFiG->getCode());
-                dump($listeOT);
-                //On récupère le nombre d'outillages
-                $nbOT=sizeof($listeOT);
-                //On cherche les OT correspondants aux articles du $creno(TableCTJ[$i])
-                $r=0;
-                $TabOTArtOFOP=[];
-                dump($TableCTJ);
-                foreach($TableCTJ[$i] as $OFJ){
-                    //Pour chaque OF on va récupérer l'OT correspondant à l'article de l'OF
-                    dump($OFJ->getReferencePcs());
-                    $Outill= $this->getDoctrine()->getRepository(Outillages::class)->myFindByOutillage($OFJ->getReferencePcs()); 
-                    dump($Outill);
-                    if(sizeof($Outill)>1){
-                        $ArtMultiIndus=True;
-                    }
-                    elseif(sizeof($Outill)==0){
-                        //Si pas d'outillage correspondant à l'article, on sort de la boucle
-                        dump('Aucun outillage trouvé');
-                        break 2;
-                    }
-                    //Suivant le nb d'empreinte on recherche les autres pièces si besoin
-                    if($Outill[0]->getNbEmpreinte()===1){
-                    //L'OT n'a qu'une seule empreinte, on peut créé le couple OT/Article/OF/OP des articles de CTJ
-                        $TabOTArtOFOP[$f][$r][0]=$Outill[0]->getRef();
-                        $TabOTArtOFOP[$f][$r][1]=$OFJ->getReferencePcs();
-                        $TabOTArtOFOP[$f][$r][2]=$OFJ->getOrdreFab();
-                        $TabOTArtOFOP[$f][$r][3]=$OFJ->getPosteW();
-                        $r=$r+1;
-                    }
-                    //Sinon on va regarder si les ref des autres empreintes sont dans CTJ
-                    else{
-                        $NbE=$Outill->getNbEmpreinte();
-                        $TabOTMultiEmp=[$NbE];  //Tableau regroupant tous les articles de l'outillage
-                        dump($TabOTMultiEmp);
-                        foreach($TableCTJ[$i] as $OFJOT){
-                            if($OFJ->getReferencePcs()==$OFJOT->getReferencePcs()){
-                                //C'est le même article, donc on ne le prend pas sauf si plusieurs indus
-                                if($Outill->getNbIndus()>1){
-                                    //Article avec plusieurs indus, donc possibilité d'avoir le même article dans le chargement
-                                    //On vérifie que celà ne soit pas le même OFOP
-                                    if($OFJ->getOF()==$OFJOT->getOF()){
-                                        //Si même OF on ne prend pas l'article
-                                    }
-                                    else{
-                                        //Si OF différent on prend l'article sur la deuxième indus
-
-                                    }
-                                }
-                                else{
-                                    //Une seule indus donc on prend pas l'article
-                                }
-                            }
-                            else{
-                                //C'est un autre article on regarde si l'OT correspond au premier
-                                
-                            }
-                        }
-                        dump($TabOTArtOFOP);   
-                        
-                    }
-                }
-                dump($TabOTArtOFOP);
-                //On vérifie si les chargements figés sont adéquate pour ce $creno(charge en nb de pièce de la journée)
-                foreach($TabOTArtOFOP as $ChargPolym){
-                    dump($ChargPolym);
-                    if(sizeof($ChargPolym)===$Creno['NbrPcs']){
-                        Dump('Chargement figé OK');
-    
-                    }
-                    //Si manque de pièce soit on passe et on va voir plus loin si plus de pièce, soit on vérifie si le chargement >%obj de remplissage
-                    else{
-                        //Il faut trouver les OT manquants dans le chargement figé
-                        
-                        //En premier on vérifie le % de remplissage par le nombre d'OT si < on passe à l'option ajout de la charge des jours suivants
-                        $Remp=(sizeof($ChargPolym)/$nbOT)*100;
-                        if($Remp>75){
-                            //On vérifie si un chargement amont n'a pas été validé à <50%
-                            Dump('Chargement figé NOK car remplissage à '.$Remp.'%');
-    
-                        }
-                        else{
-                            //On va essayer en tirant la charge des jours suivants(7 jours)
-                            Dump($Creno);
-                            $NJourD=clone $Creno['Jour'];
-                            $jourcyle=$NJourD->modify('+1 day');
-                            $NJourF= clone $Creno['Jour'];
-                            $jour3cycle=$NJourF->modify('+7 day');
-                            $Cyc=$Creno['Cycles'];
-                            Dump($jourcyle);
-                            Dump($jour3cycle);
-                            //Récupération de tous les OF suivant nouvelles dates et cycle en cours
-                            $ChargePart=$repo -> findReparChargeWCycle($jourcyle,$jour3cycle,$Cyc);
-                            dump($ChargePart);
-                            $j=0;
-                            //On va chercher les articles manquants au chargement figé pour complétude
-                            foreach($ChargePart as $CPart){
-                                //Pour chaque OF en avance de charge
-                                $TabCharPart[$j]=$repo -> findBy(['DateDeb' => $CPart['Jour'],'NumProg' => $Creno['Cycles']]);
-                                dump($TabCharPart);
-                                //On va récupérer le n° OT de chaque article
-                                foreach($TabCharPart[$j] as $OFBis ){
-                                    dump($OFBis->getReferencePcs());
-                                    $OutBis= $this->getDoctrine()->getRepository(Outillages::class)->myFindByOutillage($OFBis->getReferencePcs());
-                                    dump($OutBis);
-                                    //On comparer pour trouver les outillages manquants du chargement figé
-                                    
-                                }
-                                $j=$j+1;
-                                
-                            }
-                        }
-                    }
-                }
-            }
+            $STD=$this->getDoctrine()->getRepository(ProgMoyens::class);
+            $Out=$this->getDoctrine()->getRepository(Outillages::class);
+            $Art=$this->getDoctrine()->getRepository(Articles::class);
+            $ListCTO=$charge->checkCTO($cata, $STD, $repo, $Out, $Art, $Creno,  $i, $TbPcSsOT, $m);
+            $TbRepartChargeTot[$i]=$ListCTO;
         $i = $i + 1;
         }
-
-        return $this->render('planning_mc/Ordo.html.twig', [
-            'controller_name' => 'PlanningOrdo',
-            'RepartPcs' => $RepartP->getContent(),
-            'RepartRetard'=> $RepartRetard->getContent(),
-            'RepartT'=> $RepartT->getContent(),
-            'DerSem' => $DerSem,
-            'ChargeTot' => $ChargTot,
-            'SemUn' => $SemUn,
-            'Titres' => $Titres,
+        dump($TbRepartChargeTot);
+        return $this->render('planning_mc/PreviPlannif.html.twig', [
+            'controller_name' => 'PlannificationSAP',
             'datedeb' => $jour,
             'datefin' => $jourVisu,
-            'tests' => $ChargeTot,
+            'tests' => $TbRepartChargeTot,
         ]);
     }
 
@@ -1742,18 +1448,20 @@ class PlanningMCController extends Controller
     /**
      * @Route("/METHODES/PE/Consultation_PE", name="Consultation PE")
      * @Route("METHODES/PE/Consultation_PE/{id}", name="Consul_PE")
+     * @Security("has_role('ROLE_ADMIN')")
      */
     public function Consultation_PE(CategoryMoyens $moyen=null)
     {
-
+        return $this->redirectToRoute('home');
     }
 
     /**
      * @Route("/METHODES/PE/Demande_SPF", name="Demandes SPF")
+     * @Security("has_role('ROLE_ADMIN')")
      */
     public function Demandes_SPF(CategoryMoyens $moyen=null)
     {
-
+        return $this->redirectToRoute('home');
     }
 
     /**
@@ -1936,7 +1644,7 @@ class PlanningMCController extends Controller
      */
     public function DemandesO(Request $requette, ObjectManager $manager)
     {
-
+        return $this->redirectToRoute('home');
     }
 
      /**
@@ -1993,7 +1701,7 @@ class PlanningMCController extends Controller
      */
     public function Creation(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
     {
-        
+        return $this->redirectToRoute('home');
     }
 
     /**
@@ -2038,4 +1746,11 @@ class PlanningMCController extends Controller
         ]);
     }
     
+    /**
+     * @Route("/AccessDenied", name="noAccess")
+     */
+    public function noAccess()
+    {
+        return new JsonResponse(['Message'=>"<div class=\"text-warning\">Vous ne pouvez pas accéder à cette transaction.\n Problème de droits</div>"]);
+    }
 }
