@@ -43,8 +43,9 @@ security:
         ROLE_ADMIN:       [ROLE_USER, ROLE_REGLEUR, ROLE_METHODES, ROLE_CE_MOULAGE, ROLE_CE_POLYM, ROLE_PROGRAMMEUR]
         ROLE_CE_POLYM:    [ROLE_PLANIF, ROLE_REGLEUR]
         ROLE_CE_MOULAGE:  [ROLE_USER]
-        ROLE_RESP_POLYM: [ROLE_CE_POLYM, ROLE_CE_MOULAGE]
+        ROLE_RESP_POLYM:  [ROLE_CE_POLYM, ROLE_CE_MOULAGE]
         ROLE_REGLEUR:     [ROLE_USER]
+        ROLE_SUPERVISEUR: [ROLE_RESP_POLYM, ROLE_GESTIONAIRE]
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:

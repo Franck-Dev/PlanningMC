@@ -120,7 +120,7 @@ class FunctChargPlan
                 $test=$this->checkOTOF($listeOT, $TbCTJ, $repo, $Out, $Art, $Creno, $i, $f);
             }
             //On va tester le remplissage
-            $Remp=(sizeof($test)/sizeof($listeOT))*100;
+            $Remp=round((sizeof($test)/sizeof($listeOT))*100,0);
             $TbDatasCTO[$q]=['Nom'=>$ChargeFiG->getCode(), 'Contenu'=>$test, 'Remplissage'=>$Remp];
             $q++;
         }
@@ -154,7 +154,10 @@ class FunctChargPlan
             if (sizeof($ArtOFCTJ)>1) {
                 //dump('Attention multi empreintes à traiter');
             } elseif (sizeof($ArtOFCTJ)==1) {
-                $TbDatasArt[$p]=$this->checkOFCharge($ArtOFCTJ, $Creno, $Horizon, $repo);
+                $retourDatas=$this->checkOFCharge($ArtOFCTJ, $Creno, $Horizon, $repo);
+                if ($retourDatas) {
+                    $TbDatasArt[$p]=$retourDatas;
+                }
                 //dump($TbDatasArt);
             }
             $p++;

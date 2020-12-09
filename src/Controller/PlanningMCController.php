@@ -11,6 +11,7 @@ use App\Entity\Planning;
 use App\Entity\ChargFige;
 use App\Entity\ConfSmenu;
 use App\Entity\PolymReal;
+use App\Entity\Chargement;
 use App\Entity\ConfSsmenu;
 use App\Entity\Outillages;
 use App\Entity\ProgMoyens;
@@ -140,6 +141,8 @@ class PlanningMCController extends Controller
                     //$NewDate=date_modify($demande->getDatePropose(),'+ 7days');
                     //$demande->setDatePropose($NewDate);
                     $demande->setDatePropose($dem->getDateFinrecurrance());
+                    $demande->setOutillages('');
+                    $demande->setCommentaires('');
 
                     $manager = $this->getDoctrine()->getManager();
                     $manager->persist($demande);
@@ -169,7 +172,7 @@ class PlanningMCController extends Controller
                         $DureCycM="+".$DureCycM."Minutes";
                         $DateFin=date_modify($DateFinH,$DureCycM);
                         $Planning->setFinDate($DateFin);
-                        dump($demande);
+                        //dump($demande);
                         $Planning->setIdentification($demande->getMoyenUtilise()->getLibelle());
                         $Planning->setAction($demande->getCycle()->getNom());
                         $Planning->setNumDemande($demande);
@@ -1361,17 +1364,18 @@ class PlanningMCController extends Controller
         $repo=$this->getDoctrine()->getRepository(Charge::class);
         $ChargTot=$repo -> findAll();
         
-    //Création de la planification à long terme avec les chargements figés
         // Création de la table de répartition des programmes suivant OF SAP lancés sur 1 mois
         // Date à aujourd'hui
         $jour= new \datetime;
         // Date à 1 mois
         $jourVisu = date("Y-m-d", strtotime('+ 31 days'.date('Y') ));
         $jourVisu=new \datetime($jourVisu);
+        $ChargeMois=$repo->myFindPcsTotMois($jour,$jourVisu);
        
         return $this->render('planning_mc/Ordo.html.twig', [
             'controller_name' => 'PlanningOrdo',
             'ChargeTot' => $ChargTot,
+            'ChargeMois' => $ChargeMois[0],
             'Titres' => $Titres,
             'datedeb' => $jour,
             'datefin' => $jourVisu,
@@ -1409,12 +1413,40 @@ class PlanningMCController extends Controller
         $i = $i + 1;
         }
         dump($TbRepartChargeTot);
+        //Récupération des chargements validés pour ces dates 
+        $repo=$this->getDoctrine()->getRepository(Chargement::class);
+        $ChargPlaMois=$repo->myFindChargtMois($jour,$jourVisu);
+        dump($ChargPlaMois);
+
         return $this->render('planning_mc/PreviPlannif.html.twig', [
             'controller_name' => 'PlannificationSAP',
             'datedeb' => $jour,
             'datefin' => $jourVisu,
             'tests' => $TbRepartChargeTot,
+            'planifie' => $ChargPlaMois,
         ]);
+    }
+
+     /**
+     * @Route("/LOGISTIQUE/Creation/Chargement", name="Chargt_Crea", condition="request.isXmlHttpRequest()")
+     */
+    public function chargtCrea(Request $request, ObjectManager $manager)
+    {
+        //On va récupérer le cycle machine par la désignation
+        $repo=$this->getDoctrine()->getRepository(ProgMoyens::class);
+        $idProgram=$repo->findBy(['Description'=>$request->get('cycle')]);
+        dump($idProgram);
+        $chargt= new Chargement;
+        $chargt->setNomChargement($request->get('nom'));
+        $chargt->setRemplissage($request->get('remp'));
+        $chargt->setProgramme($request->get('cycle'));
+        $chargt->setDatePlannif(new \datetime($request->get('jour')));
+
+        $manager = $this->getDoctrine()->getManager();
+        $manager->persist($chargt);
+        $manager->flush();
+
+        return new JsonResponse(['Message'=>"Enregistrement du chargement n° ".$chargt->getId()." effectué avec succès",'Code'=>200]);
     }
 
     /**

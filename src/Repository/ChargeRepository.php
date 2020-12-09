@@ -69,7 +69,7 @@ class ChargeRepository extends ServiceEntityRepository
     return $query -> execute ();
 }
 
-    // Calcul de la charge polym par semaine
+    // Calcul de la charge polym par mois
     public function findChargeMois ( $dateD,$dateF ) : array
     {
         $entityManager = $this -> getEntityManager ();
@@ -120,6 +120,22 @@ class ChargeRepository extends ServiceEntityRepository
         // returns an array of Product objects
         return $query -> execute ();
     }
+
+     // Calcul de la charge en pcs par mois
+     public function myFindPcsTotMois ( $dateD,$dateF ) : array
+     {
+         $entityManager = $this -> getEntityManager ();
+         
+         $query = $entityManager -> createQuery (
+             'SELECT count(p.ReferencePcs) as NbrRef
+                 FROM App\Entity\Charge p 
+                 WHERE p.DateDeb > :dateD AND  p.DateDeb < :dateF'
+         );
+         $query-> setParameter ( 'dateD' , $dateD );
+         $query-> setParameter ('dateF' , $dateF);
+             // returns an array of Product objects
+         return $query -> execute ();
+     }
 
     /*
     public function findOneBySomeField($value): ?Charge

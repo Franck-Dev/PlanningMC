@@ -14,15 +14,15 @@
                 <th>actions</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody class="text-primary">
         {% for article in articles %}
             <tr>
                 <td>{{ article.id }}</td>
                 <td>{{ article.Reference }}</td>
                 <td>{{ article.Designation }}</td>
                 <td>
-                    <a href="{{ path('articles_show', {'id': article.id}) }}">Voir</a>
-                    <a href="{{ path('articles_edit', {'id': article.id}) }}">Modifier</a>
+                    <a href="{{ path('articles_show', {'id': article.id}) }}" class="btn btn-success">Voir</a>
+                    <a href="{{ path('articles_edit', {'id': article.id}) }}" class="btn btn-warning">Modifier</a>
                 </td>
             </tr>
         {% else %}
@@ -33,5 +33,5 @@
         </tbody>
     </table>
 
-    <a href="{{ path('articles_new') }}">Création</a>
+    <a href="{{ path('articles_new') }}"class="btn btn-primary">Création</a>
 {% endblock %}

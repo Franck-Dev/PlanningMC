@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -19,12 +21,37 @@ class Chargement
     /**
      * @ORM\Column(type="string", length=255)
      */
-    private $Nom_Chargement;
+    private $NomChargement;
 
     /**
      * @ORM\Column(type="integer")
      */
     private $IdPlanning;
+
+    /**
+     * @ORM\Column(type="date")
+     */
+    private $DatePlannif;
+
+    /**
+     * @ORM\Column(type="integer")
+     */
+    private $Remplissage;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Charge", mappedBy="chargement")
+     */
+    private $OF;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $Programme;
+
+    public function __construct()
+    {
+        $this->OF = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -33,12 +60,12 @@ class Chargement
 
     public function getNomChargement(): ?string
     {
-        return $this->Nom_Chargement;
+        return $this->NomChargement;
     }
 
-    public function setNomChargement(string $Nom_Chargement): self
+    public function setNomChargement(string $NomChargement): self
     {
-        $this->Nom_Chargement = $Nom_Chargement;
+        $this->NomChargement = $NomChargement;
 
         return $this;
     }
@@ -51,6 +78,73 @@ class Chargement
     public function setIdPlanning(int $IdPlanning): self
     {
         $this->IdPlanning = $IdPlanning;
+
+        return $this;
+    }
+
+    public function getDatePlannif(): ?\DateTimeInterface
+    {
+        return $this->DatePlannif;
+    }
+
+    public function setDatePlannif(\DateTimeInterface $DatePlannif): self
+    {
+        $this->DatePlannif = $DatePlannif;
+
+        return $this;
+    }
+
+    public function getRemplissage(): ?int
+    {
+        return $this->Remplissage;
+    }
+
+    public function setRemplissage(int $Remplissage): self
+    {
+        $this->Remplissage = $Remplissage;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|charge[]
+     */
+    public function getOF(): Collection
+    {
+        return $this->OF;
+    }
+
+    public function addOF(charge $oF): self
+    {
+        if (!$this->OF->contains($oF)) {
+            $this->OF[] = $oF;
+            $oF->setChargement($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOF(charge $oF): self
+    {
+        if ($this->OF->contains($oF)) {
+            $this->OF->removeElement($oF);
+            // set the owning side to null (unless already changed)
+            if ($oF->getChargement() === $this) {
+                $oF->setChargement(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getProgramme(): ?string
+    {
+        return $this->Programme;
+    }
+
+    public function setProgramme(string $Programme): self
+    {
+        $this->Programme = $Programme;
 
         return $this;
     }

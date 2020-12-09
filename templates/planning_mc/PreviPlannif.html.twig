@@ -3,6 +3,9 @@
 {% block stylesheets %}{% endblock %}
 {% block body %}
 <style>
+td{
+    color: #00325F;
+}
 </style>
 <div class="conteiner-fluid">
         {#<pre>{{dump(tests)}}</pre>#} 
@@ -57,7 +60,20 @@
                             <td>{{ test.PlanningSAP.Cycles }}</td>
                             {# <td>{{ test.Jour|date('H:i:s') }}</td> #}
                             <td>{{ test.PlanningSAP.NbrPcs }}</td>
-                            <td></td>
+                            <td>
+                                {% for item in planifie %}
+                                    {% if (item.DatePlannif|date('d/m/y') == myDat) and (item.Programme == test.PlanningSAP.Cycles) %}
+                                        {% if item.Remplissage < 50 %}
+                                            <span class="badge rounded-pill bg-danger">{{item.NomChargement}}</span>
+                                        {% elseif item.Remplissage < 75 %}
+                                            <span class="badge rounded-pill bg-warning text-dark">{{item.NomChargement}}</span>
+                                        {% else %}
+                                            <span class="badge rounded-pill bg-success">{{item.NomChargement}}<span class="badge bg-secondary">9</span><span aria-hidden="true">&times;</span></span>
+                                        
+                                        {% endif %}       
+                                    {% endif %}
+                                {% endfor %}  
+                            </td>
                             <td><b ref=""  id="btn-success" class="btn btn-success" style="border-radius:40px;background-color:blue;color:white" onclick=''>Valider</b></td>
                         </tr>
                         <tr>
@@ -65,8 +81,9 @@
                                 <div id="{{['collapse',loop.index]|join}}" class="collapse in">
                                     {% if test.CTO %}
                                         {% set ChargFig = test.CTO %}
-                                        {% for CTO in ChargFig %}
-                                            <div class="table-responsive" id="PolymAff">
+                                        {% for CTO in ChargFig %}                               
+                                            {% set nameTR = ['IDChargt',jour,CTO.Nom,loop.index]|join %}
+                                            <div class="table-responsive" id="ChargAff">
                                                 <table class="table">
                                                     <thead>	
                                                         <tr>
@@ -77,11 +94,11 @@
                                                         </tr>	
                                                     </thead>
                                                     <tbody>
-                                                        <tr>
-                                                            <td>{{CTO.Nom}}</td>
-                                                            <td>{{CTO.Contenu|length}}</td>
+                                                        <tr id="{{nameTR}}">
+                                                            <td><a href="#" id={{CTO.Nom}} onclick="">{{CTO.Nom}}</a></td>
+                                                            <td><a href="#" id={{CTO.Nom}} onclick="">{{CTO.Contenu|length}}</a></td>
                                                             <td>{{[CTO.Remplissage,"%"]|join}}</td>
-                                                            <td><b ref=""  id="btn-success" class="btn btn-success" style="border-radius:40px;background-color:blue;color:white" onclick=''>Sélectionner</b></td>
+                                                            <td><b ref=""  id="btn-success" class="btn btn-success" style="border-radius:40px;background-color:blue;color:white" onclick='SelectCTO({{nameTR}},"{{myDate|date('Y-m-d H:i')}}","{{ test.PlanningSAP.Cycles }}")'>Sélectionner</b></td>
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -100,4 +117,31 @@
 </div>
 
 {% endblock %}
-{% block javascript %}{% endblock %}
+{% block javascripts %}
+<script type="text/javascript">
+function SelectCTO(ID,jour,prog) {
+    console.log(jour);
+    console.log(ID.children);
+    var tbDatasChargt=ID.children	
+    // var jour = $(this).attr('data-jour');
+    dateJour=new Date(jour).toISOString().slice(0,10);
+    console.log(dateJour);
+    var pourcRemp=parseInt(tbDatasChargt[2].innerText, 10);
+	$.ajax({
+		cache: false,
+		type: 'POST',
+        data: {nom: tbDatasChargt[0].innerText, remp: pourcRemp, jour: dateJour, cycle: prog},
+		url: "{{ path('Chargt_Crea') }}",
+		success: function(data) 
+		{
+			console.log(data);
+			// $('#exampleModal').show();
+            // $('#content').show().html(data);
+		}
+	});
+}
+// $('#ChargAffi').on('click', 'tbody tr', function(event) {
+//     // $(this).addClass('highlight').siblings().removeClass('highlight');
+// });
+// </script>
+{% endblock %}

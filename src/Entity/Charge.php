@@ -66,6 +66,11 @@ class Charge
      */
     private $Statut;
 
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\Chargement", inversedBy="OF")
+     */
+    private $chargement;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -187,6 +192,18 @@ class Charge
     public function setStatut(?string $Statut): self
     {
         $this->Statut = $Statut;
+
+        return $this;
+    }
+
+    public function getChargement(): ?Chargement
+    {
+        return $this->chargement;
+    }
+
+    public function setChargement(?Chargement $chargement): self
+    {
+        $this->chargement = $chargement;
 
         return $this;
     }

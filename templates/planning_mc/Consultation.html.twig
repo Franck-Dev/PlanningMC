@@ -29,6 +29,7 @@
                         <th>SPC</th>
                         <th>Date Creation</th>
                         <th>Date Modification</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -47,7 +48,7 @@
                         <td>{{ cycle.datecreation  ? cycle.datecreation|date('Y/m/d H:i:s') : '' }}</td>
                         <td>{{ cycle.datemodif ? cycle.datemodif|date('Y/m/d H:i:s') : '' }}</td>
                         <td>
-                            <a href="{{ path('Modification_PRP', {'id': cycle.id}) }}">Editer</a>
+                            <a href="{{ path('Modification_PRP', {'id': cycle.id}) }}" class="btn btn-warning">Editer</a>
                         </td>
                     </tr>
                 {% else %}
@@ -72,6 +73,6 @@
                 </tbody>
             </table>
         </div>
-    <a href="{{ path('Creation') }}">Creer un nouveau cycle</a>
+    <a href="{{ path('Creation') }}" class="btn btn-success">Creer un nouveau cycle</a>
 
 {% endblock %}
