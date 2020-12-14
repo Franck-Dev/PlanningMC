@@ -10,19 +10,19 @@ use App\Repository\ProgMoyensRepository;
 
 class FunctChargPlan
 {
-    // private $foo;
+    public $nbMessErr;
     // private $bar;
     // private $baz;
     // private $other;
     
     public function __construct(
-        // Foo $foo,
+        //nbMessErr $nbMessErr,
         // Bar $bar,
         // Baz $baz,
         // Other $other
     )
     {
-        // $this->foo = $foo;
+        //$this->nbMessErr = $nbMessErr;
         // $this->bar = $bar;
         // $this->baz = $baz;
         // $this->other = $other;
@@ -47,9 +47,15 @@ class FunctChargPlan
         //On récupère l'ID du cycle en cours
         $IdProg=$STD->findOneBy(['Nom' => $Creno['Cycles']]);
         //On récupère les chargements figés du cycle en cours
-        $ChargementsFiG=$cata->findBy(['Programme' => $IdProg, 'Statut' => 1]);
+        //dump($IdProg);
+        if ($IdProg) {
+            $ChargementsFiG=$cata->findBy(['Programme' => $IdProg->getid(), 'Statut' => 1]);
+        } else {
+            $datasPlanning=['PlanningSAP'=> $Creno,'CTO'=>"" ,'PcSsOT' => "", 'Messages'=>"Les OF n\'ont pas de programme"];
+            return $datasPlanning;
+        }
         $f=0;
-        //dump($ChargementsFiG);
+        dump($ChargementsFiG);
         $k=0;
         if ($ChargementsFiG){
             $listOTJour=[];
@@ -80,10 +86,13 @@ class FunctChargPlan
             }
             // On va sélectionner les CTO possible (Qui contiennent les pièces du jour)
             $ChargTecOptJour=$this->checkCTOOF($ChargementsFiG, $listOTJour, $Out);
+            dump($ChargTecOptJour);
+            dump($listOTJour);
             if ($ChargTecOptJour) {
                 $listCTO=$this->checkOTCTO($ChargTecOptJour, $repo, $Out, $Art, $Creno, $i, $f);
+                dump($listCTO);
             } else {
-
+                $Message='Aucunes des pièces du jour est dans le Chargement Technique.';
             }  
         } else {
             $Message='Pas de chargement figé pour le programme : '.$Creno['Cycles'];
@@ -115,12 +124,14 @@ class FunctChargPlan
         foreach($ChargementsFiG as $ChargeFiG){
             //Pour chaque chargement figé on récupère sa composition en outillages
             $listeOT = $Out->myFindByCharFiG($ChargeFiG->getCode());
+            dump($listeOT);
             if ($listeOT) {
                 //Doit remonter la liste de pcs(OF) contenu dans le chargement
                 $test=$this->checkOTOF($listeOT, $TbCTJ, $repo, $Out, $Art, $Creno, $i, $f);
+                dump($test);
             }
             //On va tester le remplissage
-            $Remp=round((sizeof($test)/sizeof($listeOT))*100,0);
+            $Remp=(round((sizeof($test)/sizeof($listeOT))*100,0)+ $ChargeFiG->getPourc())/2;
             $TbDatasCTO[$q]=['Nom'=>$ChargeFiG->getCode(), 'Contenu'=>$test, 'Remplissage'=>$Remp];
             $q++;
         }
@@ -147,18 +158,20 @@ class FunctChargPlan
     //On va chercher les OT dans la CTJ pour chacun des CTO
         //On va commencer par regarder pour chaque OT de mon CTO si un OF existe dans mon CTJ
         $p=0;
+        $TbDatasArt=[];
         foreach ($listeOT as $OTCTO) {
             $ArtOFCTJ=$Art->myFindByOT($OTCTO->getRef());
             // Cas des OT multi empreintes
-            //dump($ArtOFCTJ);
+            dump($ArtOFCTJ);
             if (sizeof($ArtOFCTJ)>1) {
-                //dump('Attention multi empreintes à traiter');
+                dump('Attention multi empreintes à traiter');
+                $retourDatas=$this->checkOFChargMultiEmp($ArtOFCTJ, $Creno, $Horizon, $repo);
             } elseif (sizeof($ArtOFCTJ)==1) {
-                $retourDatas=$this->checkOFCharge($ArtOFCTJ, $Creno, $Horizon, $repo);
-                if ($retourDatas) {
-                    $TbDatasArt[$p]=$retourDatas;
-                }
+                $retourDatas=$this->checkOFCharge($ArtOFCTJ[0], $Creno, $Horizon, $repo);
                 //dump($TbDatasArt);
+            }
+            if ($retourDatas) {
+                $TbDatasArt[$p]=$retourDatas;
             }
             $p++;
             // if ($this->inArrayObject($ArtOFCTJ,$TableCTJ[$i]) == true) {
@@ -198,13 +211,13 @@ class FunctChargPlan
             }
             //Sinon on va regarder si les ref des autres empreintes sont dans CTJ
             else{
-                $NbE=$Outill->getNbEmpreinte();
+                $NbE=$Outill[0]->getNbEmpreinte();
                 $TabOTMultiEmp=[$NbE];  //Tableau regroupant tous les articles de l'outillage
                 //dump($TabOTMultiEmp);
                 foreach($TableCTJ[$i] as $OFJOT){
                     if($OFJ->getReferencePcs()==$OFJOT->getReferencePcs()){
                         //C'est le même article, donc on ne le prend pas sauf si plusieurs indus
-                        if($Outill->getNbIndus()>1){
+                        if($Outill[0]->getNbIndus()>1){
                             //Article avec plusieurs indus, donc possibilité d'avoir le même article dans le chargement
                             //On vérifie que celà ne soit pas le même OFOP
                             if($OFJ->getOF()==$OFJOT->getOF()){
@@ -317,23 +330,51 @@ class FunctChargPlan
      */
     private function checkOFCharge($ArtOT, $Creno, $Horizon, $repo) {
 
-        for ($ix=0; $ix < $Horizon; $ix++) { 
+        for ($ix=0; $ix < $Horizon+1; $ix++) {
+            $refOK=False; 
             $dateInit=clone($Creno['Jour']);
             $DureCycH="+".$ix."days";
             $newDateFin=date_modify($dateInit, $DureCycH);
-            //dump($newDateFin);
+            dump($newDateFin);
             // $chargeTotJour=$repo -> findReparChargeWCycle($newDateDeb,$newDateFin,$Creno['Cycles']);
             $chargeTotJour=$repo ->findBy(['DateDeb'=>$newDateFin, 'NumProg'=>$Creno['Cycles']]);
-            //dump($chargeTotJour);
+            dump($chargeTotJour);
             $datasOF=[];
+            dump($ArtOT);
             foreach ($chargeTotJour as $ArtCTJ) {
-                if ($ArtOT[0]->getReference() == $ArtCTJ->getReferencePcs()) {
+                if ($ArtOT->getReference() == $ArtCTJ->getReferencePcs()) {
                     $datasOF=["OF" => $ArtCTJ->getOrdreFab(), "Designation" => $ArtCTJ->getDesignationPCS(), "Horizon"=> $ix];
-                break 2;
+                    $refOK=true;
+                    dump($datasOF);
+                    break 2;
                 }
             }
-        }           
+        } 
+        if ($refOK==false) {
+            $Message='Manque la référence '.$ArtOT->getReference(). ', '.$ArtOT->getDesignation();
+            dump($Message);
+        }          
         return $datasOF;
+    }
+    
+    /**
+     * checkOFChargMultiEmp Permet de traiter le cas des multi empreintes en passant chacunes des ref liées
+     *
+     * @param  mixed $ArtOT
+     * @param  mixed $Creno
+     * @param  mixed $Horizon
+     * @param  mixed $repo
+     * @return void
+     */
+    private function checkOFChargMultiEmp($ArtOT, $Creno, $Horizon, $repo) {
+        
+        $r=0;
+        foreach ($ArtOT as $RefOT){
+            $ChargEmp=$this->checkOFCharge($RefOT, $Creno, $Horizon, $repo);
+            $retourDatas[$r]=$ChargEmp;
+            $r++;
+        }
+        return $retourDatas;
     }
     
     /**
@@ -349,12 +390,15 @@ class FunctChargPlan
         $listCTOVal=[];
         foreach($ChargementsFiG as $CTOOT) {
             $listeOT = $Out->myFindByCharFiG($CTOOT->getCode());
+            //dump($listeOT);
             $n=0;
             $TbListeOT=[];
             foreach($listeOT as $OT) {
                 $TbListeOT[$n]=$OT->getRef();
                 $n++;
             }
+            //dump($TbListeOT);
+            //dump($listOTJour);
             foreach($listOTJour as $OTJour) {
                 if (in_array($OTJour[0]->getRef(), $TbListeOT)) {
                     $listCTOVal[$o]=$CTOOT;
@@ -364,5 +408,9 @@ class FunctChargPlan
             $o++;
         }
         return $listCTOVal;
+    }
+
+    public function insertChargement() {
+        
     }
 }

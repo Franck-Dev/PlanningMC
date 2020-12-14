@@ -81,7 +81,6 @@ class ArticlesController extends AbstractController
 
         $form = $this->createForm(ArticlesType::class, $article);
         $form->handleRequest($request);
-
         if ($form->isSubmitted() && $form->isValid()) {
             $this->getDoctrine()->getManager()->flush();
 

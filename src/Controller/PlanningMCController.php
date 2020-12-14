@@ -1357,6 +1357,7 @@ class PlanningMCController extends Controller
      */
     public function Ordo(FunctChargPlan $charge)
         {
+            dump($charge);
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
         $Titres=$repo -> findAll();
 
@@ -1403,6 +1404,7 @@ class PlanningMCController extends Controller
         $TbPcSsOT=[];
         $TbRepartChargeTot=[];
         $m=0;
+        $nbMessErr=0;
         foreach($ChargeTot as $Creno){
             $cata=$this->getDoctrine()->getRepository(ChargFige::class);
             $STD=$this->getDoctrine()->getRepository(ProgMoyens::class);
@@ -1410,6 +1412,9 @@ class PlanningMCController extends Controller
             $Art=$this->getDoctrine()->getRepository(Articles::class);
             $ListCTO=$charge->checkCTO($cata, $STD, $repo, $Out, $Art, $Creno,  $i, $TbPcSsOT, $m);
             $TbRepartChargeTot[$i]=$ListCTO;
+            if ($ListCTO['Messages']) {
+                $nbMessErr++;
+            }
         $i = $i + 1;
         }
         dump($TbRepartChargeTot);
@@ -1424,6 +1429,7 @@ class PlanningMCController extends Controller
             'datefin' => $jourVisu,
             'tests' => $TbRepartChargeTot,
             'planifie' => $ChargPlaMois,
+            'nbMessErr' => $nbMessErr,
         ]);
     }
 
@@ -1445,6 +1451,11 @@ class PlanningMCController extends Controller
         $manager = $this->getDoctrine()->getManager();
         $manager->persist($chargt);
         $manager->flush();
+
+        //Une fois le chargement créé, on valide les OF dans la charge en mettant l'ID
+        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        
+
 
         return new JsonResponse(['Message'=>"Enregistrement du chargement n° ".$chargt->getId()." effectué avec succès",'Code'=>200]);
     }

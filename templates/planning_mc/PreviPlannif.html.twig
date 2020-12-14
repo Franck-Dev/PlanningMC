@@ -8,6 +8,8 @@ td{
 }
 </style>
 <div class="conteiner-fluid">
+    {% set nbMessErrT = nbMessErr %}
+    <input type="hidden" id='nbMessErrT' value={{nbMessErrT}}>
         {#<pre>{{dump(tests)}}</pre>#} 
     <div class="table-responsive" id="PolymAff">
         <table class="table">
