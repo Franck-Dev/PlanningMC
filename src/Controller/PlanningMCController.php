@@ -1232,9 +1232,11 @@ class PlanningMCController extends Controller
             $olddebdate=new \Datetime($request->request->get('olddatedeb'));
             $oldfindate=new \Datetime($request->request->get('olddatefin'));
             $idmoyen=$request->request->get('moyen');
-            $firstDateTime=date("Y-m-d H:m",strtotime($request->request->get('newdatedeb')));
+            $firstDateTime=date("Y-m-d H:i",strtotime($request->request->get('newdatedeb')));
+            dump($request->request->get('newdatedeb'));
+            dump($firstDateTime);
             $newdebdate = new \DateTime($firstDateTime);
-            $lastDateTime=date("Y-m-d H:m",strtotime($request->request->get('newdatefin')));
+            $lastDateTime=date("Y-m-d H:i",strtotime($request->request->get('newdatefin')));
             $newfindate = new \DateTime($lastDateTime);
             //Récupération de la désignation du moyen suivant id
             $basemoy = $this->getDoctrine()->getRepository(Moyens::class);
