@@ -16,6 +16,7 @@ use App\Entity\ConfSsmenu;
 use App\Entity\Outillages;
 use App\Entity\ProgMoyens;
 use App\Form\ComOutilType;
+use App\Form\DatePlanning;
 use App\Form\CreationOType;
 use App\Form\PolymFormType;
 use App\Services\FunctIndic;
@@ -809,6 +810,9 @@ class PlanningMCController extends Controller
                         'choices'  => [
                             'NON' => false,
                             'OUI' => true]])
+                      -> add('planning', DatePlanning::class,[
+                          'label'=> 'Planification de la demande pour info :'
+                      ])
                       ->getForm();
                 $ExDem = true;
             }
