@@ -85,22 +85,22 @@ td{
                                         {% set ChargFig = test.CTO %}
                                         {% for CTO in ChargFig %}                               
                                             {% set nameTR = ['IDChargt',jour,CTO.Nom,loop.index]|join %}
-                                            <div class="table-responsive" id="ChargAff">
+                                            <div class="table-responsive h-100" id="ChargAff">
                                                 <table class="table">
                                                     <thead>	
                                                         <tr>
                                                             <th>Nom</th>
                                                             <th>Qté Pcs(OF)</th>
-                                                            <th>Remplissage</th>
+                                                            <th>Remplissages</th>
                                                             <th>Action</th>
                                                         </tr>	
                                                     </thead>
                                                     <tbody>
                                                         <tr id="{{nameTR}}">
-                                                            <td><a href="#" id={{CTO.Nom}} onclick="">{{CTO.Nom}}</a></td>
-                                                            <td><a href="#" id={{CTO.Nom}} onclick="">{{CTO.Contenu|length}}</a></td>
-                                                            <td>{{[CTO.Remplissage,"%"]|join}}</td>
-                                                            <td><b ref=""  id="btn-success" class="btn btn-success" style="border-radius:40px;background-color:blue;color:white" onclick='SelectCTO({{nameTR}},"{{myDate|date('Y-m-d H:i')}}","{{ test.PlanningSAP.Cycles }}")'>Sélectionner</b></td>
+                                                            <td><a href="#" id={{CTO.Nom}} onclick="affichageCTO({{ CTO.Nom|json_encode() }})">{{CTO.Nom}}</a></td>
+                                                            <td><a href="#" id={{CTO.Nom}} onclick="affichageOFs({{ CTO.Contenu|json_encode() }})">{{CTO.Contenu|length}}</a></td>
+                                                            <td>{{[CTO.Remplissage[0],"%"]|join}}<span class="col-auto"><i class="fa fa-calendar fa-1x text-gray-300">{{[CTO.Remplissage[1],"%"]|join}}</i></span></td>
+                                                            <td><b ref=""  id="btn-success" class="btn btn-success" style="border-radius:40px;background-color:blue;color:white" onclick='SelectCTO({{nameTR}},"{{myDate|date('Y-m-d H:i')}}","{{ test.PlanningSAP.Cycles }}", {{CTO.Contenu|json_encode()}})'>Sélectionner</b></td>
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -121,9 +121,44 @@ td{
 {% endblock %}
 {% block javascripts %}
 <script type="text/javascript">
-function SelectCTO(ID,jour,prog) {
-    console.log(jour);
-    console.log(ID.children);
+let d=document.querySelector('a')
+// Pour détecter un clic sur un lien 
+d.addEventListener('click', function (e) {
+    e.preventDefault() // Annule l'évènement
+    e.target // contient l'élément sur lequel on a cliqué
+    //e.currentTarget // contient l'élément sur lequel on a greffé l'écouteur 
+    alert(e)
+})
+function affichageCTO(codeCTO) {
+    console.log(codeCTO);
+    var cibleCTO=document.getElementById("myDatasCTO");
+    $.ajax({
+		cache: false,
+		type: 'POST',
+        data: {Code: codeCTO},
+		url: "{{ path('tbDatasCTO_Crea') }}",
+		success: function(data) 
+		{
+			cibleCTO.innerHTML=data;
+		}
+    });
+}
+function affichageOFs(datCharg) {
+    console.log(datCharg);
+    var cible=document.getElementById("myDatasChargement");
+    $.ajax({
+		cache: false,
+		type: 'POST',
+        data: {chargement: datCharg},
+		url: "{{ path('tbDatasChargt_Crea') }}",
+		success: function(data) 
+		{
+			cible.innerHTML=data;
+		}
+	});
+}
+function SelectCTO(ID,jour,prog,dossiers) {
+    console.log(dossiers);
     var tbDatasChargt=ID.children	
     // var jour = $(this).attr('data-jour');
     dateJour=new Date(jour).toISOString().slice(0,10);
@@ -132,7 +167,7 @@ function SelectCTO(ID,jour,prog) {
 	$.ajax({
 		cache: false,
 		type: 'POST',
-        data: {nom: tbDatasChargt[0].innerText, remp: pourcRemp, jour: dateJour, cycle: prog},
+        data: {nom: tbDatasChargt[0].innerText, remp: pourcRemp, jour: dateJour, cycle: prog, charge: dossiers},
 		url: "{{ path('Chargt_Crea') }}",
 		success: function(data) 
 		{

@@ -1416,7 +1416,7 @@ class PlanningMCController extends Controller
             $STD=$this->getDoctrine()->getRepository(ProgMoyens::class);
             $Out=$this->getDoctrine()->getRepository(Outillages::class);
             $Art=$this->getDoctrine()->getRepository(Articles::class);
-            $ListCTO=$charge->checkCTO($cata, $STD, $repo, $Out, $Art, $Creno,  $i, $TbPcSsOT, $m);
+            $ListCTO=$charge->checkCTO($cata, $STD, $repo, $Out, $Art, $Creno, $TbPcSsOT, $m);
             $TbRepartChargeTot[$i]=$ListCTO;
             if ($ListCTO['Messages']) {
                 $nbMessErr++;
@@ -1444,16 +1444,32 @@ class PlanningMCController extends Controller
      */
     public function chargtCrea(Request $request, ObjectManager $manager)
     {
+        $chargt= new Chargement;
         //On va récupérer le cycle machine par la désignation
         $repo=$this->getDoctrine()->getRepository(ProgMoyens::class);
-        $idProgram=$repo->findBy(['Description'=>$request->get('cycle')]);
+        $idProgram=$repo->findOneBy(['Nom'=> $request->get('cycle')]);
         dump($idProgram);
-        $chargt= new Chargement;
+        //Création d'un tableau des OF du chargement
+        $repoChar=$this->getDoctrine()->getRepository(Charge::class);
+        $manager = $this->getDoctrine()->getManager();
+        foreach ($request->get('charge') as $OT) {
+            foreach ($OT as $OF) {
+                $tbOF=$repoChar->FindOneBy(['OrdreFab'=> $OF['OF'],'NumProg'=> $request->get('cycle')]);
+                $chargt->addOF($tbOF);
+                $OF= new Charge;
+                $tbOF->setStatut("PREPLAN");
+                dump($tbOF);
+                $manager->persist($tbOF);
+                //$manager->flush(); 
+            }
+        }
+        dump($request);
+        dump($chargt);
         $chargt->setNomChargement($request->get('nom'));
         $chargt->setRemplissage($request->get('remp'));
         $chargt->setProgramme($request->get('cycle'));
         $chargt->setDatePlannif(new \datetime($request->get('jour')));
-
+        dump($chargt);
         $manager = $this->getDoctrine()->getManager();
         $manager->persist($chargt);
         $manager->flush();
@@ -1464,6 +1480,36 @@ class PlanningMCController extends Controller
 
 
         return new JsonResponse(['Message'=>"Enregistrement du chargement n° ".$chargt->getId()." effectué avec succès",'Code'=>200]);
+    }
+
+     /**
+     * @Route("/LOGISTIQUE/Creation/Datas_Chargement", name="tbDatasChargt_Crea", condition="request.isXmlHttpRequest()")
+     */
+    public function tbDatasChargtCrea(Request $request)
+    {
+        return $this->render('planning_mc/form/_form_tbDatasCharg.html.twig', [
+            'Datas' => $request->get('chargement'),
+        ]);
+    }
+
+     /**
+     * @Route("/LOGISTIQUE/Creation/Datas_CTO", name="tbDatasCTO_Crea", condition="request.isXmlHttpRequest()")
+     */
+    public function tbDatasCTOCrea(Request $request, FunctChargPlan $charge)
+    {
+        $Out=$this->getDoctrine()->getRepository(Outillages::class);
+        $Art=$this->getDoctrine()->getRepository(Articles::class);
+        $listeOT = $Out->myFindByCharFiG($request->get('Code'));
+            $TbListeOT=$charge->tboDatasCTO($listeOT);
+            foreach ($TbListeOT as $OTCTO) {
+                //On cherche les articles liés à chaque OT
+                $ArtOFCTJ=$Art->myFindByOT($OTCTO);
+                $datasCTO[$OTCTO]=$ArtOFCTJ;
+            }
+        dump($datasCTO);
+        return $this->render('planning_mc/form/_form_tbDatasCTO.html.twig', [
+            'Datas' => $datasCTO,
+        ]);
     }
 
     /**

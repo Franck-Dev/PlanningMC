@@ -67,7 +67,7 @@ class Charge
     private $Statut;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Chargement", inversedBy="OF")
+     * @ORM\ManyToOne(targetEntity="App\Entity\Chargement", inversedBy="OF", cascade={"persist"})
      */
     private $chargement;
 
