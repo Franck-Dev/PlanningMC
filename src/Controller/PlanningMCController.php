@@ -1435,20 +1435,6 @@ class PlanningMCController extends Controller
             $Art=$this->getDoctrine()->getRepository(Articles::class);
             $ListCTO=$charge->checkCTO($cata, $STD, $repo, $Out, $Art, $Creno, $TbPcSsOT, $m);
             dump($ListCTO);
-            //Vérification si des chargements ne sont pas déjà validés sur ce creno
-            if ($ListCTO['CTO']) {
-                foreach ($ListCTO['CTO'] as $CTO) {
-                    $chargmntExist=$repoChargmnt->findOneBy(['DatePlannif'=> $Creno['Jour'], 'NomChargement'=> $CTO['Nom']]);
-                    if ($chargmntExist) {
-                        $ListOFChargmnt=$repo->FindBy(['chargement'=>$chargmntExist->getId(), 'DateDeb'=> $Creno['Jour']]);
-                        //Retrait des OF déjà planifié sur la charge
-                        $ListCTO['PlanningSAP']['NbrPcs']=$ListCTO['PlanningSAP']['NbrPcs']-count($ListOFChargmnt);
-                        $CTO['Plannif'] = True;
-                        $ListCTO['CTO'][0]['Plannif']=true;
-                        break;
-                    }
-                }
-            }
             $TbRepartChargeTot[$i]=$ListCTO;
             if ($ListCTO['Messages']) {
                 $nbMessErr++;
@@ -1505,6 +1491,35 @@ class PlanningMCController extends Controller
         $repo=$this->getDoctrine()->getRepository(Charge::class);
         
         $this->addFlash('success', "Enregistrement du chargement n° ".$chargt->getId()." effectué avec succès");
+
+        return $this->redirectToRoute('PreviPlannif');
+    }
+    
+     /**
+     * @Route("/LOGISTIQUE/Delete/Chargement", name="Chargt_Delete", condition="request.isXmlHttpRequest()")
+     */
+    public function ChargtDelete(Request $request, ObjectManager $manager)
+    {
+        $chargt= new Chargement;
+        //On va récupérer le chargement suivant l'id donné
+        $repo=$this->getDoctrine()->getRepository(Chargement::class);
+        $chargt=$repo->findOneBy(['id'=> $request->get('id')]);
+        dump($chargt);
+        //Suppression des OF du chargement
+        $repoChar=$this->getDoctrine()->getRepository(Charge::class);
+        $datasOF=new Charge;
+        $OFs=$repoChar->FindBy(['chargement'=>$request->get('id')]);
+        foreach($OFs as $OF) {
+            $chargt->removeOF($OF);
+            $OF->setDateDeb($OF->getDatePilote());
+            $OF->setStatut('OUV');
+        }
+
+        $manager = $this->getDoctrine()->getManager();
+        $manager->remove($chargt);
+        $manager->flush();
+
+        $this->addFlash('success', "Suppression du chargement n° ".$request->get('id')." effectué avec succès");
 
         return $this->redirectToRoute('PreviPlannif');
     }

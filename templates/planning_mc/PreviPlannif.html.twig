@@ -68,12 +68,23 @@ td{
                                         {# {% set tbStrOF = item.OF %} #}
                                         {% set tbStrOF = item.OF|join('\n') %}
                                         {% if item.Remplissage < 50 %}
-                                            <span class="badge rounded-pill bg-danger">{{item.NomChargement}}<span class="badge bg-secondary" data-toggle="tooltip" data-placement="bottom" title="{{tbStrOF}}">{{item.OF|length}}</span></span>
+                                            <span class="badge rounded-pill bg-danger">{{item.NomChargement}}<span class="badge bg-secondary" data-toggle="tooltip" data-placement="bottom" title="{{tbStrOF}}">{{item.OF|length}}</span>
+                                                <button class="btn" onblur="deleteChargmnt({{item.id}})">
+                                                    <span class="m-1" style="font-size: 1em; color: Tomato;"><i class="fa fa-trash"></i></span>
+                                                </button>
+                                            </span>
                                         {% elseif item.Remplissage < 75 %}
-                                            <span class="badge rounded-pill bg-warning text-dark">{{item.NomChargement}}<span class="badge bg-secondary" data-toggle="tooltip" data-placement="bottom" title="{{tbStrOF|nl2br}}">{{item.OF|length}}</span></span>
+                                            <span class="badge rounded-pill bg-warning text-dark">{{item.NomChargement}}<span class="badge bg-secondary" data-toggle="tooltip" data-placement="bottom" title="{{tbStrOF|nl2br}}">{{item.OF|length}}</span>
+                                                <button class="btn" onblur="deleteChargmnt({{item.id}})">
+                                                    <span class="m-1" style="font-size: 1em; color: Tomato;"><i class="fa fa-trash"></i></span>
+                                                </button>
+                                            </span>
                                         {% else %}
-                                            <span class="badge rounded-pill bg-success">{{item.NomChargement}}<span class="badge bg-secondary" data-toggle="tooltip" data-placement="bottom" title="{{tbStrOF|nl2br}}">{{item.OF|length}}</span></span>
-                                        
+                                            <span class="badge rounded-pill bg-success">{{item.NomChargement}}<span class="badge bg-secondary" data-toggle="tooltip" data-placement="bottom" title="{{tbStrOF|nl2br}}">{{item.OF|length}}</span>
+                                                <button class="btn" onblur="deleteChargmnt({{item.id}})">
+                                                    <span class="m-1" style="font-size: 1em; color: Tomato;"><i class="fa fa-trash"></i></span>
+                                                </button>
+                                            </span>
                                         {% endif %}       
                                     {% endif %}
                                 {% endfor %}  
@@ -102,12 +113,11 @@ td{
                                                             <td><a href="#" id={{CTO.Nom}} onclick="affichageCTO({{ CTO.Nom|json_encode() }})">{{CTO.Nom}}</a></td>
                                                             <td><a href="#" id={{CTO.Nom}} onclick="affichageOFs({{ CTO.Contenu|json_encode() }})">{{CTO.Contenu|length}}</a></td>
                                                             <td>{{[CTO.Remplissage[0],"%"]|join}}<span class="col-auto"><i class="fa fa-calendar fa-1x text-gray-300">{{[CTO.Remplissage[1],"%"]|join}}</i></span></td>
-                                                            {% if CTO.Plannif == false %}
-                                                                <td><b ref=""  id="btn-success" class="btn btn-primary rounded" onclick='SelectCTO({{nameTR}},"{{myDate|date('Y-m-d H:i')}}","{{ test.PlanningSAP.Cycles }}", {{CTO.Contenu|json_encode()}})'>Sélectionner</b></td>
-                                                            {% else %}
-                                                                <td><b ref=""  id="btn-success" class="btn btn-warning rounded" onclick='AnnulCTO({{nameTR}},"{{myDate|date('Y-m-d H:i')}}")'>Annuler</b></td>
-                                                            {% endif %}
-                                                            
+                                                            <td>
+                                                                <b ref=""  id="btn-success" class="btn btn-success rounded" onclick='SelectCTO({{nameTR}},"{{myDate|date('Y-m-d H:i')}}","{{ test.PlanningSAP.Cycles }}", {{CTO.Contenu|json_encode()}})'>Sélectionner</b>
+                                                                <b ref=""  id="btn-warning" class="btn btn-warning rounded" onclick=''>Modifier</b>
+                                                                <b ref=""  id="btn-primary" class="btn btn-primary rounded" onclick=''>Ordonnancer</b>
+                                                            </td> 
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -128,14 +138,14 @@ td{
 {% endblock %}
 {% block javascripts %}
 <script type="text/javascript">
-let d=document.querySelector('a')
-// Pour détecter un clic sur un lien 
-d.addEventListener('click', function (e) {
-    e.preventDefault() // Annule l'évènement
-    e.target // contient l'élément sur lequel on a cliqué
-    //e.currentTarget // contient l'élément sur lequel on a greffé l'écouteur 
-    alert(e)
-})
+// let d=document.querySelector('a')
+// // Pour détecter un clic sur un lien 
+// d.addEventListener('click', function (e) {
+//     e.preventDefault() // Annule l'évènement
+//     e.target // contient l'élément sur lequel on a cliqué
+//     //e.currentTarget // contient l'élément sur lequel on a greffé l'écouteur 
+//     alert(e)
+// })
 function affichageCTO(codeCTO) {
     console.log(codeCTO);
     var cibleCTO=document.getElementById("myDatasCTO");
@@ -175,6 +185,19 @@ function SelectCTO(ID,jour,prog,dossiers) {
 		type: 'POST',
         data: {nom: tbDatasChargt[0].innerText, remp: pourcRemp, jour: dateJour, cycle: prog, charge: dossiers},
 		url: "{{ path('Chargt_Crea') }}",
+		success: function(data) 
+		{
+            ciblePla.innerHTML=data;
+		}
+	});
+}
+function deleteChargmnt(idChargmnt) {
+    var ciblePla=document.getElementById("myPlanningPrevi");
+    $.ajax({
+		cache: false,
+		type: 'POST',
+        data: {id: idChargmnt},
+		url: "{{ path('Chargt_Delete') }}",
 		success: function(data) 
 		{
             ciblePla.innerHTML=data;
