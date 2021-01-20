@@ -1402,6 +1402,23 @@ class PlanningMCController extends Controller
         // Date à 1 mois
         $jourVisu = date("Y-m-d", strtotime('+ 31 days'.date('Y') ));
         $jourVisu=new \datetime($jourVisu);
+        //Récupération des chargements validés pour ces dates 
+        $repoChargmnt=$this->getDoctrine()->getRepository(Chargement::class);
+        $ChargPlaMois=$repoChargmnt->myFindChargtMois($jour,$jourVisu);
+        //On rajoute les OF aux données de chargement
+        $i=0;
+        foreach ($ChargPlaMois as $chargmnt) {
+            $listOF=[];
+            $j=0;
+            $ListOFChargmnt=$repo->myFindOFChargmnt($chargmnt['id']);
+            foreach ($ListOFChargmnt as $OF) {
+                $listOF[$j]=$OF['OrdreFab'];
+                $j++;
+            }
+            $ChargPlaMois[$i]['OF']=$listOF;
+            $i++;
+        }
+        dump($ChargPlaMois);
         //Récupération de la charge SAP sur 1 mois
         $ChargeTot=$repo -> findReparChargeW($jour,$jourVisu);
         $i=0;
@@ -1417,6 +1434,21 @@ class PlanningMCController extends Controller
             $Out=$this->getDoctrine()->getRepository(Outillages::class);
             $Art=$this->getDoctrine()->getRepository(Articles::class);
             $ListCTO=$charge->checkCTO($cata, $STD, $repo, $Out, $Art, $Creno, $TbPcSsOT, $m);
+            dump($ListCTO);
+            //Vérification si des chargements ne sont pas déjà validés sur ce creno
+            if ($ListCTO['CTO']) {
+                foreach ($ListCTO['CTO'] as $CTO) {
+                    $chargmntExist=$repoChargmnt->findOneBy(['DatePlannif'=> $Creno['Jour'], 'NomChargement'=> $CTO['Nom']]);
+                    if ($chargmntExist) {
+                        $ListOFChargmnt=$repo->FindBy(['chargement'=>$chargmntExist->getId(), 'DateDeb'=> $Creno['Jour']]);
+                        //Retrait des OF déjà planifié sur la charge
+                        $ListCTO['PlanningSAP']['NbrPcs']=$ListCTO['PlanningSAP']['NbrPcs']-count($ListOFChargmnt);
+                        $CTO['Plannif'] = True;
+                        $ListCTO['CTO'][0]['Plannif']=true;
+                        break;
+                    }
+                }
+            }
             $TbRepartChargeTot[$i]=$ListCTO;
             if ($ListCTO['Messages']) {
                 $nbMessErr++;
@@ -1424,10 +1456,6 @@ class PlanningMCController extends Controller
         $i = $i + 1;
         }
         dump($TbRepartChargeTot);
-        //Récupération des chargements validés pour ces dates 
-        $repo=$this->getDoctrine()->getRepository(Chargement::class);
-        $ChargPlaMois=$repo->myFindChargtMois($jour,$jourVisu);
-        dump($ChargPlaMois);
 
         return $this->render('planning_mc/PreviPlannif.html.twig', [
             'controller_name' => 'PlannificationSAP',
@@ -1458,18 +1486,17 @@ class PlanningMCController extends Controller
                 $chargt->addOF($tbOF);
                 $OF= new Charge;
                 $tbOF->setStatut("PREPLAN");
-                dump($tbOF);
+                $tbOF->setDateDeb(new \datetime($request->get('jour')));
                 $manager->persist($tbOF);
                 //$manager->flush(); 
             }
         }
-        dump($request);
-        dump($chargt);
+
         $chargt->setNomChargement($request->get('nom'));
         $chargt->setRemplissage($request->get('remp'));
         $chargt->setProgramme($request->get('cycle'));
         $chargt->setDatePlannif(new \datetime($request->get('jour')));
-        dump($chargt);
+
         $manager = $this->getDoctrine()->getManager();
         $manager->persist($chargt);
         $manager->flush();
@@ -1477,9 +1504,9 @@ class PlanningMCController extends Controller
         //Une fois le chargement créé, on valide les OF dans la charge en mettant l'ID
         $repo=$this->getDoctrine()->getRepository(Charge::class);
         
+        $this->addFlash('success', "Enregistrement du chargement n° ".$chargt->getId()." effectué avec succès");
 
-
-        return new JsonResponse(['Message'=>"Enregistrement du chargement n° ".$chargt->getId()." effectué avec succès",'Code'=>200]);
+        return $this->redirectToRoute('PreviPlannif');
     }
 
      /**

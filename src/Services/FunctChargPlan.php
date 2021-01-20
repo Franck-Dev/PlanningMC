@@ -137,7 +137,7 @@ class FunctChargPlan
             //On va tester le remplissage (A REVOIR CALCUL EN 2 INDICATEURS)
             $Remp[0]=(round((sizeof($test)/sizeof($listeOT))*100,0));
             $Remp[1]=$ChargeFiG->getPourc();
-            $TbDatasCTO[$q]=['Nom'=>$ChargeFiG->getCode(), 'Contenu'=>$test, 'Remplissage'=>$Remp];
+            $TbDatasCTO[$q]=['Nom'=>$ChargeFiG->getCode(), 'Contenu'=>$test, 'Remplissage'=>$Remp, 'Plannif'=>False];
             $q++;
         }
         //dump($TbDatasCTO);

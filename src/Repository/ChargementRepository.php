@@ -31,7 +31,7 @@ class ChargementRepository extends ServiceEntityRepository
         $entityManager = $this -> getEntityManager ();
         
         $query = $entityManager -> createQuery (
-            'SELECT p.NomChargement, p.Remplissage, p.DatePlannif, p.Programme
+            'SELECT p.NomChargement, p.Remplissage, p.DatePlannif, p.Programme, p.id
                 FROM App\Entity\Chargement p 
                 WHERE p.DatePlannif > :dateD AND  p.DatePlannif < :dateF'
         );

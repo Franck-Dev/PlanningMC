@@ -94,12 +94,12 @@ class ChargeRepository extends ServiceEntityRepository
         $query = $entityManager -> createQuery (
             'SELECT p.DateDeb as Jour, count(p.ReferencePcs) as NbrPcs, p.NumProg as Cycles
             FROM App\Entity\Charge p 
-            WHERE p.DateDeb > :dateD AND  p.DateDeb < :dateF AND p.Statut = :Stat
+            WHERE p.DateDeb > :dateD AND  p.DateDeb < :dateF AND p.Statut <> :Stat
             GROUP BY Jour,Cycles'
         );
         $query-> setParameter ( 'dateD' , $dateD );
         $query-> setParameter ('dateF' , $dateF);
-        $query-> setParameter ('Stat' , 'OUV');
+        $query-> setParameter ('Stat' , 'CLOT');
         // returns an array of Product objects
         return $query -> execute ();
     }
@@ -122,43 +122,58 @@ class ChargeRepository extends ServiceEntityRepository
         return $query -> execute ();
     }
 
-     // Calcul de la charge en pcs par mois
-     public function myFindPcsTotMois ( $dateD,$dateF ) : array
-     {
-         $entityManager = $this -> getEntityManager ();
-         
-         $query = $entityManager -> createQuery (
-             'SELECT count(p.ReferencePcs) as NbrRef
-                 FROM App\Entity\Charge p 
-                 WHERE p.DateDeb > :dateD AND  p.DateDeb < :dateF'
-         );
-         $query-> setParameter ( 'dateD' , $dateD );
-         $query-> setParameter ('dateF' , $dateF);
-             // returns an array of Product objects
-         return $query -> execute ();
-     }
+    // Calcul de la charge en pcs par mois
+    public function myFindPcsTotMois ( $dateD,$dateF ) : array
+    {
+        $entityManager = $this -> getEntityManager ();
+        
+        $query = $entityManager -> createQuery (
+            'SELECT count(p.ReferencePcs) as NbrRef
+                FROM App\Entity\Charge p 
+                WHERE p.DateDeb > :dateD AND  p.DateDeb < :dateF'
+        );
+        $query-> setParameter ( 'dateD' , $dateD );
+        $query-> setParameter ('dateF' , $dateF);
+            // returns an array of Product objects
+        return $query -> execute ();
+    }
 
-     // Vérifier si OF dans le passé pour un cycle
-     public function myFindOFToPast ($art, $dateD,$cycle ) : array
-     {
-         $entityManager = $this -> getEntityManager ();
-         
-         $query = $entityManager -> createQuery (
-             'SELECT p.OrdreFab as OF, p.DateDeb, p.DesignationPcs as Designation
-                 FROM App\Entity\Charge p 
-                 WHERE p.DateDeb < :dateD 
-                 AND p.ReferencePcs = :refArt 
-                 AND  p.NumProg = :cycle 
-                 AND p.Statut = :Stat
-                 ORDER BY p.DateDeb ASC' 
-         );
-         $query-> setParameter ( 'refArt' , $art);
-         $query-> setParameter ( 'dateD' , $dateD);
-         $query-> setParameter ('cycle' , $cycle);
-         $query-> setParameter ('Stat' , 'OUV');
-             // returns an array of Product objects
-         return $query -> execute ();
-     }
+    // Vérifier si OF dans le passé pour un cycle
+    public function myFindOFToPast ($art, $dateD,$cycle ) : array
+    {
+        $entityManager = $this -> getEntityManager ();
+        
+        $query = $entityManager -> createQuery (
+            'SELECT p.OrdreFab as OF, p.DateDeb, p.DesignationPcs as Designation
+                FROM App\Entity\Charge p 
+                WHERE p.DateDeb < :dateD 
+                AND p.ReferencePcs = :refArt 
+                AND  p.NumProg = :cycle 
+                AND p.Statut = :Stat
+                ORDER BY p.DateDeb ASC' 
+        );
+        $query-> setParameter ( 'refArt' , $art);
+        $query-> setParameter ( 'dateD' , $dateD);
+        $query-> setParameter ('cycle' , $cycle);
+        $query-> setParameter ('Stat' , 'OUV');
+            // returns an array of Product objects
+        return $query -> execute ();
+    }
+
+    // Récupération des OF d'un chargement
+    public function myFindOFChargmnt($idChargmnt) : array
+    {
+        $entityManager = $this -> getEntityManager ();
+        
+        $query = $entityManager -> createQuery (
+            'SELECT p.OrdreFab 
+                FROM App\Entity\Charge p 
+                WHERE p.chargement = :chargmnt'
+        );
+        $query-> setParameter ('chargmnt' , $idChargmnt);
+            // returns an array of Product objects
+        return $query -> execute ();
+    }
 
     /*
     public function findOneBySomeField($value): ?Charge

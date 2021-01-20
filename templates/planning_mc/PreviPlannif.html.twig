@@ -38,8 +38,8 @@ td{
                                     <th> Id </th>
                                     <th> Cycle </th>
                                     {# <th> Départ </th> #}
-                                    <th> Nbre OT </th>
-                                    <th>Chargements Validés</th>
+                                    <th> Charge OF </th>
+                                    <th>Chargements Sélectionnés</th>
                                     <th>Action</th>
                     
                             </tr>
@@ -65,18 +65,20 @@ td{
                             <td>
                                 {% for item in planifie %}
                                     {% if (item.DatePlannif|date('d/m/y') == myDat) and (item.Programme == test.PlanningSAP.Cycles) %}
+                                        {# {% set tbStrOF = item.OF %} #}
+                                        {% set tbStrOF = item.OF|join('\n') %}
                                         {% if item.Remplissage < 50 %}
-                                            <span class="badge rounded-pill bg-danger">{{item.NomChargement}}</span>
+                                            <span class="badge rounded-pill bg-danger">{{item.NomChargement}}<span class="badge bg-secondary" data-toggle="tooltip" data-placement="bottom" title="{{tbStrOF}}">{{item.OF|length}}</span></span>
                                         {% elseif item.Remplissage < 75 %}
-                                            <span class="badge rounded-pill bg-warning text-dark">{{item.NomChargement}}</span>
+                                            <span class="badge rounded-pill bg-warning text-dark">{{item.NomChargement}}<span class="badge bg-secondary" data-toggle="tooltip" data-placement="bottom" title="{{tbStrOF|nl2br}}">{{item.OF|length}}</span></span>
                                         {% else %}
-                                            <span class="badge rounded-pill bg-success">{{item.NomChargement}}<span class="badge bg-secondary">9</span><span aria-hidden="true">&times;</span></span>
+                                            <span class="badge rounded-pill bg-success">{{item.NomChargement}}<span class="badge bg-secondary" data-toggle="tooltip" data-placement="bottom" title="{{tbStrOF|nl2br}}">{{item.OF|length}}</span></span>
                                         
                                         {% endif %}       
                                     {% endif %}
                                 {% endfor %}  
                             </td>
-                            <td><b ref=""  id="btn-success" class="btn btn-success" style="border-radius:40px;background-color:blue;color:white" onclick=''>Valider</b></td>
+                            <td><b ref=""  id="btn-success" class="btn btn-success" style="border-radius:40px;background-color:blue;color:white" onclick=''>Planifier</b></td>
                         </tr>
                         <tr>
                             <td colspan="12">
@@ -90,7 +92,7 @@ td{
                                                     <thead>	
                                                         <tr>
                                                             <th>Nom</th>
-                                                            <th>Qté Pcs(OF)</th>
+                                                            <th>Qté OT(OF)</th>
                                                             <th>Remplissages</th>
                                                             <th>Action</th>
                                                         </tr>	
@@ -100,7 +102,12 @@ td{
                                                             <td><a href="#" id={{CTO.Nom}} onclick="affichageCTO({{ CTO.Nom|json_encode() }})">{{CTO.Nom}}</a></td>
                                                             <td><a href="#" id={{CTO.Nom}} onclick="affichageOFs({{ CTO.Contenu|json_encode() }})">{{CTO.Contenu|length}}</a></td>
                                                             <td>{{[CTO.Remplissage[0],"%"]|join}}<span class="col-auto"><i class="fa fa-calendar fa-1x text-gray-300">{{[CTO.Remplissage[1],"%"]|join}}</i></span></td>
-                                                            <td><b ref=""  id="btn-success" class="btn btn-success" style="border-radius:40px;background-color:blue;color:white" onclick='SelectCTO({{nameTR}},"{{myDate|date('Y-m-d H:i')}}","{{ test.PlanningSAP.Cycles }}", {{CTO.Contenu|json_encode()}})'>Sélectionner</b></td>
+                                                            {% if CTO.Plannif == false %}
+                                                                <td><b ref=""  id="btn-success" class="btn btn-primary rounded" onclick='SelectCTO({{nameTR}},"{{myDate|date('Y-m-d H:i')}}","{{ test.PlanningSAP.Cycles }}", {{CTO.Contenu|json_encode()}})'>Sélectionner</b></td>
+                                                            {% else %}
+                                                                <td><b ref=""  id="btn-success" class="btn btn-warning rounded" onclick='AnnulCTO({{nameTR}},"{{myDate|date('Y-m-d H:i')}}")'>Annuler</b></td>
+                                                            {% endif %}
+                                                            
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -144,7 +151,6 @@ function affichageCTO(codeCTO) {
     });
 }
 function affichageOFs(datCharg) {
-    console.log(datCharg);
     var cible=document.getElementById("myDatasChargement");
     $.ajax({
 		cache: false,
@@ -158,8 +164,8 @@ function affichageOFs(datCharg) {
 	});
 }
 function SelectCTO(ID,jour,prog,dossiers) {
-    console.log(dossiers);
-    var tbDatasChargt=ID.children	
+    var tbDatasChargt=ID.children
+    var ciblePla=document.getElementById("myPlanningPrevi");	
     // var jour = $(this).attr('data-jour');
     dateJour=new Date(jour).toISOString().slice(0,10);
     console.log(dateJour);
@@ -171,14 +177,15 @@ function SelectCTO(ID,jour,prog,dossiers) {
 		url: "{{ path('Chargt_Crea') }}",
 		success: function(data) 
 		{
-			console.log(data);
-			// $('#exampleModal').show();
-            // $('#content').show().html(data);
+            ciblePla.innerHTML=data;
 		}
 	});
 }
 // $('#ChargAffi').on('click', 'tbody tr', function(event) {
 //     // $(this).addClass('highlight').siblings().removeClass('highlight');
 // });
-// </script>
+function AnnulCTO(ID,Date) {
+    alert(ID);
+}
+</script>
 {% endblock %}
