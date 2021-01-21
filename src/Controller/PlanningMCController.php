@@ -1233,8 +1233,7 @@ class PlanningMCController extends Controller
             $oldfindate=new \Datetime($request->request->get('olddatefin'));
             $idmoyen=$request->request->get('moyen');
             $firstDateTime=date("Y-m-d H:i",strtotime($request->request->get('newdatedeb')));
-            dump($request->request->get('newdatedeb'));
-            dump($firstDateTime);
+
             $newdebdate = new \DateTime($firstDateTime);
             $lastDateTime=date("Y-m-d H:i",strtotime($request->request->get('newdatefin')));
             $newfindate = new \DateTime($lastDateTime);
@@ -1243,16 +1242,18 @@ class PlanningMCController extends Controller
             $moyen = $basemoy->findBy(['id' => $idmoyen]);
             //dump($idPolymPla);//die();
             if($idPolymPla) {
-                dump($newdebdate);
+
                 $mr = $this->getDoctrine()->getRepository(Planning::class);
                 //$maga = $mr->findOneBySomeField($olddebdate,$oldfindate,$moyen[0]->getLibelle($idmoyen));
                 $maga=$mr->findBy(['id' => $idPolymPla]);
                 $old=$request->request->get('olddatedeb');
                 //$new=date("Y-m-d H:m",strtotime($request->request->get('newdatedeb')));
-                dump($maga);//die();
+
                 $maga[0]->setDebutDate($newdebdate);
                 $maga[0]->setFinDate($newfindate);
-                dump($maga);//die();
+                $maga[0]->getNumDemande()->setMoyenUtilise($moyen[0]);
+                $maga[0]->setIdentification($moyen[0]->getLibelle());
+
                 $manager = $this->getDoctrine()->getManager();
                 $manager->persist($maga[0]);
                 $manager->flush();

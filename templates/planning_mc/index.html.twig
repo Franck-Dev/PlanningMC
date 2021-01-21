@@ -332,7 +332,7 @@
             editable : { 
                 add : true , // ajoute de nouveaux éléments en double tapant  
                 updateTime : true , // déplace les éléments horizontalement  
-                updateGroup : false , // déplace les éléments d'un groupe à un autre  
+                updateGroup : true , // déplace les éléments d'un groupe à un autre  
                 remove : false , // supprime un élément en appuyant sur le bouton de suppression en haut à droite  
                 overrideItems : false  // autorise ces options à remplacer item.editable
             },
@@ -347,7 +347,7 @@
                     //Conversion de la date pour prise en compte dans controlleur
                     var DateDeb = (item.start).toISOString().slice(0,24);
                     var DateFin = (item.end).toISOString().slice(0,24);
-                    //console.log(DateDeb);
+                    console.log(item);
                     $.ajax({
                         method: "POST",
                         data: {id: item.id, olddatedeb: items._data[item.id].start, olddatefin: items._data[item.id].end, moyen: item.group, cycle: item.programmes, newdatedeb: DateDeb, newdatefin: DateFin},
