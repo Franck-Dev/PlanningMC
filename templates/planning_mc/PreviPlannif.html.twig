@@ -1,10 +1,25 @@
 {% block title %}Planning Prévisionnel{% endblock %}
 
-{% block stylesheets %}{% endblock %}
+{% block stylesheets %}
+
+{% endblock %}
 {% block body %}
 <style>
 td{
     color: #00325F;
+}
+.tooltip-inner {
+    max-width: none;
+    height: 100%;
+    white-space: nowrap;
+    background:white;
+    border:1px solid lightgray;
+  -webkit-box-shadow: 0px 3px 3px 0px rgba(0,0,0,0.3);
+  -moz-box-shadow: 0px 3px 3px 0px rgba(0,0,0,0.3);
+  box-shadow: 0px 3px 3px 0px rgba(0,0,0,0.3);
+  color:gray;
+  margin:0;
+  padding:0;
 }
 </style>
 <div class="conteiner-fluid">
@@ -61,7 +76,7 @@ td{
                             <td>{{key}}</td>
                             <td>{{ test.PlanningSAP.Cycles }}</td>
                             {# <td>{{ test.Jour|date('H:i:s') }}</td> #}
-                            <td>{{ test.PlanningSAP.NbrPcs }}</td>
+                            <td onmouseup='detailsOF({{key}},"{{test.PlanningSAP.Jour|date('Y-m-d')}}","{{test.PlanningSAP.Cycles}}")' id='{{key}}'>{{ test.PlanningSAP.NbrPcs }}</td>
                             <td>
                                 {% for item in planifie %}
                                     {% if (item.DatePlannif|date('d/m/y') == myDat) and (item.Programme == test.PlanningSAP.Cycles) %}
@@ -137,6 +152,7 @@ td{
 
 {% endblock %}
 {% block javascripts %}
+<script src="{{ asset('build/popper.min.js') }}"></script>
 <script type="text/javascript">
 // let d=document.querySelector('a')
 // // Pour détecter un clic sur un lien 
@@ -209,6 +225,26 @@ function deleteChargmnt(idChargmnt) {
 // });
 function AnnulCTO(ID,Date) {
     alert(ID);
+}
+
+function detailsOF(idPlannif,DateP,Cycle) {
+    var cibleNbrPcs=document.getElementById(idPlannif);
+    $.ajax({
+		cache: false,
+		type: 'POST',
+        data: {date: DateP, prog: Cycle},
+		url: "{{ path('Charge_OF') }}",
+		success: function(data) 
+		{
+            $(cibleNbrPcs).tooltip({
+                animated: 'fade',
+                placement: 'bottom',
+                html: true,
+                title : data
+            });
+		}
+	});
+    alert(Cycle);
 }
 </script>
 {% endblock %}

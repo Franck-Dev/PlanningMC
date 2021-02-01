@@ -1419,11 +1419,11 @@ class PlanningMCController extends Controller
             $ChargPlaMois[$i]['OF']=$listOF;
             $i++;
         }
-        dump($ChargPlaMois);
+        //dump($ChargPlaMois);
         //Récupération de la charge SAP sur 1 mois
         $ChargeTot=$repo -> findReparChargeW($jour,$jourVisu);
         $i=0;
-        dump($ChargeTot);
+        //dump($ChargeTot);
         //Attribution des CTO possible pour chacun des créneaux de polymérisation(Creation listCTO)
         $TbPcSsOT=[];
         $TbRepartChargeTot=[];
@@ -1451,6 +1451,21 @@ class PlanningMCController extends Controller
             'tests' => $TbRepartChargeTot,
             'planifie' => $ChargPlaMois,
             'nbMessErr' => $nbMessErr,
+        ]);
+    }
+
+    /**
+     * @Route("/LOGISTIQUE/Creation/ChargeOF", name="Charge_OF", condition="request.isXmlHttpRequest()")
+     */
+    public function chargeOF(Request $request)
+    {
+        //Récupération des OF contenus dans la charge du jour
+        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        $listOFCharge=$repo->findBy(['DateDeb' => new \datetime($request->request->get('date')), 'NumProg' => $request->request->get('prog')]);
+        
+        return $this->render('planning_mc/form/_formChargeOF.html.twig', [
+            'controller_name' => 'PlannificationSAP',
+            'dataChargeOF' => $listOFCharge,
         ]);
     }
 
