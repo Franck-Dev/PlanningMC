@@ -41,6 +41,23 @@ class ChargementRepository extends ServiceEntityRepository
         return $query -> execute ();
     }
 
+    public function myFindByDispo($dateAval,$dateAmont,$CTO) : array
+    {
+        $entityManager = $this -> getEntityManager ();
+        
+        $query = $entityManager -> createQuery (
+            'SELECT p.id, p.IdPlanning
+                FROM App\Entity\Chargement p 
+                WHERE p.DatePlannif > :dateD AND  p.DatePlannif = :dateF
+                AND p.NomChargement = :nom'
+        );
+        $query-> setParameter ('dateD' , $dateAval );
+        $query-> setParameter ('dateF' , $dateAmont);
+        $query-> setParameter ('nom' , $CTO);
+            // returns an array of Product objects
+        return $query -> execute ();
+    }
+
 //    /**
 //     * @return Chargement[] Returns an array of Chargement objects
 //     */

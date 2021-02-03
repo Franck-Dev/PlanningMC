@@ -4,9 +4,11 @@ namespace App\Services;
 
 use App\Repository\ChargeRepository;
 use App\Repository\ArticlesRepository;
+use App\Repository\ChargementRepository;
 use App\Repository\ChargFigeRepository;
 use App\Repository\OutillagesRepository;
 use App\Repository\ProgMoyensRepository;
+use phpDocumentor\Reflection\Types\Boolean;
 
 class FunctChargPlan
 {
@@ -40,7 +42,7 @@ class FunctChargPlan
      * @return void
      * Retourne un array des CTO chargés des OF
      */
-    public function checkCTO(ChargFigeRepository $cata, ProgMoyensRepository $STD, ChargeRepository $repo, OutillagesRepository $Out, ArticlesRepository $Art, $Creno, $TbPcSsOT, $m) {
+    public function checkCTO(ChargementRepository $chargmnt, ChargFigeRepository $cata, ProgMoyensRepository $STD, ChargeRepository $repo, OutillagesRepository $Out, ArticlesRepository $Art, $Creno, $TbPcSsOT, $m) {
         $Message=[];
         $datasPlanning=[];
         $listCTO=[];
@@ -61,7 +63,6 @@ class FunctChargPlan
             //dump($chargePcsJour);
             $l=0;
             foreach ($chargePcsJour as $PcsJour) {
-                //dump($PcsJour->getReferencePcs());
                 //On cherche l'OT correspondant à la pièce
                 $OT=$Out->myFindByPcs($PcsJour->getReferencePcs());
                 //Si on trouve un OT on le sauvegarde dans la liste
@@ -84,9 +85,9 @@ class FunctChargPlan
                 //return $datasPlanning=['PlanningSAP'=> '','CTO'=> '' ,'PcSsOT' => $TbPcSsOT, 'Messages'=>$Message];
             } else {
                 // On va sélectionner les CTO possible (Qui contiennent les pièces du jour)
-                dump('liste des OT de la Charge Jour');
+                dump('liste des OT de la Charge du Jour');
                 dump($listOTJour);
-                $ChargTecOptJour=$this->checkCTOOF($ChargementsFiG, $listOTJour, $Out);
+                $ChargTecOptJour=$this->checkCTOOF($ChargementsFiG, $listOTJour, $Out, $chargmnt, $Creno['Jour']);
             //Si il y a au moins 1 CTO OK, je vais chercher les OT
                 if ($ChargTecOptJour) {
                     dump('liste des CTO valides');
@@ -304,23 +305,33 @@ class FunctChargPlan
      * @param  mixed $Out
      * @return mixed
      */
-    private function checkCTOOF($ChargementsFiG, $listOTJour, $Out) {
+    private function checkCTOOF($ChargementsFiG, $listOTJour, $Out, $chargmnt, $dateCharge) {
         $o=0;
         $listCTOVal=[];
         foreach($ChargementsFiG as $CTOOT) {
-            $listeOT = $Out->myFindByCharFiG($CTOOT->getCode());
-            //dump($listeOT);
-            $TbListeOT=[];
-            $TbListeOT=$this->tboDatasCTO($listeOT);
-            //dump($TbListeOT);
-            //dump($listOTJour);
-            foreach($listOTJour as $OTJour) {
-                if (in_array($OTJour[0]->getRef(), $TbListeOT)) {
-                    $listCTOVal[$o]=$CTOOT;
-                break;
+            //Avant tout, je vérifie si la chargement n'a pas déjà été créé en aval sur x jours($cycle a déterminer)
+            $cycle=4;
+            $dateNew=clone($dateCharge);
+            $CTODispo=$this->checkCTODispo($CTOOT, $chargmnt, $dateNew, $cycle);
+            if (!$CTODispo) {
+                //Si Ok, je récupère les OT de ce CTO
+                $listeOT = $Out->myFindByCharFiG($CTOOT->getCode());
+                //dump($listeOT);
+                $TbListeOT=[];
+                $TbListeOT=$this->tboDatasCTO($listeOT);
+                //dump($TbListeOT);
+                //dump($listOTJour);
+                foreach($listOTJour as $OTJour) {
+                    if (in_array($OTJour[0]->getRef(), $TbListeOT)) {
+                        $listCTOVal[$o]=$CTOOT;
+                    break;
+                    }
                 }
+                $o++;
+            } else {
+                
             }
-            $o++;
+            
         }
         return $listCTOVal;
     }
@@ -340,5 +351,19 @@ class FunctChargPlan
                 $n++;
             }
         return $TbListeOT;
+    }
+
+    private function checkCTODispo($CTO, $chargmnt, $dateCharger, $cycle) {
+        //On récupère les dates à vérifier
+        $dateAmont=clone($dateCharger);
+        $interv= "-".$cycle."days";
+        $dateAval=date_modify($dateAmont, $interv);
+        // //Dans ce créneau de date, a-t-il déjà été validé
+        $dispo=$chargmnt->myFindByDispo($dateAval,$dateCharger,$CTO->getCode());
+        if ($dispo) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }

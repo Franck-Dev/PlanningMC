@@ -62,4 +62,18 @@ class DemandesRepository extends ServiceEntityRepository
         // returns an array of Product objects
         return $query -> execute ();
     }
+
+    public function findDemSem( $firstDateTime,$lastDateTime) : array 
+    {
+        $entityManager = $this -> getEntityManager ();
+
+        $query = $entityManager -> createQuery (
+            'SELECT d
+            FROM App\Entity\Demandes d
+            WHERE d.DatePropose > :dateD AND d.DatePropose < :dateF');            
+        $query-> setParameter ( 'dateD' , $firstDateTime);
+        $query-> setParameter ('dateF' , $lastDateTime);
+        // returns an array of Product objects
+        return $query -> execute ();
+    }
 }

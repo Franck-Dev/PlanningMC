@@ -76,7 +76,6 @@ class PlanningMCController extends Controller
     }    
     /**
      * @Route("/Planning", name="Planning")
-     * @Security("is_granted('ROLE_USER')")
      */
     public function index(FunctPlanning $plan)
     {
@@ -921,14 +920,14 @@ class PlanningMCController extends Controller
         if(!$demande){
             $cycles = $this->getDoctrine()
             ->getRepository(Demandes::class)
-            ->findAll();
+            ->findDemSem( $firstDateTime,$lastDateTime);
         }
         else{
             $cycles = $this->getDoctrine()
             ->getRepository(Demandes::class)
-            ->findAll();
+            ->findDemSem( $firstDateTime,$lastDateTime);
         }
-        //dump($cycles); 
+
     //Recherche des moyens à afficher sur planning
         $repos=$this->getDoctrine()->getRepository(Moyens::class);
         $moyens=$repos -> findBy(['Id_Service' => '8','Activitees' => 'Plannifie']);
@@ -949,7 +948,8 @@ class PlanningMCController extends Controller
         $Titres=$repo -> findAll();
 //Chargement d'une variable pour les tâches déjà plannifiées
     $repo=$this->getDoctrine()->getRepository(Planning::class);
-    $Taches=$repo -> findAll();
+    $Taches=$repo -> getDays($firstDateTime,$lastDateTime);
+    $Taches=
     $item=array();
         $data = [];
         $i = 0;
@@ -1008,7 +1008,7 @@ class PlanningMCController extends Controller
     /**
      * @Route("/Demandes/Deprogrammation/{id}", name="Deprog_Demandes")
      */
-    public function demandeDeprog(Demandes $demande=null, \Swift_Mailer $mailer, Request $request, userInterface $user=null)
+    public function demandeDeprog(Demandes $demande=null, \Swift_Mailer $mailer, userInterface $user=null)
     {
         //On récupère le CE polym
         $repo=$this->getDoctrine()->getRepository(User::class);
@@ -1031,8 +1031,25 @@ class PlanningMCController extends Controller
         ;
         $mailer->send($message);
 
-        $this->addFlash('Annulation', 'Votre message a été transmis concernant la demande n°'.$demande->getId().' , nous vous répondrons dans les meilleurs délais.'); // Permet un message flash de renvoi
-        
+        $this->addFlash('Annulation', 'Votre message concernant l\'annulation de la demande n°'.$demande->getId(). 'a été transmis, nous vous répondrons dans les meilleurs délais.'); // Permet un message flash de renvoi
+        //Mettre commentaire sur la demande pour tracer la modification
+        $comment=$demande->getCommentaires();
+        $jour=new \datetime();
+        $now=$jour->format('d/m/Y H:i');
+        $demande->setCommentaires($comment."Demande annulée par ".$user->getUsername()." le : ".$now);
+        $manager = $this->getDoctrine()->getManager();
+        $manager->persist($demande);
+        $manager->flush();
+
+        //Mettre le statut ANNULER sur la polym
+        $repoPla=$this->getDoctrine()->getRepository(Planning::class);
+        $polPla=new Planning;
+        $polPla=$repoPla->findOneBy(['NumDemande'=>$demande->getId()]);
+        $polPla->setStatut('ANNULE');
+
+        $manager->persist($polPla);
+        $manager->flush();
+
         return $this->redirectToRoute('Demandes');
     }
 
@@ -1361,6 +1378,7 @@ class PlanningMCController extends Controller
 
     /**
      * @Route("/LOGISTIQUE/Ordonnancement", name="Ordo")
+     * @Security("has_role('ROLE_PLANIF')")
      */
     public function Ordo(FunctChargPlan $charge)
         {
@@ -1375,6 +1393,13 @@ class PlanningMCController extends Controller
         // Création de la table de répartition des programmes suivant OF SAP lancés sur 1 mois
         // Date à aujourd'hui
         $jour= new \datetime;
+        // Date periode
+        $dateD=clone($jour);
+        $dateF=clone($jour);
+        $debPeriode=$dateD->modify('First day of january this year');
+        $debPeriode->format('mm YY');
+        $finPeriode=$dateF->modify('Last day of december this year');
+        $finPeriode->format('mm YY');
         // Date à 1 mois
         $jourVisu = date("Y-m-d", strtotime('+ 31 days'.date('Y') ));
         $jourVisu=new \datetime($jourVisu);
@@ -1387,6 +1412,8 @@ class PlanningMCController extends Controller
             'Titres' => $Titres,
             'datedeb' => $jour,
             'datefin' => $jourVisu,
+            'debPeriode' => $debPeriode,
+            'finPeriode' => $finPeriode,
         ]);
     }
 
@@ -1423,7 +1450,7 @@ class PlanningMCController extends Controller
         //Récupération de la charge SAP sur 1 mois
         $ChargeTot=$repo -> findReparChargeW($jour,$jourVisu);
         $i=0;
-        //dump($ChargeTot);
+        dump($ChargeTot);
         //Attribution des CTO possible pour chacun des créneaux de polymérisation(Creation listCTO)
         $TbPcSsOT=[];
         $TbRepartChargeTot=[];
@@ -1434,7 +1461,7 @@ class PlanningMCController extends Controller
             $STD=$this->getDoctrine()->getRepository(ProgMoyens::class);
             $Out=$this->getDoctrine()->getRepository(Outillages::class);
             $Art=$this->getDoctrine()->getRepository(Articles::class);
-            $ListCTO=$charge->checkCTO($cata, $STD, $repo, $Out, $Art, $Creno, $TbPcSsOT, $m);
+            $ListCTO=$charge->checkCTO($repoChargmnt, $cata, $STD, $repo, $Out, $Art, $Creno, $TbPcSsOT, $m);
             dump($ListCTO);
             $TbRepartChargeTot[$i]=$ListCTO;
             if ($ListCTO['Messages']) {
@@ -1779,12 +1806,9 @@ class PlanningMCController extends Controller
         $OT=new Outillages();
         $repo=$this->getDoctrine()->getRepository(Outillages::class);
         $OTs=$repo -> findall();
-        dump($OTs);
 
         $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'OUTILLAGE']);
-        dump($Titres);
-        dump($OTs);
         
         return $this->render('planning_mc/ConsultationOutil.html.twig',[
             'Titres' => $Titres,
@@ -1804,9 +1828,7 @@ class PlanningMCController extends Controller
      * @Route("/METHODES/Moyens", name="MOYENS_INDUS")
      */
     public function CreationM(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
-        {//$repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
-            //$Titres=$repo -> findall();
-
+        {
         //Recherche date du jour
         $DateJour = new \DateTime();
         $jour=$DateJour->modify('today');
@@ -1816,7 +1838,6 @@ class PlanningMCController extends Controller
         //La requête remonte les moyens inférieur à 23 du service 8
         $repo=$this->getDoctrine()->getRepository(Moyens::class);
         $Moyen=$repo ->findMoyens(intval('8'),intval('23'));
-        dump($Moyen);
         $Tablo = [];
         $i = 0;
         foreach($Moyen as $moyen){
@@ -1826,7 +1847,6 @@ class PlanningMCController extends Controller
             $j = 0;
             $repo=$this->getDoctrine()->getRepository(PolymReal::class);
             $PMoy=$repo ->findCharMach($jour,$dateDebAn,$moyen['Moyen']);
-            dump($PMoy);    //$Annee.'-'.$polym['Mois'].'-01')
             foreach($PMoy as $pmoy){
                 $y=intval($pmoy['DureTotPolyms'])/3600;
                 $w=round($y,1);
@@ -1839,6 +1859,7 @@ class PlanningMCController extends Controller
             //$CharTot=intval($polym['DureTheoPolym']/10000);
         }
         $Productivite= new JsonResponse($Tablo);
+
         $Titres=[];
 
         return $this->render('planning_mc/MoyensIndus.html.twig',[

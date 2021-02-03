@@ -506,7 +506,7 @@ class IndicateursController extends AbstractController
         $repo=$this->getDoctrine()->getRepository(Charge::class);
         // Date à aujourd'hui
         $jour= new \datetime;
-        $date=$jour;
+
         $SemUn=$jour->format("W");
         // Date à 1 mois
         $jourVisu = date("Y-m-d", strtotime('+ 30 days'.date('Y') ));

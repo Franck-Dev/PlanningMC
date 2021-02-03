@@ -48,6 +48,7 @@
 }
 
 </style>
+{% set periode = [debPeriode|date('M Y'),finPeriode|date('M Y')]|join(' - ') %}
 <nav class="nav nav-tabs" id="myTab" role="tablist">
   <a class="nav-item nav-link active text-primary" href="#p1" data-toggle="tab" role="tab" aria-controls="tab-p1" aria-selected="true">Charge des différents postes ! ✅</a>
   <a class="nav-item nav-link text-primary" href="#p2" data-toggle="tab" role="tab" aria-controls="tab-p2" aria-selected="false">Planning Prévisionnel ! ✅</a>
@@ -57,15 +58,15 @@
     <div class="conteiner-fluid">
         <h2 id="header">
             <strong>Charge Découpe</strong>
-            <small class="text-muted">Jan 2020 - Dec 2020</small>
+            <small class="text-muted">{{periode}}</small>
         </h2>
         <h2 id="header">
             <strong>Charge Moulage</strong>
-            <small class="text-muted">Jan 2020 - Dec 2020</small>
+            <small class="text-muted">{{periode}}</small>
         </h2>
         <h2 id="header">
             <strong>Charge Moyen Chaud</strong>
-            <small class="text-muted">Jan 2020 - Dec 2020</small>
+            <small class="text-muted">{{periode}}</small>
         </h2>
         <div class="row m-b-1">
             <div class="col-xl-6">
