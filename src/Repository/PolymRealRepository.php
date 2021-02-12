@@ -36,17 +36,16 @@ class PolymRealRepository extends ServiceEntityRepository
     }
     */
 
-    /*
-    public function findOneBySomeField($value): ?PolymReal
-    {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-    */
+    //Récupération des polym suivant date
+    public function myFindByDays(\DateTime $firstDateTime): array
+{
+    return $this->createQueryBuilder('c')
+        ->where('c.DebPolym >= :firstDate')
+        ->setParameter('firstDate', $firstDateTime)
+        ->getQuery()
+        ->getResult()
+    ;
+}
     public function findAllPcsByDates ( $date ) : array
 {
     $entityManager = $this -> getEntityManager ();

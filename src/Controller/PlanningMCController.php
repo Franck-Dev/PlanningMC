@@ -909,8 +909,9 @@ class PlanningMCController extends Controller
             $lastDateTime = $lastDateTime->modify('23 hours');
         }
         else{
-            $firstDateTime=date("Y-m-d",strtotime($requette->get('DatedebPlan')));
-            $currentMonthDateTime = new \DateTime($firstDateTime);
+            //$firstDateTime=date("Y-m-d",strtotime($requette->get('DatedebPlan')));
+            $firstDateTime=new \Datetime($requette->get('DatedebPlan'));
+            $currentMonthDateTime = clone($firstDateTime);
             $lastDateTime = $currentMonthDateTime->modify('Sunday this week');
             $lastDateTime = $lastDateTime->modify('23 hours');
         }
@@ -927,7 +928,6 @@ class PlanningMCController extends Controller
             ->getRepository(Demandes::class)
             ->findDemSem( $firstDateTime,$lastDateTime);
         }
-
     //Recherche des moyens à afficher sur planning
         $repos=$this->getDoctrine()->getRepository(Moyens::class);
         $moyens=$repos -> findBy(['Id_Service' => '8','Activitees' => 'Plannifie']);
@@ -948,9 +948,8 @@ class PlanningMCController extends Controller
         $Titres=$repo -> findAll();
 //Chargement d'une variable pour les tâches déjà plannifiées
     $repo=$this->getDoctrine()->getRepository(Planning::class);
-    $Taches=$repo -> getDays($firstDateTime,$lastDateTime);
-    $Taches=
-    $item=array();
+    $Taches=$repo -> myFindByDays($firstDateTime,$lastDateTime);
+    //$item=array();
         $data = [];
         $i = 0;
         foreach($Taches as $tache){ 
@@ -959,8 +958,10 @@ class PlanningMCController extends Controller
             $data[$i] = ['id'=> $i,'programmes'=> $tache->getAction(),'statut'=>$tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires];
             $i = $i + 1;
         }
+//Chargement des polyms réalisées
     $repo=$this->getDoctrine()->getRepository(PolymReal::class);
-    $Polyms=$repo -> findAll();
+    //$Polyms=$repo -> findAll();
+    $Polyms=$repo->myFindByDays($firstDateTime);
         foreach($Polyms as $polym){ 
             $data[$i] = ['id'=> $i,'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym()];
             $i = $i + 1;
@@ -986,7 +987,6 @@ class PlanningMCController extends Controller
            'datefin' => $lastDateTime,
            'Cycles'=>$cycles,
            'Moyens' => $moyen->getContent(),
-           //'Ssmoyen' => $Ssmoyen->getContent(),
            'taches' => $taches->getContent(),
            'DemRec' => $DemRec,
            'utilisateurs' => $utilisateurs,
@@ -1160,10 +1160,6 @@ class PlanningMCController extends Controller
        $ChargeMoy= new JsonResponse($result[0]);
        $ReparCharg= new JsonResponse($result[1]);
         
-//Chargement d'une variable pour toutes les demandes créées
-        $test = $this->getDoctrine()
-            ->getRepository(demandes::class)
-            ->findAll();
 //Recherche du début de semaine et fin de semaine
     if(!$requette->get('DatedebPlan')){
         $currentMonthDateTime = new \DateTime();
@@ -1173,11 +1169,15 @@ class PlanningMCController extends Controller
         $lastDateTime = $lastDateTime->modify('23 hours');
     }
     else{
-        $firstDateTime=date("Y-m-d",strtotime($requette->get('DatedebPlan')));
-        $currentMonthDateTime = new \DateTime($firstDateTime);
+        $firstDateTime=new \DateTime(date("Y-m-d",strtotime($requette->get('DatedebPlan'))));
+        $currentMonthDateTime =clone($firstDateTime);
         $lastDateTime = $currentMonthDateTime->modify('Sunday this week');
         $lastDateTime = $lastDateTime->modify('23 hours');
     }
+//Chargement d'une variable pour toutes les demandes créées
+    $test = $this->getDoctrine()
+    ->getRepository(demandes::class)
+    ->myFindByDays($firstDateTime);
 
 //Recherche des moyens à afficher sur planning
         $repos=$this->getDoctrine()->getRepository(Moyens::class);

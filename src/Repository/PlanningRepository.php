@@ -49,14 +49,16 @@ class PlanningRepository extends ServiceEntityRepository
         ;
     }
     
-    public function getDays(\DateTime $firstDateTime, \DateTime $lastDateTime): ?Planning
+    //Récupération des polym suivant date
+    public function myFindByDays(\DateTime $firstDateTime, \DateTime $lastDateTime): array
     {
         return $this->createQueryBuilder('c')
-            ->andwhere('c.DebutDate > :firstDate AND c.FinDate > :lastDate ')
+            ->where('c.DebutDate >= :firstDate')
+            ->andwhere('c.FinDate <= :lastDate')
             ->setParameter('firstDate', $firstDateTime)
             ->setParameter('lastDate', $lastDateTime)
             ->getQuery()
-            ->getOneOrNullResult()
+            ->getResult()
         ;
     }
     // Calcul de la charge par machine
