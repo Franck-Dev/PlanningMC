@@ -24,8 +24,10 @@ class FunctPlanning
         
         foreach($Taches as $tache){
             if ($tache->getDebutDate() > $newDateFin) {
+                //On récupère la date de départ en français
+                $dateDep=$this->dateFrench($tache->getDebutDate());
                 //On construit l'info bulle(tooltip) avec certaines données de la polym plannifiée
-                $commentaires=nl2br("Demande n° ". $tache->getNumDemande()->getId()." / ID Plannif : ". $tache->getId()."\n" ."Départ: ". ($tache->getDebutDate())->format('G:i') . "\n" .$tache->getNumDemande()->getCommentaires()."\n".$tache->getNumDemande()->getOutillages() ."\n" . "Fin à : " . ($tache->getFinDate())->format('G:i'));
+                $commentaires=nl2br("Demande n° ". $tache->getNumDemande()->getId()." / ID Plannif : ". $tache->getId()."\n" ."Départ: ". $dateDep . "\n" .$tache->getNumDemande()->getCommentaires()."\n".$tache->getNumDemande()->getOutillages() ."\n" . "Fin à : " . ($tache->getFinDate())->format('G:i'));
                 //On cherche le moyen attribué à la polym suivant la demande et l'activité Plannification
                 $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification(),'Activitees'=> 'Plannifie']);
                 if($Pourc<75){
@@ -98,5 +100,34 @@ class FunctPlanning
         return $result=[$TbEtat, $data, $item];
         // $Ssmoyen= new JsonResponse($TbEtat);
         // $moyen= new JsonResponse($data);
+    }
+
+    public function dateFrench($date) 
+    {
+        switch ($date->format('N')) {
+            case 1 :
+                $jourFrench='Lundi';
+                break;
+            case 2 :
+                $jourFrench='Mardi';
+                break;
+            case 3 :
+                $jourFrench='Mercredi';
+                break;
+            case 4 :
+                $jourFrench='Jeudi';
+                break;
+            case 5 :
+                $jourFrench='Vendredi';
+                break;
+            case 6 :
+                $jourFrench='Samedi';
+                break;
+            default:
+                $jourFrench='Dimanche';
+                break;
+        }
+        $dateNew=$jourFrench." ".$date->format('j'). " à ".$date->format('G:i');
+        return $dateNew;
     }
 }
