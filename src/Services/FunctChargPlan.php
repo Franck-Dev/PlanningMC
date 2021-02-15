@@ -366,4 +366,38 @@ class FunctChargPlan
             return false;
         }
     }
+
+    public function listCharg($jourDeb, $jourFin, $repoChargmnt, $repo) 
+    {
+        $ChargPlaMois=$repoChargmnt->myFindChargtMois($jourDeb,$jourFin);
+        //On rajoute les OF aux données de chargement
+        $i=0;
+        foreach ($ChargPlaMois as $chargmnt) {
+            $listOF=[];
+            $j=0;
+            $ListOFChargmnt=$repo->myFindOFChargmnt($chargmnt['id']);
+
+            foreach ($ListOFChargmnt as $OF) {
+                $listOF[$j]=$OF->getOrdreFab()."/".$OF->getPosteW()."/".$OF->getConf()."/".$OF->getDateDeb()->format("d-m-Y")."/".$OF->getChargement()->getId();
+                $j++;
+            }
+            $ChargPlaMois[$i]['OF']=$listOF;
+            $i++;
+        }
+        return $ChargPlaMois;
+    }
+
+    public function exportCSV($tbChargement,$name) 
+    {
+        header("Content-Type: text/plain");
+        header("Content-disposition: attachment; filename=products.csv");
+
+        $fp = fopen($name, 'w');
+         
+        foreach ($tbChargement as $fields) {
+            fputcsv($fp, $fields);
+        }
+         
+        fclose($fp);
+    }
 }

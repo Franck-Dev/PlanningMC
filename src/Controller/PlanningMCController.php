@@ -1432,20 +1432,21 @@ class PlanningMCController extends Controller
         $jourVisu=new \datetime($jourVisu);
         //Récupération des chargements validés pour ces dates 
         $repoChargmnt=$this->getDoctrine()->getRepository(Chargement::class);
-        $ChargPlaMois=$repoChargmnt->myFindChargtMois($jour,$jourVisu);
-        //On rajoute les OF aux données de chargement
-        $i=0;
-        foreach ($ChargPlaMois as $chargmnt) {
-            $listOF=[];
-            $j=0;
-            $ListOFChargmnt=$repo->myFindOFChargmnt($chargmnt['id']);
-            foreach ($ListOFChargmnt as $OF) {
-                $listOF[$j]=$OF['OrdreFab'];
-                $j++;
-            }
-            $ChargPlaMois[$i]['OF']=$listOF;
-            $i++;
-        }
+        $ChargPlaMois=$charge->listCharg($jour, $jourVisu, $repoChargmnt, $repo);
+        // $ChargPlaMois=$repoChargmnt->myFindChargtMois($jour,$jourVisu);
+        // //On rajoute les OF aux données de chargement
+        // $i=0;
+        // foreach ($ChargPlaMois as $chargmnt) {
+        //     $listOF=[];
+        //     $j=0;
+        //     $ListOFChargmnt=$repo->myFindOFChargmnt($chargmnt['id']);
+        //     foreach ($ListOFChargmnt as $OF) {
+        //         $listOF[$j]=$OF['OrdreFab'];
+        //         $j++;
+        //     }
+        //     $ChargPlaMois[$i]['OF']=$listOF;
+        //     $i++;
+        // }
         //dump($ChargPlaMois);
         //Récupération de la charge SAP sur 1 mois
         $ChargeTot=$repo -> findReparChargeW($jour,$jourVisu);
@@ -1536,6 +1537,48 @@ class PlanningMCController extends Controller
         $this->addFlash('success', "Enregistrement du chargement n° ".$chargt->getId()." effectué avec succès");
 
         return $this->redirectToRoute('PreviPlannif');
+    }
+
+    /**
+     * @Route("/LOGISTIQUE/Export/Chargement", name="Chargt_ExportSAP")
+     */
+    public function ChargtExport(FunctChargPlan $charge)
+    {
+        //Création de la planification à long terme avec les chargements figés
+        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        // Création de la table de répartition des programmes suivant OF SAP lancés sur 1 mois
+        // Date à aujourd'hui
+        $jour= new \datetime;
+        // Date à 1 mois
+        $jourVisu = date("Y-m-d", strtotime('+ 31 days'.date('Y') ));
+        $jourVisu=new \datetime($jourVisu);
+        //Récupération des chargements validés pour ces dates 
+        $repoChargmnt=$this->getDoctrine()->getRepository(Chargement::class);
+
+        $tbChargement=$charge->listCharg($jour, $jourVisu, $repoChargmnt, $repo);
+        $myFileOFOP="OF;OP;CONF;DATE;ID;\n";
+        
+        foreach ($tbChargement as $Chargement) {
+            foreach ($Chargement['OF'] as $OFOP) {
+                $tbTempDatasOF=[];
+                $tbTempDatasOF=explode("/",$OFOP);
+                $myFileOFOP.= $tbTempDatasOF[0].";".$tbTempDatasOF[1].";".$tbTempDatasOF[2].";".
+                $tbTempDatasOF[3].";".$tbTempDatasOF[4].";\n";
+            }
+            
+        }
+
+        $name="C". $jour->format("dmmY").".csv";
+        return new Response(
+            $myFileOFOP,
+            200,
+            [
+          //Définit le contenu de la requête en tant que fichier texte
+              'Content-Type' => 'text/plain',
+          //On indique que le fichier sera en attachment donc ouverture de boite de téléchargement ainsi que le nom du fichier
+              "Content-disposition" => "attachment; filename=".$name
+           ]
+     );
     }
     
      /**

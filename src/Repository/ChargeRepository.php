@@ -166,7 +166,7 @@ class ChargeRepository extends ServiceEntityRepository
         $entityManager = $this -> getEntityManager ();
         
         $query = $entityManager -> createQuery (
-            'SELECT p.OrdreFab 
+            'SELECT p
                 FROM App\Entity\Charge p 
                 WHERE p.chargement = :chargmnt'
         );
