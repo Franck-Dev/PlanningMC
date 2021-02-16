@@ -64,6 +64,9 @@ class SecurityController extends AbstractController
                 case "EXTER":
                     $user->setRoles(['ROLE_USER']);
                 break;
+                case "ORDO":
+                    $user->setRoles(['ROLE_GESTIONAIRE']);
+                break;
             }
             $user->setIsActive('0');
             $user->setPassword($hash);

@@ -11,10 +11,12 @@ use App\Entity\Planning;
 use App\Entity\ChargFige;
 use App\Entity\ConfSmenu;
 use App\Entity\PolymReal;
+use App\Entity\Chargement;
 use App\Entity\ConfSsmenu;
 use App\Entity\Outillages;
 use App\Entity\ProgMoyens;
 use App\Form\ComOutilType;
+use App\Form\DatePlanning;
 use App\Form\CreationOType;
 use App\Form\PolymFormType;
 use App\Services\FunctIndic;
@@ -74,29 +76,34 @@ class PlanningMCController extends Controller
     }    
     /**
      * @Route("/Planning", name="Planning")
-     * @Security("is_granted('ROLE_USER')")
      */
     public function index(FunctPlanning $plan)
     {
-        
+    //Gestion menu
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
-
         $Titres=[];
-
+    //Gestion des dates de la semaine concernée
         $currentMonthDateTime = new \DateTime();
         $firstDateTime = $currentMonthDateTime->modify('first day of this week');
         $currentMonthDateTime = new \DateTime();
         $lastDateTime = $currentMonthDateTime->modify('last day of this week');
-
-//Recherche des moyens à afficher sur planning
+    //Recherche si demande d'annulation de polym
+        $repo=$this->getDoctrine()->getRepository(Planning::class);
+        $polyAnnul=$repo->findBy(['Statut'=>'ANNULATION']);
+        foreach ($polyAnnul as $polymA) {
+            $this->addFlash('warning', 'Demande d\'annulation sur polym ID n°'.$polymA->getId().
+            '('.$polymA->getAction().' du '.$polymA->getDebutDate()->format('d/m/Y').
+            ' sur '.$polymA->getIdentification().')');
+        }
+        dump($polyAnnul);
+    //Recherche des moyens à afficher sur planning
         $repos=$this->getDoctrine()->getRepository(Moyens::class);
         $moyens=$plan->moyens($repos);
         $Ssmoyen= new JsonResponse($moyens[0]);
         $moyen= new JsonResponse($moyens[1]);
         $item= $moyens[2];
 
-//Chargement d'une variable pour les tâches déjà plannifiées
-        $repo=$this->getDoctrine()->getRepository(Planning::class);
+    //Chargement d'une variable pour les tâches déjà plannifiées
         $repi=$this->getDoctrine()->getRepository(PolymReal::class);
         $task=$plan->planning($repo, $repos, $repi);
         $taches = new JsonResponse($task[0]);
@@ -124,22 +131,19 @@ class PlanningMCController extends Controller
             $lastDateTime = $lastDateTime->modify('23 hours');
 
             //Récupération des polyms récurrantes de la semaine -1    
-            //$repo=$this->getDoctrine()->getRepository(Demandes::class);
-            //$DemRec=$repo ->findDemRecur($lastDateTime,$firstDateTime);
-            //$DemRec=$repo -> findBy(['Reccurance'=>'1','UserCrea'=>$user->getUsername(),'Plannifie'=>'1','RecurValide'=>'0']);
             $repo=$this->getDoctrine()->getRepository(RecurrancePolym::class);
             $ListRec=$repo ->findRecur($lastDateTime,$firstDateTime);
-            //dump($ListRec);
+
             //On va créer la demande et la polym à semaine +1 de chaque polym recur de la semaine -1
             foreach($ListRec as $dem){
-                //dump($dem->getNumHeritage());
                 if(!$dem->getNumHeritage()){
                     //Création de la demande
                     $demande = new Demandes();
                     $demande=clone $dem->getNumPlanning()->getNumDemande();
-                    //$NewDate=date_modify($demande->getDatePropose(),'+ 7days');
-                    //$demande->setDatePropose($NewDate);
+
                     $demande->setDatePropose($dem->getDateFinrecurrance());
+                    $demande->setOutillages('');
+                    $demande->setCommentaires('');
 
                     $manager = $this->getDoctrine()->getManager();
                     $manager->persist($demande);
@@ -149,7 +153,7 @@ class PlanningMCController extends Controller
                 //On créé la polym si une demande a été réalisé
                     if ($DemVal){
                         $Planning=new Planning();
-                        //dump($demande);
+
                     //récupération des données de la demande pour les reporter dans la polym
                         //Formatage des dates de début
                         $heure=$demande->getHeurePropose()->format('H');
@@ -159,7 +163,7 @@ class PlanningMCController extends Controller
                         $date = new \DateTime($DebDate);
                         $date->setTime($heure,$minute,$seconde);
                         $Planning->setDebutDate($date);
-                        //dump($Planning);
+
                         //Formatage de la date de fin, en récupérant la durée du cycle
                         $dated=clone($date);
                         $DureCycH=$demande->getCycle()->getDuree()->format('H');
@@ -169,7 +173,7 @@ class PlanningMCController extends Controller
                         $DureCycM="+".$DureCycM."Minutes";
                         $DateFin=date_modify($DateFinH,$DureCycM);
                         $Planning->setFinDate($DateFin);
-                        dump($demande);
+
                         $Planning->setIdentification($demande->getMoyenUtilise()->getLibelle());
                         $Planning->setAction($demande->getCycle()->getNom());
                         $Planning->setNumDemande($demande);
@@ -765,7 +769,7 @@ class PlanningMCController extends Controller
                 $manager = $this->getDoctrine()->getManager();
                 $manager->persist($demande);
                 $manager->flush();
-                dump($demande);
+                //dump($demande);
                 //On créé la nouvelle demande avec les données de la récurrante
                 $demande = new Demandes();
                 $date=$requette->get('DatePla');
@@ -806,6 +810,9 @@ class PlanningMCController extends Controller
                         'choices'  => [
                             'NON' => false,
                             'OUI' => true]])
+                      -> add('planning', DatePlanning::class,[
+                          'label'=> 'Planification de la demande pour info :'
+                      ])
                       ->getForm();
                 $ExDem = true;
             }
@@ -903,8 +910,9 @@ class PlanningMCController extends Controller
             $lastDateTime = $lastDateTime->modify('23 hours');
         }
         else{
-            $firstDateTime=date("Y-m-d",strtotime($requette->get('DatedebPlan')));
-            $currentMonthDateTime = new \DateTime($firstDateTime);
+            //$firstDateTime=date("Y-m-d",strtotime($requette->get('DatedebPlan')));
+            $firstDateTime=new \Datetime($requette->get('DatedebPlan'));
+            $currentMonthDateTime = clone($firstDateTime);
             $lastDateTime = $currentMonthDateTime->modify('Sunday this week');
             $lastDateTime = $lastDateTime->modify('23 hours');
         }
@@ -914,14 +922,13 @@ class PlanningMCController extends Controller
         if(!$demande){
             $cycles = $this->getDoctrine()
             ->getRepository(Demandes::class)
-            ->findAll();
+            ->findDemSem( $firstDateTime,$lastDateTime);
         }
         else{
             $cycles = $this->getDoctrine()
             ->getRepository(Demandes::class)
-            ->findAll();
+            ->findDemSem( $firstDateTime,$lastDateTime);
         }
-        //dump($cycles); 
     //Recherche des moyens à afficher sur planning
         $repos=$this->getDoctrine()->getRepository(Moyens::class);
         $moyens=$repos -> findBy(['Id_Service' => '8','Activitees' => 'Plannifie']);
@@ -942,8 +949,8 @@ class PlanningMCController extends Controller
         $Titres=$repo -> findAll();
 //Chargement d'une variable pour les tâches déjà plannifiées
     $repo=$this->getDoctrine()->getRepository(Planning::class);
-    $Taches=$repo -> findAll();
-    $item=array();
+    $Taches=$repo -> myFindByDays($firstDateTime,$lastDateTime);
+    //$item=array();
         $data = [];
         $i = 0;
         foreach($Taches as $tache){ 
@@ -952,8 +959,10 @@ class PlanningMCController extends Controller
             $data[$i] = ['id'=> $i,'programmes'=> $tache->getAction(),'statut'=>$tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires];
             $i = $i + 1;
         }
+//Chargement des polyms réalisées
     $repo=$this->getDoctrine()->getRepository(PolymReal::class);
-    $Polyms=$repo -> findAll();
+    //$Polyms=$repo -> findAll();
+    $Polyms=$repo->myFindByDays($firstDateTime);
         foreach($Polyms as $polym){ 
             $data[$i] = ['id'=> $i,'programmes'=> $polym->getProgrammes()->getNom(),'statut'=>$polym->getStatut(),'start'=> ($polym->getDebPolym())->format('c'),'end'=> ($polym->getFinPolym())->format('c'),'group'=> $polym->getMoyens()->getid(),'style'=> 'background-color: '.$polym->getProgrammes()->getCouleur(),'title'=> $polym->getNomPolym()];
             $i = $i + 1;
@@ -979,7 +988,6 @@ class PlanningMCController extends Controller
            'datefin' => $lastDateTime,
            'Cycles'=>$cycles,
            'Moyens' => $moyen->getContent(),
-           //'Ssmoyen' => $Ssmoyen->getContent(),
            'taches' => $taches->getContent(),
            'DemRec' => $DemRec,
            'utilisateurs' => $utilisateurs,
@@ -1001,7 +1009,7 @@ class PlanningMCController extends Controller
     /**
      * @Route("/Demandes/Deprogrammation/{id}", name="Deprog_Demandes")
      */
-    public function demandeDeprog(Demandes $demande=null, \Swift_Mailer $mailer, Request $request, userInterface $user=null)
+    public function demandeDeprog(Demandes $demande=null, \Swift_Mailer $mailer, userInterface $user=null)
     {
         //On récupère le CE polym
         $repo=$this->getDoctrine()->getRepository(User::class);
@@ -1024,8 +1032,25 @@ class PlanningMCController extends Controller
         ;
         $mailer->send($message);
 
-        $this->addFlash('Annulation', 'Votre message a été transmis concernant la demande n°'.$demande->getId().' , nous vous répondrons dans les meilleurs délais.'); // Permet un message flash de renvoi
-        
+        $this->addFlash('Annulation', 'Votre message concernant l\'annulation de la demande n°'.$demande->getId(). 'a été transmis, nous vous répondrons dans les meilleurs délais.'); // Permet un message flash de renvoi
+        //Mettre commentaire sur la demande pour tracer la modification
+        $comment=$demande->getCommentaires();
+        $jour=new \datetime();
+        $now=$jour->format('d/m/Y H:i');
+        $demande->setCommentaires($comment."Demande d\'annulation faite par ".$user->getUsername()." le : ".$now);
+        $manager = $this->getDoctrine()->getManager();
+        $manager->persist($demande);
+        $manager->flush();
+
+        //Mettre le statut ANNULER sur la polym
+        $repoPla=$this->getDoctrine()->getRepository(Planning::class);
+        $polPla=new Planning;
+        $polPla=$repoPla->findOneBy(['NumDemande'=>$demande->getId()]);
+        $polPla->setStatut('ANNULATION');
+
+        $manager->persist($polPla);
+        $manager->flush();
+
         return $this->redirectToRoute('Demandes');
     }
 
@@ -1136,10 +1161,6 @@ class PlanningMCController extends Controller
        $ChargeMoy= new JsonResponse($result[0]);
        $ReparCharg= new JsonResponse($result[1]);
         
-//Chargement d'une variable pour toutes les demandes créées
-        $test = $this->getDoctrine()
-            ->getRepository(demandes::class)
-            ->findAll();
 //Recherche du début de semaine et fin de semaine
     if(!$requette->get('DatedebPlan')){
         $currentMonthDateTime = new \DateTime();
@@ -1149,11 +1170,15 @@ class PlanningMCController extends Controller
         $lastDateTime = $lastDateTime->modify('23 hours');
     }
     else{
-        $firstDateTime=date("Y-m-d",strtotime($requette->get('DatedebPlan')));
-        $currentMonthDateTime = new \DateTime($firstDateTime);
+        $firstDateTime=new \DateTime(date("Y-m-d",strtotime($requette->get('DatedebPlan'))));
+        $currentMonthDateTime =clone($firstDateTime);
         $lastDateTime = $currentMonthDateTime->modify('Sunday this week');
         $lastDateTime = $lastDateTime->modify('23 hours');
     }
+//Chargement d'une variable pour toutes les demandes créées
+    $test = $this->getDoctrine()
+    ->getRepository(demandes::class)
+    ->myFindByDays($firstDateTime);
 
 //Recherche des moyens à afficher sur planning
         $repos=$this->getDoctrine()->getRepository(Moyens::class);
@@ -1225,25 +1250,28 @@ class PlanningMCController extends Controller
             $olddebdate=new \Datetime($request->request->get('olddatedeb'));
             $oldfindate=new \Datetime($request->request->get('olddatefin'));
             $idmoyen=$request->request->get('moyen');
-            $firstDateTime=date("Y-m-d H:m",strtotime($request->request->get('newdatedeb')));
+            $firstDateTime=date("Y-m-d H:i",strtotime($request->request->get('newdatedeb')));
+
             $newdebdate = new \DateTime($firstDateTime);
-            $lastDateTime=date("Y-m-d H:m",strtotime($request->request->get('newdatefin')));
+            $lastDateTime=date("Y-m-d H:i",strtotime($request->request->get('newdatefin')));
             $newfindate = new \DateTime($lastDateTime);
             //Récupération de la désignation du moyen suivant id
             $basemoy = $this->getDoctrine()->getRepository(Moyens::class);
             $moyen = $basemoy->findBy(['id' => $idmoyen]);
             //dump($idPolymPla);//die();
             if($idPolymPla) {
-                dump($newdebdate);
+
                 $mr = $this->getDoctrine()->getRepository(Planning::class);
                 //$maga = $mr->findOneBySomeField($olddebdate,$oldfindate,$moyen[0]->getLibelle($idmoyen));
                 $maga=$mr->findBy(['id' => $idPolymPla]);
                 $old=$request->request->get('olddatedeb');
                 //$new=date("Y-m-d H:m",strtotime($request->request->get('newdatedeb')));
-                dump($maga);//die();
+
                 $maga[0]->setDebutDate($newdebdate);
                 $maga[0]->setFinDate($newfindate);
-                dump($maga);//die();
+                $maga[0]->getNumDemande()->setMoyenUtilise($moyen[0]);
+                $maga[0]->setIdentification($moyen[0]->getLibelle());
+
                 $manager = $this->getDoctrine()->getManager();
                 $manager->persist($maga[0]);
                 $manager->flush();
@@ -1351,9 +1379,11 @@ class PlanningMCController extends Controller
 
     /**
      * @Route("/LOGISTIQUE/Ordonnancement", name="Ordo")
+     * @Security("has_role('ROLE_PLANIF')")
      */
     public function Ordo(FunctChargPlan $charge)
         {
+            dump($charge);
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
         $Titres=$repo -> findAll();
 
@@ -1361,20 +1391,30 @@ class PlanningMCController extends Controller
         $repo=$this->getDoctrine()->getRepository(Charge::class);
         $ChargTot=$repo -> findAll();
         
-    //Création de la planification à long terme avec les chargements figés
         // Création de la table de répartition des programmes suivant OF SAP lancés sur 1 mois
         // Date à aujourd'hui
         $jour= new \datetime;
+        // Date periode
+        $dateD=clone($jour);
+        $dateF=clone($jour);
+        $debPeriode=$dateD->modify('First day of january this year');
+        $debPeriode->format('mm YY');
+        $finPeriode=$dateF->modify('Last day of december this year');
+        $finPeriode->format('mm YY');
         // Date à 1 mois
         $jourVisu = date("Y-m-d", strtotime('+ 31 days'.date('Y') ));
         $jourVisu=new \datetime($jourVisu);
+        $ChargeMois=$repo->myFindPcsTotMois($jour,$jourVisu);
        
         return $this->render('planning_mc/Ordo.html.twig', [
             'controller_name' => 'PlanningOrdo',
             'ChargeTot' => $ChargTot,
+            'ChargeMois' => $ChargeMois[0],
             'Titres' => $Titres,
             'datedeb' => $jour,
             'datefin' => $jourVisu,
+            'debPeriode' => $debPeriode,
+            'finPeriode' => $finPeriode,
         ]);
     }
 
@@ -1391,6 +1431,24 @@ class PlanningMCController extends Controller
         // Date à 1 mois
         $jourVisu = date("Y-m-d", strtotime('+ 31 days'.date('Y') ));
         $jourVisu=new \datetime($jourVisu);
+        //Récupération des chargements validés pour ces dates 
+        $repoChargmnt=$this->getDoctrine()->getRepository(Chargement::class);
+        $ChargPlaMois=$charge->listCharg($jour, $jourVisu, $repoChargmnt, $repo);
+        // $ChargPlaMois=$repoChargmnt->myFindChargtMois($jour,$jourVisu);
+        // //On rajoute les OF aux données de chargement
+        // $i=0;
+        // foreach ($ChargPlaMois as $chargmnt) {
+        //     $listOF=[];
+        //     $j=0;
+        //     $ListOFChargmnt=$repo->myFindOFChargmnt($chargmnt['id']);
+        //     foreach ($ListOFChargmnt as $OF) {
+        //         $listOF[$j]=$OF['OrdreFab'];
+        //         $j++;
+        //     }
+        //     $ChargPlaMois[$i]['OF']=$listOF;
+        //     $i++;
+        // }
+        //dump($ChargPlaMois);
         //Récupération de la charge SAP sur 1 mois
         $ChargeTot=$repo -> findReparChargeW($jour,$jourVisu);
         $i=0;
@@ -1399,21 +1457,187 @@ class PlanningMCController extends Controller
         $TbPcSsOT=[];
         $TbRepartChargeTot=[];
         $m=0;
+        $nbMessErr=0;
         foreach($ChargeTot as $Creno){
             $cata=$this->getDoctrine()->getRepository(ChargFige::class);
             $STD=$this->getDoctrine()->getRepository(ProgMoyens::class);
             $Out=$this->getDoctrine()->getRepository(Outillages::class);
             $Art=$this->getDoctrine()->getRepository(Articles::class);
-            $ListCTO=$charge->checkCTO($cata, $STD, $repo, $Out, $Art, $Creno,  $i, $TbPcSsOT, $m);
+            $ListCTO=$charge->checkCTO($repoChargmnt, $cata, $STD, $repo, $Out, $Art, $Creno, $TbPcSsOT, $m);
+            dump($ListCTO);
             $TbRepartChargeTot[$i]=$ListCTO;
+            if ($ListCTO['Messages']) {
+                $nbMessErr++;
+            }
         $i = $i + 1;
         }
         dump($TbRepartChargeTot);
+
         return $this->render('planning_mc/PreviPlannif.html.twig', [
             'controller_name' => 'PlannificationSAP',
             'datedeb' => $jour,
             'datefin' => $jourVisu,
             'tests' => $TbRepartChargeTot,
+            'planifie' => $ChargPlaMois,
+            'nbMessErr' => $nbMessErr,
+        ]);
+    }
+
+    /**
+     * @Route("/LOGISTIQUE/Creation/ChargeOF", name="Charge_OF", condition="request.isXmlHttpRequest()")
+     */
+    public function chargeOF(Request $request)
+    {
+        //Récupération des OF contenus dans la charge du jour
+        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        $listOFCharge=$repo->findBy(['DateDeb' => new \datetime($request->request->get('date')), 'NumProg' => $request->request->get('prog')]);
+        
+        return $this->render('planning_mc/form/_formChargeOF.html.twig', [
+            'controller_name' => 'PlannificationSAP',
+            'dataChargeOF' => $listOFCharge,
+        ]);
+    }
+
+     /**
+     * @Route("/LOGISTIQUE/Creation/Chargement", name="Chargt_Crea", condition="request.isXmlHttpRequest()")
+     */
+    public function chargtCrea(Request $request, ObjectManager $manager)
+    {
+        $chargt= new Chargement;
+        //On va récupérer le cycle machine par la désignation
+        $repo=$this->getDoctrine()->getRepository(ProgMoyens::class);
+        $idProgram=$repo->findOneBy(['Nom'=> $request->get('cycle')]);
+        dump($idProgram);
+        //Création d'un tableau des OF du chargement
+        $repoChar=$this->getDoctrine()->getRepository(Charge::class);
+        $manager = $this->getDoctrine()->getManager();
+        foreach ($request->get('charge') as $OT) {
+            foreach ($OT as $OF) {
+                $tbOF=$repoChar->FindOneBy(['OrdreFab'=> $OF['OF'],'NumProg'=> $request->get('cycle')]);
+                $chargt->addOF($tbOF);
+                $OF= new Charge;
+                $tbOF->setStatut("PREPLAN");
+                $tbOF->setDateDeb(new \datetime($request->get('jour')));
+                $manager->persist($tbOF);
+                //$manager->flush(); 
+            }
+        }
+
+        $chargt->setNomChargement($request->get('nom'));
+        $chargt->setRemplissage($request->get('remp'));
+        $chargt->setProgramme($request->get('cycle'));
+        $chargt->setDatePlannif(new \datetime($request->get('jour')));
+
+        $manager = $this->getDoctrine()->getManager();
+        $manager->persist($chargt);
+        $manager->flush();
+
+        //Une fois le chargement créé, on valide les OF dans la charge en mettant l'ID
+        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        
+        $this->addFlash('success', "Enregistrement du chargement n° ".$chargt->getId()." effectué avec succès");
+
+        return $this->redirectToRoute('PreviPlannif');
+    }
+
+    /**
+     * @Route("/LOGISTIQUE/Export/Chargement", name="Chargt_ExportSAP")
+     */
+    public function ChargtExport(FunctChargPlan $charge)
+    {
+        //Création de la planification à long terme avec les chargements figés
+        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        // Création de la table de répartition des programmes suivant OF SAP lancés sur 1 mois
+        // Date à aujourd'hui
+        $jour= new \datetime;
+        // Date à 1 mois
+        $jourVisu = date("Y-m-d", strtotime('+ 31 days'.date('Y') ));
+        $jourVisu=new \datetime($jourVisu);
+        //Récupération des chargements validés pour ces dates 
+        $repoChargmnt=$this->getDoctrine()->getRepository(Chargement::class);
+
+        $tbChargement=$charge->listCharg($jour, $jourVisu, $repoChargmnt, $repo);
+        $myFileOFOP="OF;OP;CONF;DATE;ID;\n";
+        
+        foreach ($tbChargement as $Chargement) {
+            foreach ($Chargement['OF'] as $OFOP) {
+                $tbTempDatasOF=[];
+                $tbTempDatasOF=explode("/",$OFOP);
+                $myFileOFOP.= $tbTempDatasOF[0].";".$tbTempDatasOF[1].";".$tbTempDatasOF[2].";".
+                $tbTempDatasOF[3].";".$tbTempDatasOF[4].";\n";
+            }
+            
+        }
+
+        $name="C". $jour->format("dmmY").".csv";
+        return new Response(
+            $myFileOFOP,
+            200,
+            [
+          //Définit le contenu de la requête en tant que fichier texte
+              'Content-Type' => 'text/plain',
+          //On indique que le fichier sera en attachment donc ouverture de boite de téléchargement ainsi que le nom du fichier
+              "Content-disposition" => "attachment; filename=".$name
+           ]
+     );
+    }
+    
+     /**
+     * @Route("/LOGISTIQUE/Delete/Chargement", name="Chargt_Delete", condition="request.isXmlHttpRequest()")
+     */
+    public function ChargtDelete(Request $request, ObjectManager $manager)
+    {
+        $chargt= new Chargement;
+        //On va récupérer le chargement suivant l'id donné
+        $repo=$this->getDoctrine()->getRepository(Chargement::class);
+        $chargt=$repo->findOneBy(['id'=> $request->get('id')]);
+        dump($chargt);
+        //Suppression des OF du chargement
+        $repoChar=$this->getDoctrine()->getRepository(Charge::class);
+        $datasOF=new Charge;
+        $OFs=$repoChar->FindBy(['chargement'=>$request->get('id')]);
+        foreach($OFs as $OF) {
+            $chargt->removeOF($OF);
+            $OF->setDateDeb($OF->getDatePilote());
+            $OF->setStatut('OUV');
+        }
+
+        $manager = $this->getDoctrine()->getManager();
+        $manager->remove($chargt);
+        $manager->flush();
+
+        $this->addFlash('success', "Suppression du chargement n° ".$request->get('id')." effectué avec succès");
+
+        return $this->redirectToRoute('PreviPlannif');
+    }
+
+     /**
+     * @Route("/LOGISTIQUE/Creation/Datas_Chargement", name="tbDatasChargt_Crea", condition="request.isXmlHttpRequest()")
+     */
+    public function tbDatasChargtCrea(Request $request)
+    {
+        return $this->render('planning_mc/form/_form_tbDatasCharg.html.twig', [
+            'Datas' => $request->get('chargement'),
+        ]);
+    }
+
+     /**
+     * @Route("/LOGISTIQUE/Creation/Datas_CTO", name="tbDatasCTO_Crea", condition="request.isXmlHttpRequest()")
+     */
+    public function tbDatasCTOCrea(Request $request, FunctChargPlan $charge)
+    {
+        $Out=$this->getDoctrine()->getRepository(Outillages::class);
+        $Art=$this->getDoctrine()->getRepository(Articles::class);
+        $listeOT = $Out->myFindByCharFiG($request->get('Code'));
+            $TbListeOT=$charge->tboDatasCTO($listeOT);
+            foreach ($TbListeOT as $OTCTO) {
+                //On cherche les articles liés à chaque OT
+                $ArtOFCTJ=$Art->myFindByOT($OTCTO);
+                $datasCTO[$OTCTO]=$ArtOFCTJ;
+            }
+        dump($datasCTO);
+        return $this->render('planning_mc/form/_form_tbDatasCTO.html.twig', [
+            'Datas' => $datasCTO,
         ]);
     }
 
@@ -1626,12 +1850,9 @@ class PlanningMCController extends Controller
         $OT=new Outillages();
         $repo=$this->getDoctrine()->getRepository(Outillages::class);
         $OTs=$repo -> findall();
-        dump($OTs);
 
         $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'OUTILLAGE']);
-        dump($Titres);
-        dump($OTs);
         
         return $this->render('planning_mc/ConsultationOutil.html.twig',[
             'Titres' => $Titres,
@@ -1651,9 +1872,7 @@ class PlanningMCController extends Controller
      * @Route("/METHODES/Moyens", name="MOYENS_INDUS")
      */
     public function CreationM(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
-        {//$repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
-            //$Titres=$repo -> findall();
-
+        {
         //Recherche date du jour
         $DateJour = new \DateTime();
         $jour=$DateJour->modify('today');
@@ -1663,7 +1882,6 @@ class PlanningMCController extends Controller
         //La requête remonte les moyens inférieur à 23 du service 8
         $repo=$this->getDoctrine()->getRepository(Moyens::class);
         $Moyen=$repo ->findMoyens(intval('8'),intval('23'));
-        dump($Moyen);
         $Tablo = [];
         $i = 0;
         foreach($Moyen as $moyen){
@@ -1673,7 +1891,6 @@ class PlanningMCController extends Controller
             $j = 0;
             $repo=$this->getDoctrine()->getRepository(PolymReal::class);
             $PMoy=$repo ->findCharMach($jour,$dateDebAn,$moyen['Moyen']);
-            dump($PMoy);    //$Annee.'-'.$polym['Mois'].'-01')
             foreach($PMoy as $pmoy){
                 $y=intval($pmoy['DureTotPolyms'])/3600;
                 $w=round($y,1);
@@ -1686,6 +1903,7 @@ class PlanningMCController extends Controller
             //$CharTot=intval($polym['DureTheoPolym']/10000);
         }
         $Productivite= new JsonResponse($Tablo);
+
         $Titres=[];
 
         return $this->render('planning_mc/MoyensIndus.html.twig',[

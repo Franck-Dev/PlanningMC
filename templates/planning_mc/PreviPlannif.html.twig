@@ -1,10 +1,30 @@
 {% block title %}Planning Prévisionnel{% endblock %}
 
-{% block stylesheets %}{% endblock %}
+{% block stylesheets %}
+
+{% endblock %}
 {% block body %}
 <style>
+td{
+    color: #00325F;
+}
+.tooltip-inner {
+    max-width: none;
+    height: 100%;
+    white-space: nowrap;
+    background:white;
+    border:1px solid lightgray;
+  -webkit-box-shadow: 0px 3px 3px 0px rgba(0,0,0,0.3);
+  -moz-box-shadow: 0px 3px 3px 0px rgba(0,0,0,0.3);
+  box-shadow: 0px 3px 3px 0px rgba(0,0,0,0.3);
+  color:gray;
+  margin:0;
+  padding:0;
+}
 </style>
 <div class="conteiner-fluid">
+    {% set nbMessErrT = nbMessErr %}
+    <input type="hidden" id='nbMessErrT' value={{nbMessErrT}}>
         {#<pre>{{dump(tests)}}</pre>#} 
     <div class="table-responsive" id="PolymAff">
         <table class="table">
@@ -33,8 +53,8 @@
                                     <th> Id </th>
                                     <th> Cycle </th>
                                     {# <th> Départ </th> #}
-                                    <th> Nbre OT </th>
-                                    <th>Chargements Validés</th>
+                                    <th> Charge OF </th>
+                                    <th>Chargements Sélectionnés</th>
                                     <th>Action</th>
                     
                             </tr>
@@ -56,32 +76,63 @@
                             <td>{{key}}</td>
                             <td>{{ test.PlanningSAP.Cycles }}</td>
                             {# <td>{{ test.Jour|date('H:i:s') }}</td> #}
-                            <td>{{ test.PlanningSAP.NbrPcs }}</td>
-                            <td></td>
-                            <td><b ref=""  id="btn-success" class="btn btn-success" style="border-radius:40px;background-color:blue;color:white" onclick=''>Valider</b></td>
+                            <td onmouseup='detailsOF({{key}},"{{test.PlanningSAP.Jour|date('Y-m-d')}}","{{test.PlanningSAP.Cycles}}")' id='{{key}}'>{{ test.PlanningSAP.NbrPcs }}</td>
+                            <td>
+                                {% for item in planifie %}
+                                    {% if (item.DatePlannif|date('d/m/y') == myDat) and (item.Programme == test.PlanningSAP.Cycles) %}
+                                        {# {% set tbStrOF = item.OF %} #}
+                                        {% set tbStrOF = item.OF|join('\n') %}
+                                        {% if item.Remplissage < 50 %}
+                                            <span class="badge rounded-pill bg-danger">{{item.NomChargement}}<span class="badge bg-secondary" data-toggle="tooltip" data-placement="bottom" title="{{tbStrOF}}">{{item.OF|length}}</span>
+                                                <button class="btn" onblur="deleteChargmnt({{item.id}})">
+                                                    <span class="m-1" style="font-size: 1em; color: Tomato;"><i class="fa fa-trash"></i></span>
+                                                </button>
+                                            </span>
+                                        {% elseif item.Remplissage < 75 %}
+                                            <span class="badge rounded-pill bg-warning text-dark">{{item.NomChargement}}<span class="badge bg-secondary" data-toggle="tooltip" data-placement="bottom" title="{{tbStrOF|nl2br}}">{{item.OF|length}}</span>
+                                                <button class="btn" onblur="deleteChargmnt({{item.id}})">
+                                                    <span class="m-1" style="font-size: 1em; color: Tomato;"><i class="fa fa-trash"></i></span>
+                                                </button>
+                                            </span>
+                                        {% else %}
+                                            <span class="badge rounded-pill bg-success">{{item.NomChargement}}<span class="badge bg-secondary" data-toggle="tooltip" data-placement="bottom" title="{{tbStrOF|nl2br}}">{{item.OF|length}}</span>
+                                                <button class="btn" onblur="deleteChargmnt({{item.id}})">
+                                                    <span class="m-1" style="font-size: 1em; color: Tomato;"><i class="fa fa-trash"></i></span>
+                                                </button>
+                                            </span>
+                                        {% endif %}       
+                                    {% endif %}
+                                {% endfor %}  
+                            </td>
+                            <td><b ref=""  id="btn-success" class="btn btn-success" style="border-radius:40px;background-color:blue;color:white" onclick=''>Planifier</b></td>
                         </tr>
                         <tr>
                             <td colspan="12">
                                 <div id="{{['collapse',loop.index]|join}}" class="collapse in">
                                     {% if test.CTO %}
                                         {% set ChargFig = test.CTO %}
-                                        {% for CTO in ChargFig %}
-                                            <div class="table-responsive" id="PolymAff">
+                                        {% for CTO in ChargFig %}                               
+                                            {% set nameTR = ['IDChargt',jour,CTO.Nom,loop.index]|join %}
+                                            <div class="table-responsive h-100" id="ChargAff">
                                                 <table class="table">
                                                     <thead>	
                                                         <tr>
                                                             <th>Nom</th>
-                                                            <th>Qté Pcs(OF)</th>
-                                                            <th>Remplissage</th>
+                                                            <th>Qté OT(OF)</th>
+                                                            <th>Remplissages</th>
                                                             <th>Action</th>
                                                         </tr>	
                                                     </thead>
                                                     <tbody>
-                                                        <tr>
-                                                            <td>{{CTO.Nom}}</td>
-                                                            <td>{{CTO.Contenu|length}}</td>
-                                                            <td>{{[CTO.Remplissage,"%"]|join}}</td>
-                                                            <td><b ref=""  id="btn-success" class="btn btn-success" style="border-radius:40px;background-color:blue;color:white" onclick=''>Sélectionner</b></td>
+                                                        <tr id="{{nameTR}}">
+                                                            <td><a href="#" id={{CTO.Nom}} onclick="affichageCTO({{ CTO.Nom|json_encode() }})">{{CTO.Nom}}</a></td>
+                                                            <td><a href="#" id={{CTO.Nom}} onclick="affichageOFs({{ CTO.Contenu|json_encode() }})">{{CTO.Contenu|length}}</a></td>
+                                                            <td>{{[CTO.Remplissage[0],"%"]|join}}<span class="col-auto"><i class="fa fa-calendar fa-1x text-gray-300">{{[CTO.Remplissage[1],"%"]|join}}</i></span></td>
+                                                            <td>
+                                                                <b ref=""  id="btn-success" class="btn btn-success rounded" onclick='SelectCTO({{nameTR}},"{{myDate|date('Y-m-d H:i')}}","{{ test.PlanningSAP.Cycles }}", {{CTO.Contenu|json_encode()}})'>Sélectionner</b>
+                                                                <b ref=""  id="btn-warning" class="btn btn-warning rounded" onclick=''>Modifier</b>
+                                                                <b ref=""  id="btn-primary" class="btn btn-primary rounded" onclick=''>Ordonnancer</b>
+                                                            </td> 
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -100,4 +151,100 @@
 </div>
 
 {% endblock %}
-{% block javascript %}{% endblock %}
+{% block javascripts %}
+<script src="{{ asset('build/popper.min.js') }}"></script>
+<script type="text/javascript">
+// let d=document.querySelector('a')
+// // Pour détecter un clic sur un lien 
+// d.addEventListener('click', function (e) {
+//     e.preventDefault() // Annule l'évènement
+//     e.target // contient l'élément sur lequel on a cliqué
+//     //e.currentTarget // contient l'élément sur lequel on a greffé l'écouteur 
+//     alert(e)
+// })
+function affichageCTO(codeCTO) {
+    console.log(codeCTO);
+    var cibleCTO=document.getElementById("myDatasCTO");
+    $.ajax({
+		cache: false,
+		type: 'POST',
+        data: {Code: codeCTO},
+		url: "{{ path('tbDatasCTO_Crea') }}",
+		success: function(data) 
+		{
+			cibleCTO.innerHTML=data;
+		}
+    });
+}
+function affichageOFs(datCharg) {
+    var cible=document.getElementById("myDatasChargement");
+    $.ajax({
+		cache: false,
+		type: 'POST',
+        data: {chargement: datCharg},
+		url: "{{ path('tbDatasChargt_Crea') }}",
+		success: function(data) 
+		{
+			cible.innerHTML=data;
+		}
+	});
+}
+function SelectCTO(ID,jour,prog,dossiers) {
+    var tbDatasChargt=ID.children
+    var ciblePla=document.getElementById("myPlanningPrevi");	
+    // var jour = $(this).attr('data-jour');
+    dateJour=new Date(jour).toISOString().slice(0,10);
+    console.log(dateJour);
+    var pourcRemp=parseInt(tbDatasChargt[2].innerText, 10);
+	$.ajax({
+		cache: false,
+		type: 'POST',
+        data: {nom: tbDatasChargt[0].innerText, remp: pourcRemp, jour: dateJour, cycle: prog, charge: dossiers},
+		url: "{{ path('Chargt_Crea') }}",
+		success: function(data) 
+		{
+            ciblePla.innerHTML=data;
+		}
+	});
+}
+function deleteChargmnt(idChargmnt) {
+    var ciblePla=document.getElementById("myPlanningPrevi");
+    $.ajax({
+		cache: false,
+		type: 'POST',
+        data: {id: idChargmnt},
+		url: "{{ path('Chargt_Delete') }}",
+		success: function(data) 
+		{
+            ciblePla.innerHTML=data;
+		}
+	});
+}
+// $('#ChargAffi').on('click', 'tbody tr', function(event) {
+//     // $(this).addClass('highlight').siblings().removeClass('highlight');
+// });
+function AnnulCTO(ID,Date) {
+    alert(ID);
+}
+
+function detailsOF(idPlannif,DateP,Cycle) {
+    var cibleNbrPcs=document.getElementById(idPlannif);
+    $.ajax({
+		cache: false,
+		type: 'POST',
+        data: {date: DateP, prog: Cycle},
+		url: "{{ path('Charge_OF') }}",
+		success: function(data) 
+		{
+            $(cibleNbrPcs).tooltip({
+                animated: 'fade',
+                placement: 'bottom',
+                html: true,
+                title : data
+            });
+		}
+	});
+    alert(Cycle);
+}
+</script>
+{% endblock %}

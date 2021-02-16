@@ -107,7 +107,7 @@ class IndicateursController extends AbstractController
      * @Route("/indicateur/RatioChargePcs", name="indic_Ratio_Charge_Pcs")
      * 
      */
-    public function indicRatioChargePcs($unjouran, FunctIndic $indic)
+    public function indicRatioChargePcs($unjouran=null, FunctIndic $indic)
     {
         // { label: "New Jersey",  y: 19034.5 },
         //{ label: "Texas", y: 20015 },
@@ -123,6 +123,7 @@ class IndicateursController extends AbstractController
         $Polyms=$repo -> findRapportPcsH($unjouran);
         $daty = [];
         $i = 0;
+        $y=0;
         foreach($Polyms as $polym){
             $y=intval($polym['DureTotPolyms']/3600);
             $daty[$i] = ['label'=> $polym['semaine'],'y'=> $y];
@@ -138,7 +139,11 @@ class IndicateursController extends AbstractController
         }
         $PProdSem=$y;
 
-        $RapportPH=round($PProdSem/$HProdSem,2);
+        if($HProdSem) {
+            $RapportPH=round($PProdSem/$HProdSem,2);
+        } else {
+            $RapportPH=0;
+        }
         $RapportH= new JsonResponse($daty);
         $RapportPcs= new JsonResponse($daty2);
 
@@ -501,7 +506,7 @@ class IndicateursController extends AbstractController
         $repo=$this->getDoctrine()->getRepository(Charge::class);
         // Date à aujourd'hui
         $jour= new \datetime;
-        $date=$jour;
+
         $SemUn=$jour->format("W");
         // Date à 1 mois
         $jourVisu = date("Y-m-d", strtotime('+ 30 days'.date('Y') ));

@@ -1,0 +1,23 @@
+<div class="table-responsive h-100">
+    <table class="table">
+        <thead>	
+            <tr>
+                <th>OF</th>
+                <th>OP</th>
+                <th>Désignation</th>
+                <th>Date Initiale</th>
+            </tr>	
+        </thead>
+        {% for key, OF in dataChargeOF %}                               
+            {# {% set nameTR = ['IDChargt',jour,CTO.Nom,loop.index]|join %} #}
+                    <tbody class="border bg-secondary">
+                        <tr>
+                            <td>{{OF.OrdreFab}}</td>
+                            <td>{{OF.PosteW}}</td>
+                            <td>{{OF.DesignationPcs}}</td>
+                            <td>{{OF.DatePilote|date('d/m/Y')}}</td>
+                        </tr>
+                    </tbody>
+        {% endfor %}
+    </table>
+</div>

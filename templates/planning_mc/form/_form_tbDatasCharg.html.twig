@@ -1,0 +1,28 @@
+<div class="table-responsive h-100" id="tbDatasChargt">
+    <table class="table">
+        <thead>	
+            <tr>
+                <th>OF</th>
+                <th>Désignation</th>
+                <th>Horizon</th>
+            </tr>	
+        </thead>
+        {% for key, OT in Datas %}                               
+            {# {% set nameTR = ['IDChargt',jour,CTO.Nom,loop.index]|join %} #}
+                    <tbody class="border bg-secondary">
+                        {# <tr id="{{nameTR}}"> #}
+                        <tr>
+                            <td colspan="11" class="text-center bg-primary">{{key}}</td>
+                        </tr>
+                            {% for Data in OT %}
+                                <tr>
+                                    <td><a href="#">{{Data.OF}}</a></td>
+                                    <td><a href="#" class="h6">{{Data.Designation}}</a></td>
+                                    <td><span class="col-auto"><i class="fa fa-calendar fa-1x text-gray">{{Data.Horizon}}</i></span></td>
+                                    {# <td><b ref=""  id="btn-success" class="btn btn-success" style="border-radius:40px;background-color:blue;color:white" onclick='SelectCTO({{nameTR}},"{{myDate|date('Y-m-d H:i')}}","{{ test.PlanningSAP.Cycles }}")'>Sélectionner</b></td> #}
+                                </tr>
+                            {% endfor %}
+                    </tbody>
+        {% endfor %}
+    </table>
+</div>

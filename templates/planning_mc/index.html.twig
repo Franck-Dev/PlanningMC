@@ -185,6 +185,20 @@
     </style>
 {% endblock %}    
 {% block body %}
+{% for label, messages in app.flashes %}
+    {% for message in messages %}
+        {% if label == 'warning' %}
+            <div class="alert alert-dismissible alert-{{ label }}" data-toggle="tooltip" title="Cliquer sur le lien pour annuler la polym" onclick="removeAlert(this)">
+                <a href="#" class="alert-link">{{ message | trans | capitalize }}</a>
+                <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+            </div>
+        {% else %}
+            
+        {% endif %}
+        <!-- Flash message -->
+        
+    {% endfor %}
+{% endfor %}
 <div class="input" id="DatePlanif">
     <input type="hidden" id="JourPlannif" value="">
 </div>
@@ -313,7 +327,7 @@
 
         var options = {
             locale: 'fr',
-            zoomMin: 80000000,
+            zoomMin: 23000000,
             zoomMax: 20160000000,
             template:template ,
             stack: true,
@@ -332,7 +346,7 @@
             editable : { 
                 add : true , // ajoute de nouveaux éléments en double tapant  
                 updateTime : true , // déplace les éléments horizontalement  
-                updateGroup : false , // déplace les éléments d'un groupe à un autre  
+                updateGroup : true , // déplace les éléments d'un groupe à un autre  
                 remove : false , // supprime un élément en appuyant sur le bouton de suppression en haut à droite  
                 overrideItems : false  // autorise ces options à remplacer item.editable
             },
@@ -347,7 +361,7 @@
                     //Conversion de la date pour prise en compte dans controlleur
                     var DateDeb = (item.start).toISOString().slice(0,24);
                     var DateFin = (item.end).toISOString().slice(0,24);
-                    //console.log(DateDeb);
+                    console.log(item);
                     $.ajax({
                         method: "POST",
                         data: {id: item.id, olddatedeb: items._data[item.id].start, olddatefin: items._data[item.id].end, moyen: item.group, cycle: item.programmes, newdatedeb: DateDeb, newdatefin: DateFin},
@@ -684,6 +698,9 @@
                 }
             })
         })
+        function removeAlert(message) {
+            console.log(message);
+        }
     </script>
 <div class="sweet-overlay" tabindex="-1" style="opacity: -0.02; display: none;"></div><div class="sweet-alert hideSweetAlert" data-custom-class="" data-has-cancel-button="true" data-has-confirm-button="true" data-allow-outside-click="false" data-has-done-function="true" data-animation="pop" data-timer="null" style="display: none; margin-top: -200px; opacity: -0.01;"><div class="sa-icon sa-error" style="display: none;">
       <span class="sa-x-mark">

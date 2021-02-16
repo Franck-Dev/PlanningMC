@@ -22,6 +22,7 @@
                         <th>Tps Dechargement</th>
                         <th>Tps Chargement</th>
                         <th>Nb TC</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -42,13 +43,13 @@
                         <td>{{ OT.tpscharge ? OT.tpscharge|date('H:i:s') : '' }}</td>
                         <td>{{ OT.nbthermocouples }}</td>
                         <td>
-                            <a href="{{ path('ModificationO', {'id': OT.id}) }}">Editer</a>
+                            <a href="{{ path('ModificationO', {'id': OT.id}) }}" class="btn btn-warning">Editer</a>
                         </td>
                     </tr>
                 {% endfor %}
                 </tbody>
             </table>
         </div>
-    <a href="{{ path('CreationO') }}">Creer un nouvel outillage</a>
+    <a href="{{ path('CreationO') }}" class="btn btn-success">Creer un nouvel outillage</a>
 
 {% endblock %}

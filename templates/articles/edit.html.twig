@@ -7,7 +7,7 @@
 
     {{ include('articles/_form.html.twig', {'button_label': 'Mettre à jour'}) }}
 
-    <a href="{{ path('articles_index') }}">Voir Liste</a>
+    <a href="{{ path('articles_index') }}" class="btn btn-primary">Voir Liste</a>
 
     {{ include('articles/_delete_form.html.twig') }}
 {% endblock %}

@@ -36,17 +36,17 @@ class DemandesRepository extends ServiceEntityRepository
     }
     */
 
-    /*
-    public function findOneBySomeField($value): ?Demandes
+    //Récupération des demandes suivant date
+    public function myFindByDays(\DateTime $firstDateTime): array
     {
-        return $this->createQueryBuilder('d')
-            ->andWhere('d.exampleField = :val')
-            ->setParameter('val', $value)
+        return $this->createQueryBuilder('c')
+            ->where('c.DatePropose >= :firstDate')
+            ->setParameter('firstDate', $firstDateTime)
             ->getQuery()
-            ->getOneOrNullResult()
+            ->getResult()
         ;
     }
-    */
+
     // Calcul de la Charge Totale
     public function findDemRecur( $dateF,$dateD ) : array
     {
@@ -59,6 +59,20 @@ class DemandesRepository extends ServiceEntityRepository
         $query-> setParameter ( 'dateD' , $dateD);
         $query-> setParameter ('dateF' , $dateF);
         $query-> setParameter ('Reccurance' , '1');
+        // returns an array of Product objects
+        return $query -> execute ();
+    }
+
+    public function findDemSem( $firstDateTime,$lastDateTime) : array 
+    {
+        $entityManager = $this -> getEntityManager ();
+
+        $query = $entityManager -> createQuery (
+            'SELECT d
+            FROM App\Entity\Demandes d
+            WHERE d.DatePropose >= :dateD AND d.DatePropose <= :dateF');            
+        $query-> setParameter ( 'dateD' , $firstDateTime);
+        $query-> setParameter ('dateF' , $lastDateTime);
         // returns an array of Product objects
         return $query -> execute ();
     }

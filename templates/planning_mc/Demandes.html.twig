@@ -158,12 +158,19 @@
 				{% for cycle in Cycles if cycle.datePropose|date('d/m/Y') == myDate|date('d/m/Y') %}					
 					<tbody class="text-primary">
 					<tr>
-						<td>{% if cycle.plannifie == 1 %}
-							{# <i class="fa fa-calendar-check"></i> #}
-							<span style="color : Green"><i class="fa fa-thumbs-up"></i></span>
-						{% else %}
-							<i class="fa fa-pause-circle"></i>
-						{% endif %} </td>
+						<td>
+							{% if cycle.plannifie == 1 %}
+								{% set datasPPlanif = ['Debut plannifié: ',cycle.planning.DebutDate|date('d/m/Y H:i'),'\n','Moyen: ',cycle.planning.identification
+								,'\n','Id Polym: n°',cycle.planning.id]|join %}
+								{% if cycle.planning.Statut == 'ANNULE' %}
+									<span style="color : Red" data-toggle="tooltip" data-placement="bottom" title="{{ datasPPlanif|nl2br }}"><i class="fa fa-thumbs-down"></i></span>
+								{% else %}
+									<span style="color : Green" data-toggle="tooltip" data-placement="bottom" title="{{ datasPPlanif|nl2br }}"><i class="fa fa-thumbs-up"></i></span>
+								{% endif %}
+							{% else %}
+								<i class="fa fa-pause-circle"></i>
+							{% endif %}
+						</td>
 						<td>{{ cycle.id  }}</td>
 						<td>{{ cycle.cycle.nom }}</td>
 						<td>{{ cycle.datePropose ?  cycle.datePropose|date('d/m/Y') : ''  }}</td>

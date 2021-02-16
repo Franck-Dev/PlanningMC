@@ -66,6 +66,16 @@ class Charge
      */
     private $Statut;
 
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\Chargement", inversedBy="OF", cascade={"persist", "remove"})
+     */
+    private $chargement;
+
+    /**
+     * @ORM\Column(type="datetime")
+     */
+    private $DatePilote;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -187,6 +197,30 @@ class Charge
     public function setStatut(?string $Statut): self
     {
         $this->Statut = $Statut;
+
+        return $this;
+    }
+
+    public function getChargement(): ?Chargement
+    {
+        return $this->chargement;
+    }
+
+    public function setChargement(?Chargement $chargement): self
+    {
+        $this->chargement = $chargement;
+
+        return $this;
+    }
+
+    public function getDatePilote(): ?\DateTimeInterface
+    {
+        return $this->DatePilote;
+    }
+
+    public function setDatePilote(\DateTimeInterface $DatePilote): self
+    {
+        $this->DatePilote = $DatePilote;
 
         return $this;
     }

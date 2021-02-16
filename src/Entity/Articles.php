@@ -16,13 +16,13 @@ class Articles
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Assert\Range(
-     *      min = "7000000",
-     *      max = "7999999")
      */
     private $id;
 
     /**
+     * @Assert\Range(
+     *      min = "7000000",
+     *      max = "7999999")
      * @ORM\Column(type="integer")
      */
     private $Reference;
