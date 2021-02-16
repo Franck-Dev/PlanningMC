@@ -79,25 +79,31 @@ class PlanningMCController extends Controller
      */
     public function index(FunctPlanning $plan)
     {
-        
+    //Gestion menu
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
-
         $Titres=[];
-
+    //Gestion des dates de la semaine concernée
         $currentMonthDateTime = new \DateTime();
         $firstDateTime = $currentMonthDateTime->modify('first day of this week');
         $currentMonthDateTime = new \DateTime();
         $lastDateTime = $currentMonthDateTime->modify('last day of this week');
-
-//Recherche des moyens à afficher sur planning
+    //Recherche si demande d'annulation de polym
+        $repo=$this->getDoctrine()->getRepository(Planning::class);
+        $polyAnnul=$repo->findBy(['Statut'=>'ANNULATION']);
+        foreach ($polyAnnul as $polymA) {
+            $this->addFlash('warning', 'Demande d\'annulation sur polym ID n°'.$polymA->getId().
+            '('.$polymA->getAction().' du '.$polymA->getDebutDate()->format('d/m/Y').
+            ' sur '.$polymA->getIdentification().')');
+        }
+        dump($polyAnnul);
+    //Recherche des moyens à afficher sur planning
         $repos=$this->getDoctrine()->getRepository(Moyens::class);
         $moyens=$plan->moyens($repos);
         $Ssmoyen= new JsonResponse($moyens[0]);
         $moyen= new JsonResponse($moyens[1]);
         $item= $moyens[2];
 
-//Chargement d'une variable pour les tâches déjà plannifiées
-        $repo=$this->getDoctrine()->getRepository(Planning::class);
+    //Chargement d'une variable pour les tâches déjà plannifiées
         $repi=$this->getDoctrine()->getRepository(PolymReal::class);
         $task=$plan->planning($repo, $repos, $repi);
         $taches = new JsonResponse($task[0]);
@@ -125,21 +131,16 @@ class PlanningMCController extends Controller
             $lastDateTime = $lastDateTime->modify('23 hours');
 
             //Récupération des polyms récurrantes de la semaine -1    
-            //$repo=$this->getDoctrine()->getRepository(Demandes::class);
-            //$DemRec=$repo ->findDemRecur($lastDateTime,$firstDateTime);
-            //$DemRec=$repo -> findBy(['Reccurance'=>'1','UserCrea'=>$user->getUsername(),'Plannifie'=>'1','RecurValide'=>'0']);
             $repo=$this->getDoctrine()->getRepository(RecurrancePolym::class);
             $ListRec=$repo ->findRecur($lastDateTime,$firstDateTime);
-            //dump($ListRec);
+
             //On va créer la demande et la polym à semaine +1 de chaque polym recur de la semaine -1
             foreach($ListRec as $dem){
-                //dump($dem->getNumHeritage());
                 if(!$dem->getNumHeritage()){
                     //Création de la demande
                     $demande = new Demandes();
                     $demande=clone $dem->getNumPlanning()->getNumDemande();
-                    //$NewDate=date_modify($demande->getDatePropose(),'+ 7days');
-                    //$demande->setDatePropose($NewDate);
+
                     $demande->setDatePropose($dem->getDateFinrecurrance());
                     $demande->setOutillages('');
                     $demande->setCommentaires('');
@@ -152,7 +153,7 @@ class PlanningMCController extends Controller
                 //On créé la polym si une demande a été réalisé
                     if ($DemVal){
                         $Planning=new Planning();
-                        //dump($demande);
+
                     //récupération des données de la demande pour les reporter dans la polym
                         //Formatage des dates de début
                         $heure=$demande->getHeurePropose()->format('H');
@@ -162,7 +163,7 @@ class PlanningMCController extends Controller
                         $date = new \DateTime($DebDate);
                         $date->setTime($heure,$minute,$seconde);
                         $Planning->setDebutDate($date);
-                        //dump($Planning);
+
                         //Formatage de la date de fin, en récupérant la durée du cycle
                         $dated=clone($date);
                         $DureCycH=$demande->getCycle()->getDuree()->format('H');
@@ -172,7 +173,7 @@ class PlanningMCController extends Controller
                         $DureCycM="+".$DureCycM."Minutes";
                         $DateFin=date_modify($DateFinH,$DureCycM);
                         $Planning->setFinDate($DateFin);
-                        //dump($demande);
+
                         $Planning->setIdentification($demande->getMoyenUtilise()->getLibelle());
                         $Planning->setAction($demande->getCycle()->getNom());
                         $Planning->setNumDemande($demande);
@@ -768,7 +769,7 @@ class PlanningMCController extends Controller
                 $manager = $this->getDoctrine()->getManager();
                 $manager->persist($demande);
                 $manager->flush();
-                dump($demande);
+                //dump($demande);
                 //On créé la nouvelle demande avec les données de la récurrante
                 $demande = new Demandes();
                 $date=$requette->get('DatePla');
@@ -1036,7 +1037,7 @@ class PlanningMCController extends Controller
         $comment=$demande->getCommentaires();
         $jour=new \datetime();
         $now=$jour->format('d/m/Y H:i');
-        $demande->setCommentaires($comment."Demande annulée par ".$user->getUsername()." le : ".$now);
+        $demande->setCommentaires($comment."Demande d\'annulation faite par ".$user->getUsername()." le : ".$now);
         $manager = $this->getDoctrine()->getManager();
         $manager->persist($demande);
         $manager->flush();
@@ -1045,7 +1046,7 @@ class PlanningMCController extends Controller
         $repoPla=$this->getDoctrine()->getRepository(Planning::class);
         $polPla=new Planning;
         $polPla=$repoPla->findOneBy(['NumDemande'=>$demande->getId()]);
-        $polPla->setStatut('ANNULE');
+        $polPla->setStatut('ANNULATION');
 
         $manager->persist($polPla);
         $manager->flush();

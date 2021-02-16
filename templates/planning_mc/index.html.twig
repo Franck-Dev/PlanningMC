@@ -185,6 +185,20 @@
     </style>
 {% endblock %}    
 {% block body %}
+{% for label, messages in app.flashes %}
+    {% for message in messages %}
+        {% if label == 'warning' %}
+            <div class="alert alert-dismissible alert-{{ label }}" data-toggle="tooltip" title="Cliquer sur le lien pour annuler la polym" onclick="removeAlert(this)">
+                <a href="#" class="alert-link">{{ message | trans | capitalize }}</a>
+                <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+            </div>
+        {% else %}
+            
+        {% endif %}
+        <!-- Flash message -->
+        
+    {% endfor %}
+{% endfor %}
 <div class="input" id="DatePlanif">
     <input type="hidden" id="JourPlannif" value="">
 </div>
@@ -684,6 +698,9 @@
                 }
             })
         })
+        function removeAlert(message) {
+            console.log(message);
+        }
     </script>
 <div class="sweet-overlay" tabindex="-1" style="opacity: -0.02; display: none;"></div><div class="sweet-alert hideSweetAlert" data-custom-class="" data-has-cancel-button="true" data-has-confirm-button="true" data-allow-outside-click="false" data-has-done-function="true" data-animation="pop" data-timer="null" style="display: none; margin-top: -200px; opacity: -0.01;"><div class="sa-icon sa-error" style="display: none;">
       <span class="sa-x-mark">

@@ -38,10 +38,6 @@ class FunctPlanning
                 }
                 
                 $i = $i + 1;
-                //dump($MoyUtil=$repos -> )findBy(['Libelle' => $tache->getIdentification()]));
-                //dump($MoyUtil[0]->getId());
-                //dump($Taches);
-                //dump($tache->getNumDemande()->getCycle()->getCouleur());
             }
         }
         //Implémentation dans la variable des polyms créées
