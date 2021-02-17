@@ -185,20 +185,25 @@
     </style>
 {% endblock %}    
 {% block body %}
-{% for label, messages in app.flashes %}
-    {% for message in messages %}
-        {% if label == 'warning' %}
-            <div class="alert alert-dismissible alert-{{ label }}" data-toggle="tooltip" title="Cliquer sur le lien pour annuler la polym" onclick="removeAlert(this)">
-                <a href="#" class="alert-link">{{ message | trans | capitalize }}</a>
-                <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-            </div>
-        {% else %}
+<div class="text-center" id="msg_planning">
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            {% if label == 'warning' %}
+            {% set tbDatas = message|split('/') %}
+            {% set msg = ['Demande d\'annulation sur polym id n°',tbDatas[0],' sur ',tbDatas[1],' le : ',tbDatas[2]]|join %}
+                <div class="alert alert-dismissible alert-{{ label }}" onclick="removeAlert(this)">
+                    <a href="{{ path('Polym_Modif', {'id': message}) }}" class="alert-link" data-toggle="tooltip" title="Cliquer sur le lien pour annuler la polym">{{ msg | trans | capitalize }}</a>
+                    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                </div>
+            {% else %}
+                
+            {% endif %}
+            <!-- Flash message -->
             
-        {% endif %}
-        <!-- Flash message -->
-        
+        {% endfor %}
     {% endfor %}
-{% endfor %}
+</div>
+
 <div class="input" id="DatePlanif">
     <input type="hidden" id="JourPlannif" value="">
 </div>

@@ -91,11 +91,9 @@ class PlanningMCController extends Controller
         $repo=$this->getDoctrine()->getRepository(Planning::class);
         $polyAnnul=$repo->findBy(['Statut'=>'ANNULATION']);
         foreach ($polyAnnul as $polymA) {
-            $this->addFlash('warning', 'Demande d\'annulation sur polym ID n°'.$polymA->getId().
-            '('.$polymA->getAction().' du '.$polymA->getDebutDate()->format('d/m/Y').
-            ' sur '.$polymA->getIdentification().')');
+            $this->addFlash('warning', $polymA->getId().'/'.$polymA->getIdentification().'/'.$polymA->getDebutDate()->format('d-m-Y G:i'));
         }
-        dump($polyAnnul);
+        
     //Recherche des moyens à afficher sur planning
         $repos=$this->getDoctrine()->getRepository(Moyens::class);
         $moyens=$plan->moyens($repos);
@@ -505,7 +503,6 @@ class PlanningMCController extends Controller
     public function editpolym(Request $request)
     {
         $demande = new Demandes();
-        //Récupération du libelle du moyen
 
         //Récupération des données de la requette
         $demande->setDatePropose(new \Datetime($request->get('DateDeb')));
@@ -561,50 +558,69 @@ class PlanningMCController extends Controller
     }
     
      /**
-     * @Route("/PlanningMC/Modification", name="Polym_Modif", condition="request.isXmlHttpRequest()")
+     * @Route("/PlanningMC/Modification", name="Polym_Modif")//, condition="request.isXmlHttpRequest()"
      * @Security("has_role('ROLE_REGLEUR')")
      */
-    public function polymodif(Request $request)
+    public function polymodif(Request $request, UserInterface $user)
     {
-        //Remonté d'info pour modification du statut de la polymérisation
-        $idPolym=substr($request->get('PolymId'),1,strlen($request->get('PolymId'))-1);
-        //dump($idPolym);
-        $PolymPla = $this->getDoctrine()
-            ->getRepository(Planning::class)
-            ->findBy(['id' => $idPolym]);
-        //$planning->setMoyenUtilise($PolymPla[0]);
-        //dump($PolymPla[0]);
-        $form = $this -> createFormBuilder($PolymPla[0])
-        ->add('id', HiddenType::class, [
-            'label' => 'ID',
-        ])
-        ->add('identification', TextType::class, [
-            'label' => 'Moyen',
-            'disabled'=>true,
-        ])
-        ->add('action', TextType::class, [
-            'label' => 'Programme',
-            'disabled'=>true,
-        ])
-        -> add('num_demande', ComOutilType::class)
-        -> add('debut_date', DateTimeType::class,['disabled'=>true])
-        -> add('fin_date', DateTimeType::class,['disabled'=>true])
-        -> add('statut', ChoiceType::class, [
-            'choices'  => [
-                'PLANNIFIE' => 'PLANNIFIE',
-                'ANNULER' => 'ANNULER',
-                'REMPLACER' => 'REMPLACER',
-            ]])
-        ->add('save', SubmitType::class, ['label' => 'Modifier'])
-        ->getForm();
-        $form->handleRequest($request);
-        //dump($form);
-        $Titres=[];
-        return $this->render('planning_mc/editpolym.html.twig',[
-            'controller_name' => 'Moyen Chaud',
-           'Titres' => $Titres,
-           'form' => $form->createView()
-        ]);
+        if (!$request->request->get('')) {
+            $repo=$this->getDoctrine()->getRepository(Planning::class);
+            $planning=$repo->findOneBy(['id'=>$request->query->get('id')]);
+            $planning->setStatut('ANNULER');
+            $jour=new \Datetime;
+            $jour=$jour->format('d/m/Y G:i');
+            $commentaire=$planning->getNumDemande()->getCommentaires().'.Et annulé par : '.$user->getUsername().' le : '. $jour;
+            $planning->getNumDemande()->setCommentaires($commentaire);
+            $planning->getNumDemande()->setDateModif(new \DateTime());
+            $planning->getNumDemande()->setUserModif($user->getUsername());
+
+            $manager = $this->getDoctrine()->getManager();
+            $manager->persist($planning);
+            $manager->flush();
+            
+            return $this->redirectToRoute('Planning');
+
+        } else {
+            //Remonté d'info pour modification du statut de la polymérisation
+            $idPolym=substr($request->get('PolymId'),1,strlen($request->get('PolymId'))-1);
+            //dump($idPolym);
+            $PolymPla = $this->getDoctrine()
+                ->getRepository(Planning::class)
+                ->findBy(['id' => $idPolym]);
+            //$planning->setMoyenUtilise($PolymPla[0]);
+            //dump($PolymPla[0]);
+            $form = $this -> createFormBuilder($PolymPla[0])
+            ->add('id', HiddenType::class, [
+                'label' => 'ID',
+            ])
+            ->add('identification', TextType::class, [
+                'label' => 'Moyen',
+                'disabled'=>true,
+            ])
+            ->add('action', TextType::class, [
+                'label' => 'Programme',
+                'disabled'=>true,
+            ])
+            -> add('num_demande', ComOutilType::class)
+            -> add('debut_date', DateTimeType::class,['disabled'=>true])
+            -> add('fin_date', DateTimeType::class,['disabled'=>true])
+            -> add('statut', ChoiceType::class, [
+                'choices'  => [
+                    'PLANNIFIE' => 'PLANNIFIE',
+                    'ANNULER' => 'ANNULER',
+                    'REMPLACER' => 'REMPLACER',
+                ]])
+            ->add('save', SubmitType::class, ['label' => 'Modifier'])
+            ->getForm();
+            $form->handleRequest($request);
+            //dump($form);
+            $Titres=[];
+            return $this->render('planning_mc/editpolym.html.twig',[
+                'controller_name' => 'Moyen Chaud',
+            'Titres' => $Titres,
+            'form' => $form->createView()
+            ]);
+        }
     }
 
     /**

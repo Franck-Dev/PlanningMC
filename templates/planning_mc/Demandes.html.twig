@@ -162,7 +162,7 @@
 							{% if cycle.plannifie == 1 %}
 								{% set datasPPlanif = ['Debut plannifié: ',cycle.planning.DebutDate|date('d/m/Y H:i'),'\n','Moyen: ',cycle.planning.identification
 								,'\n','Id Polym: n°',cycle.planning.id]|join %}
-								{% if cycle.planning.Statut == 'ANNULE' %}
+								{% if cycle.planning.Statut == 'ANNULER' %}
 									<span style="color : Red" data-toggle="tooltip" data-placement="bottom" title="{{ datasPPlanif|nl2br }}"><i class="fa fa-thumbs-down"></i></span>
 								{% else %}
 									<span style="color : Green" data-toggle="tooltip" data-placement="bottom" title="{{ datasPPlanif|nl2br }}"><i class="fa fa-thumbs-up"></i></span>
@@ -185,7 +185,7 @@
 								<a href="{{ path('Modif_Demandes', {'id': cycle.id}) }}" class="text-warning"><span class="m-1" style="font-size: 1.3em; 
 								color: Orange;"><i class="fa fa-pencil"></i></span>Modifier</a>
 								<a href="{{ path('Sup_Demandes', {'id': cycle.id}) }}"><span class="m-1" style="font-size: 1.3em; color: Tomato;"><i class="fa fa-trash"></i></span></a>
-							{% elseif  app.user.username == cycle.UserCrea %}
+							{% elseif  app.user.username == cycle.UserCrea and cycle.planning.Statut != 'ANNULER' %}
 								<a href="{{ path('Deprog_Demandes', {'id': cycle.id}) }}" class="text-danger"><span class="m-1" style="font-size: 1.3em;
 								 color: Tomato;"><i class="fa fa-envelope-o"></i></span>Annuler</a>
 								<a href="{{ path('Modif_Demandes', {'id': cycle.id}) }}"><span class="m-1" style="font-size: 1.3em; color: Tomato;"><i class="fa fa-edit"></i></span>Insérer</a>
