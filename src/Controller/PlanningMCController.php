@@ -561,9 +561,10 @@ class PlanningMCController extends Controller
      * @Route("/PlanningMC/Modification", name="Polym_Modif")//, condition="request.isXmlHttpRequest()"
      * @Security("has_role('ROLE_REGLEUR')")
      */
-    public function polymodif(Request $request, UserInterface $user)
+    public function polymodif(Request $request)
     {
-        if (!$request->request->get('')) {
+        if ($request->isXmlHttpRequest() == false) {
+            $user = $this->getUser();
             $repo=$this->getDoctrine()->getRepository(Planning::class);
             $planning=$repo->findOneBy(['id'=>$request->query->get('id')]);
             $planning->setStatut('ANNULER');
