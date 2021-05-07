@@ -16,7 +16,7 @@
     },
     "dependencies": {
         "canvasjs": "^1.8.1",
-        "handlebars": "^4.1.2",
+        "handlebars": "^4.7.7",
         "just-dashboard": "^0.14.1",
         "sweetalert": "^2.1.2",
         "vis": "^4.21.0"
