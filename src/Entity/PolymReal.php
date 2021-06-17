@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -72,6 +74,16 @@ class PolymReal
      * @ORM\Column(type="datetime", nullable=true)
      */
     private $Retard;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Charge", mappedBy="Polym")
+     */
+    private $charges;
+
+    public function __construct()
+    {
+        $this->charges = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -206,6 +218,37 @@ class PolymReal
     public function setRetard(?\DateTimeInterface $Retard): self
     {
         $this->Retard = $Retard;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Charge[]
+     */
+    public function getCharges(): Collection
+    {
+        return $this->charges;
+    }
+
+    public function addCharge(Charge $charge): self
+    {
+        if (!$this->charges->contains($charge)) {
+            $this->charges[] = $charge;
+            $charge->setPolym($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCharge(Charge $charge): self
+    {
+        if ($this->charges->contains($charge)) {
+            $this->charges->removeElement($charge);
+            // set the owning side to null (unless already changed)
+            if ($charge->getPolym() === $this) {
+                $charge->setPolym(null);
+            }
+        }
 
         return $this;
     }
