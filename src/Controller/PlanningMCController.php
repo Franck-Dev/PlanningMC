@@ -1675,7 +1675,7 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/LOGISTIQUE/Bloquants", name="Bloquants")
      */
-    public function Bloquants(Request $requette, ObjectManager $manager)
+    public function Bloquants()
     {
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
         $Titres=$repo -> findAll();
@@ -1683,6 +1683,19 @@ class PlanningMCController extends AbstractController
         return $this->render('planning_mc/Bloquants.html.twig', [
             'controller_name' => 'PlanningMCController',
             'Titres' => $Titres,
+        ]);
+    }
+
+    /**
+     * @Route("/LOGISTIQUE/Bloquants/OFErrConf", name="OFErrConf")
+     */
+    public function OFErrConf()
+    {
+        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        $ChargeOFDefConf=$repo -> myFindOFStatut("ERRCONF");
+
+        return $this->render('planning_mc/form/_form_tbOFDefConf.html.twig', [
+            'OFERRConf' => $ChargeOFDefConf,
         ]);
     }
 
