@@ -76,6 +76,11 @@ class Charge
      */
     private $DatePilote;
 
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\PolymReal", inversedBy="charges")
+     */
+    private $Polym;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -221,6 +226,18 @@ class Charge
     public function setDatePilote(\DateTimeInterface $DatePilote): self
     {
         $this->DatePilote = $DatePilote;
+
+        return $this;
+    }
+
+    public function getPolym(): ?PolymReal
+    {
+        return $this->Polym;
+    }
+
+    public function setPolym(?PolymReal $Polym): self
+    {
+        $this->Polym = $Polym;
 
         return $this;
     }

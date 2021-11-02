@@ -176,6 +176,20 @@ class ChargeRepository extends ServiceEntityRepository
         return $query -> execute ();
     }
 
+    // Récupération des OF suivant un statut
+    public function myFindOFStatut($Statut) : array
+    {
+        $entityManager = $this -> getEntityManager ();
+        
+        $query = $entityManager -> createQuery (
+            'SELECT p
+                FROM App\Entity\Charge p 
+                WHERE p.Statut = :stat'
+        );
+        $query-> setParameter ('stat' , $Statut);
+            // returns an array of Product objects
+        return $query -> execute ();
+    }
     /*
     public function findOneBySomeField($value): ?Charge
     {

@@ -5,6 +5,10 @@
 
 {% block body %}
 	<h1>Etat d'avancement des pièces ! ✅</h1>
-
+	<div class="card-body">
+		<div class="chart-area" id="myPlanningPrevi">
+			{{ render(controller('App\\Controller\\PlanningMCController::OFErrConf')) }}
+		</div>
+	</div>
 
 {% endblock %}
