@@ -3,7 +3,7 @@
 namespace App\DataFixtures;
 
 use Doctrine\Bundle\FixturesBundle\Fixture;
-use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\Persistence\ObjectManager;
 use App\Entity\ConfSsmenu;
 
 class ConfSsmenuFixtures extends Fixture
@@ -25,7 +25,7 @@ class ConfSsmenuFixtures extends Fixture
     }
         $Titres=array('PE'=>array('ARTICLE','FI','FAC'),'OUTILLAGE'=>array('ARTICLE','MAINTENANCE','REPARATION'),'PROGRAMMATION'=>array('DECOUPE','LASER','AFP','POLYM','CSCAN','USINAGE'),'DATA_TOOLS'=>array('ERP','PDM','MeS','GED'));
         $Description=array('Service moulage serie','Service reparation petit outillages de moulage','Realise les programmes des moyens communs',
-        'Services d\'aide au suivi des procédures et leurs applications');
+        'Services d\'aide au suivi des procï¿½dures et leurs applications');
 
         foreach ($Titres as $Titre => $Lignes){
             foreach ($Lignes as $valeur=> $men){

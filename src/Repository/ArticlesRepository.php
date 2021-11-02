@@ -3,8 +3,8 @@
 namespace App\Repository;
 
 use App\Entity\Articles;
+use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\Common\Persistence\ManagerRegistry;
 
 /**
  * @method Articles|null find($id, $lockMode = null, $lockVersion = null)

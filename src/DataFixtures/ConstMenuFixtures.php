@@ -3,7 +3,7 @@
 namespace App\DataFixtures;
 
 use Doctrine\Bundle\FixturesBundle\Fixture;
-use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\Persistence\ObjectManager;
 use App\Entity\ConstMenu;
 
 class ConstMenuFixtures extends Fixture
@@ -13,7 +13,7 @@ class ConstMenuFixtures extends Fixture
         $Menu=array('Ameliorations','Utilisateurs','Demandes','Planning','Planification','Tracabilite','Services');
         $Description=array('Faire une demande d\'amelioration sur le produit ou process',
         'Permet aux utilisateurs d\'avoir une page perso','Faire une demande de creneaux de polymerisation',
-        'Affichage du planning','Permet de faire le planning MC','Permet de realiser la tracabilite à ce service','Sous services');
+        'Affichage du planning','Permet de faire le planning MC','Permet de realiser la tracabilite ï¿½ ce service','Sous services');
 
         for($i=0;$i<count($Menu);$i++){
             $ConstMenu= new ConstMenu();

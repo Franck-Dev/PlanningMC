@@ -3,17 +3,17 @@
 namespace App\DataFixtures;
 
 use Doctrine\Bundle\FixturesBundle\Fixture;
-use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\Persistence\ObjectManager;
 use App\Entity\ConfSmenu;
 
 class ConfSmenuFixtures extends Fixture
 {
-// Fonction a améliorer par la suite pour être plus dynamique sur les noms de Smenu et de Titre
+// Fonction a amï¿½liorer par la suite pour ï¿½tre plus dynamique sur les noms de Smenu et de Titre
     public function load(ObjectManager $manager)
     {
         $Titre=array('DECOUPE','MOULAGE','MOYENS CHAUD','QUALITE','METHODES','LOGISTIQUE');
         $Description=array('Service decoupe tissu','Drappage laser et manuel','Polymerisation',
-        'Suivi des pièces','Industrialisation des pieces','Gestion du planning de livraison');
+        'Suivi des piï¿½ces','Industrialisation des pieces','Gestion du planning de livraison');
 
         $i=0;
         foreach ($Titre as $valeur){
