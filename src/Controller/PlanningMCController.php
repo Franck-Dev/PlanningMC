@@ -30,6 +30,7 @@ use App\Form\CreationMoyensType;
 use App\Services\FunctChargPlan;
 use PhpParser\Node\Stmt\Foreach_;
 use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\DefaultRepositoryFactory;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Persistence\ObjectManager;
@@ -52,6 +53,7 @@ use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 //use Symfony\Component\HttpFoundation\Session\Session ;
@@ -213,7 +215,7 @@ class PlanningMCController extends AbstractController
     } 
      /**
      * @Route("/PlanningMC/Creation/", name="CreaDemPolymf", condition="request.isXmlHttpRequest()")
-     * @Security("has_role('ROLE_CE_POLYM')")
+     * @IsGranted("ROLE_CE_POLYM")
      */
     public function CreaDemPolymf(Request $request,RequestStack $requestStack, userInterface $user=null)
     {
@@ -498,7 +500,7 @@ class PlanningMCController extends AbstractController
 
     /**
      * @Route("/PlanningMC/", name="Polym_Edit", condition="request.isXmlHttpRequest()")
-     * @Security("has_role('ROLE_PLANIF')")
+     * @IsGranted("ROLE_PLANIF")
      */
     public function editpolym(Request $request)
     {
@@ -559,7 +561,7 @@ class PlanningMCController extends AbstractController
     
      /**
      * @Route("/PlanningMC/Modification", name="Polym_Modif")//, condition="request.isXmlHttpRequest()"
-     * @Security("has_role('ROLE_REGLEUR')")
+     * @IsGranted("ROLE_REGLEUR")
      */
     public function polymodif(Request $request)
     {
@@ -626,7 +628,7 @@ class PlanningMCController extends AbstractController
 
     /**
      * @Route("/PlanningMC/ModificationPolym", name="CreaDemPolym")
-     * @Security("has_role('ROLE_REGLEUR')")
+     * @IsGranted("ROLE_REGLEUR")
      */
     public function CreaDemPolym(Request $request,RequestStack $requestStack, userInterface $user=null)
     {
@@ -663,7 +665,7 @@ class PlanningMCController extends AbstractController
     
      /**
      * @Route("/PlanningMC/Suppression", name="Polym_Del", condition="request.isXmlHttpRequest()")
-     * @Security("has_role('ROLE_PLANIF')")
+     * @IsGranted("ROLE_PLANIF")
      */
     public function deletepolym(Request $request)
     {
@@ -766,7 +768,7 @@ class PlanningMCController extends AbstractController
      * @Route("/Demandes/Creation", name="Crea_Demandes")
      * @Route("/Demandes/Modification/{id}", name="Modif_Demandes")
      */
-    public function DemandesCrea( Request $requette,RequestStack $requestStack,ObjectManager $manager,Demandes $demande=null,$datejour=null, userInterface $user=null)
+    public function DemandesCrea( Request $requette,RequestStack $requestStack,EntityManagerInterface $manager,Demandes $demande=null,$datejour=null, userInterface $user=null)
     {
 //Si la demande n'est pas déjà faite(modification), on l'a crée
         //dump($datejour);    
@@ -914,7 +916,7 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/Demandes", name="Demandes")
      */
-    public function Demandes(Request $requette, ObjectManager $manager,userInterface $user=null)
+    public function Demandes(Request $requette, EntityManagerInterface $manager,userInterface $user=null)
     {
         
 //Recherche des dates de la semaine encours pour les demandes avec récurrences
@@ -1015,7 +1017,7 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/Demandes/Supression/{id}", name="Sup_Demandes")
      */
-    public function demandeSup(ObjectManager $manager,Demandes $demande=null)
+    public function demandeSup(EntityManagerInterface $manager,Demandes $demande=null)
     {
         $manager = $this->getDoctrine()->getManager();
             $manager->remove($demande);
@@ -1073,9 +1075,9 @@ class PlanningMCController extends AbstractController
 
     /**
      * @Route("/Demandes/Plannification/{id}", name="Planif_Demandes")
-     * @Security("has_role('ROLE_PLANIF')")
+     * @IsGranted("ROLE_PLANIF")
      */
-    public function DemandesPlanif( Request $requette,ObjectManager $manager,Demandes $demande=null, ValidatorInterface $validator )
+    public function DemandesPlanif( Request $requette,EntityManagerInterface $manager,Demandes $demande=null, ValidatorInterface $validator )
     {
         $action= new Planning();
         $cycles= new ProgMoyens();
@@ -1157,7 +1159,7 @@ class PlanningMCController extends AbstractController
 
 	/**
      * @Route("/Planification", name="Planification")
-     * @Security("has_role('ROLE_PLANIF')")
+     * @IsGranted("ROLE_PLANIF")
      */
     public function Planification(request $requette,Demandes $demande=null, FunctIndic $indic)
     {
@@ -1253,7 +1255,7 @@ class PlanningMCController extends AbstractController
 
      /**
      * @Route("/Plannification/Modification", name="Modif_Polym_Pla")
-     * @Security("has_role('ROLE_PLANIF')")
+     * @IsGranted("ROLE_PLANIF")
      */
     public function Modif_Polym_Pla(Request $request, Planning $Polyms=null)
     {
@@ -1355,7 +1357,7 @@ class PlanningMCController extends AbstractController
     }
     /**
      * @Route("/METHODES/PROGRAMMATION", name="PROGRAMMATION")
-     * @Security("has_role('ROLE_PROGRAMMEUR')")
+     * @IsGranted("ROLE_PROGRAMMEUR")
      */
     public function PROGRAMMATION()
     {
@@ -1396,7 +1398,7 @@ class PlanningMCController extends AbstractController
 
     /**
      * @Route("/LOGISTIQUE/Ordonnancement", name="Ordo")
-     * @Security("has_role('ROLE_PLANIF')")
+     * @IsGranted("ROLE_PLANIF")
      */
     public function Ordo(FunctChargPlan $charge)
         {
@@ -1518,7 +1520,7 @@ class PlanningMCController extends AbstractController
      /**
      * @Route("/LOGISTIQUE/Creation/Chargement", name="Chargt_Crea", condition="request.isXmlHttpRequest()")
      */
-    public function chargtCrea(Request $request, ObjectManager $manager)
+    public function chargtCrea(Request $request, EntityManagerInterface $manager)
     {
         $chargt= new Chargement;
         //On va récupérer le cycle machine par la désignation
@@ -1602,7 +1604,7 @@ class PlanningMCController extends AbstractController
      /**
      * @Route("/LOGISTIQUE/Delete/Chargement", name="Chargt_Delete", condition="request.isXmlHttpRequest()")
      */
-    public function ChargtDelete(Request $request, ObjectManager $manager)
+    public function ChargtDelete(Request $request, EntityManagerInterface $manager)
     {
         $chargt= new Chargement;
         //On va récupérer le chargement suivant l'id donné
@@ -1661,7 +1663,7 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/LOGISTIQUE/Urgences", name="Urgences")
      */
-    public function Urgences(Request $requette, ObjectManager $manager)
+    public function Urgences(Request $requette, EntityManagerInterface $manager)
     {
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
         $Titres=$repo -> findAll();
@@ -1702,7 +1704,7 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/METHODES/PE/Consultation_PE", name="Consultation PE")
      * @Route("METHODES/PE/Consultation_PE/{id}", name="Consul_PE")
-     * @Security("has_role('ROLE_ADMIN')")
+     * @IsGranted("ROLE_ADMIN")
      */
     public function Consultation_PE(CategoryMoyens $moyen=null)
     {
@@ -1711,7 +1713,7 @@ class PlanningMCController extends AbstractController
 
     /**
      * @Route("/METHODES/PE/Demande_SPF", name="Demandes SPF")
-     * @Security("has_role('ROLE_ADMIN')")
+     * @IsGranted("ROLE_ADMIN")
      */
     public function Demandes_SPF(CategoryMoyens $moyen=null)
     {
@@ -1722,7 +1724,7 @@ class PlanningMCController extends AbstractController
      * @Route("/METHODES/PE/Creation_PE", name="Creation PE")
      * @Route("/METHODES/PE/Modification_PE/{id}", name="Modification_PE")
      */
-    public function Creation_PE(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
+    public function Creation_PE(Request $Requet,EntityManagerInterface $manager,ProgMoyens $Prog=null)
     {
         $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'PE']);
@@ -1736,7 +1738,7 @@ class PlanningMCController extends AbstractController
      * @Route("/METHODES/PROGRAMMATION/Creation_PRP", name="Creation PRP")
      * @Route("/METHODES/PROGRAMMATION/Modification_PRP/{id}", name="Modification_PRP")
      */
-    public function Creation_PRP(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
+    public function Creation_PRP(Request $Requet,EntityManagerInterface $manager,ProgMoyens $Prog=null)
     {
 //Si pas de programmes connus, c'est une création sinon une modif
         if(!$Prog){
@@ -1778,7 +1780,7 @@ class PlanningMCController extends AbstractController
      * @Route("/METHODES/PROGRAMMATION/Creation_ChargF", name="Creation Chargement Fige")
      * @Route("/METHODES/PROGRAMMATION/Modification_ChargF/{id}", name="Modification_Charge")
      */
-    public function Creation_ChargeF(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
+    public function Creation_ChargeF(Request $Requet,EntityManagerInterface $manager,ProgMoyens $Prog=null)
     {
         $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'PROGRAMMATION']);
@@ -1832,7 +1834,7 @@ class PlanningMCController extends AbstractController
      * @Route("/OUTILLAGE/Article/Creation", name="CreationO")
      * @Route("/OUTILLAGE/Article/Modification/{id}", name="ModificationO")
      */
-    public function CreationO(Request $Requet,ObjectManager $manager,Outillages $OT=null)
+    public function CreationO(Request $Requet,EntityManagerInterface $manager,Outillages $OT=null)
         {
         $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'OUTILLAGE']);
@@ -1893,7 +1895,7 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/OUTILLAGE/Article/Demandes", name="DemandesO")
      */
-    public function DemandesO(Request $requette, ObjectManager $manager)
+    public function DemandesO(Request $requette, EntityManagerInterface $manager)
     {
         return $this->redirectToRoute('home');
     }
@@ -1901,7 +1903,7 @@ class PlanningMCController extends AbstractController
      /**
      * @Route("/METHODES/Moyens", name="MOYENS_INDUS")
      */
-    public function CreationM(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
+    public function CreationM(Request $Requet,EntityManagerInterface $manager,ProgMoyens $Prog=null)
         {
         //Recherche date du jour
         $DateJour = new \DateTime();
@@ -1947,7 +1949,7 @@ class PlanningMCController extends AbstractController
      * @Route("/METHODES/PE/Creation", name="Creation")
      * @Route("/METHODES/PE/Modification/{id}", name="Modification")
      */
-    public function Creation(Request $Requet,ObjectManager $manager,ProgMoyens $Prog=null)
+    public function Creation(Request $Requet,EntityManagerInterface $manager,ProgMoyens $Prog=null)
     {
         return $this->redirectToRoute('home');
     }
@@ -1956,7 +1958,7 @@ class PlanningMCController extends AbstractController
      * @Route("/ADMIN/Moyen/Creation", name="CreationMoyen")
      * @Route("/ADMIN/Moyen/Modification/{id}", name="ModificationMoyen")
      */
-    public function CreationMoyen(Request $Requet,ObjectManager $manager,Moyens $Moyen=null)
+    public function CreationMoyen(Request $Requet,EntityManagerInterface $manager,Moyens $Moyen=null)
         {
             if(!$Moyen){
                 $Moyen=new Moyens();

@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class IndicateursController extends AbstractController
@@ -26,7 +27,7 @@ class IndicateursController extends AbstractController
 
     /**
      * @Route("/Indicateur/", name="Maj_Indicateur", condition="request.isXmlHttpRequest()")
-     * @Security("has_role('ROLE_PLANIF')")
+     * @IsGranted("ROLE_PLANIF")
      */
     public function MaJIndicateur(Request $request, FunctIndic $indic)
     {

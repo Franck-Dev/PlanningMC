@@ -64,7 +64,7 @@ class User implements UserInterface
     private $DateCreation;
 
     /**
-     * @ORM\Column(type="json_array")
+     * @ORM\Column(type="json")
      */
     private $Roles = [];
 
@@ -185,6 +185,11 @@ class User implements UserInterface
     {
         $this->isActive = $isActive;
         return $this;
+    }
+
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->email;
     }
 
 }
