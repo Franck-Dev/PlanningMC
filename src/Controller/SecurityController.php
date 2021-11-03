@@ -2,27 +2,29 @@
 
 namespace App\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
-use Doctrine\Common\Persistence\ObjectManager;
 use App\Entity\User;
-use App\Form\RegistrationType;
-use App\Form\ModifMdPType;
-use App\Entity\ConfSmenu;
 use App\Entity\Moyens;
+use App\Entity\ConfSmenu;
+use App\Form\ModifMdPType;
+use App\Form\RegistrationType;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Doctrine\Common\Persistence\ObjectManager;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
 class SecurityController extends AbstractController
 {
     /**
     * @Route("/inscription", name="security_registration")
     */
-    Public function registration(request $request, ObjectManager $manager, UserPasswordEncoderInterface $encoder){
+    Public function registration(request $request, EntityManagerInterface  $manager, UserPasswordHasherInterface $encoder){
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
 
         $Titres=$repo -> findAll();
@@ -31,7 +33,7 @@ class SecurityController extends AbstractController
         $form=$this->createForm(RegistrationType::class, $user);
         $form->handleRequest($request);
         if($form->isSubmitted() && $form->isValid()){
-            $hash=$encoder->encodePassword($user, $user->getPassword());
+            $hash=$encoder->hashPassword($user, $user->getPassword());
             //Attribution des rôles suivant les postes (a revoir pour faire une page admin)
             switch ($user->getService()->getNom()) {
                 case "METHODES PE":
@@ -114,7 +116,7 @@ class SecurityController extends AbstractController
     /**
      * * @Route("/inscription/Modification", name="Modif_Inscription")
     */
-    Public function ModifMdP(request $request, ObjectManager $manager, user $user=null, UserPasswordEncoderInterface $encoder, ValidatorInterface $validator){
+    Public function ModifMdP(request $request, EntityManagerInterface $manager, user $user=null, UserPasswordHasherInterface $encoder, ValidatorInterface $validator){
 
         $Titres=[];
         //Si le formulaire est rempli
@@ -137,7 +139,7 @@ class SecurityController extends AbstractController
         //dump($request);
         //dump($request->get('modif_md_p')['password']);
         if($form->isSubmitted()){
-            $hash=$encoder->encodePassword($user, $request->get('modif_md_p')['password']);
+            $hash=$encoder->hashPassword($user, $request->get('modif_md_p')['password']);
             //dump($hash);
             $user->setIsActive('0');
             $user->setPassword($hash);
@@ -146,9 +148,9 @@ class SecurityController extends AbstractController
             
             return $this->redirectToRoute('security_login');
         }
-
-        return $this->render('security/ModificationMdP.html.twig',[
-            'form' => $form->createView(),
+        dump($form);
+        return $this->renderForm('security/ModificationMdP.html.twig',[
+            'form' => $form,
             'Titres' => $Titres
         ]);
     }
