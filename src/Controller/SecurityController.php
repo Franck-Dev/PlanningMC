@@ -148,7 +148,6 @@ class SecurityController extends AbstractController
             
             return $this->redirectToRoute('security_login');
         }
-        dump($form);
         return $this->renderForm('security/ModificationMdP.html.twig',[
             'form' => $form,
             'Titres' => $Titres

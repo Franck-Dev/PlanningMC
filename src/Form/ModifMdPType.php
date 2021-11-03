@@ -13,7 +13,6 @@ class ModifMdPType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        dump(User::class);
         $builder
             ->add('email', EntityType::class, [
                 'class' =>User::class,
