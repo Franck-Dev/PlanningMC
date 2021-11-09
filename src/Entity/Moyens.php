@@ -69,6 +69,11 @@ class Moyens
      */
     private $chargFiges;
 
+    public function __toString(): string
+    {
+        return (string) $this->getLibelle();
+    }
+
     public function __construct()
     {
         $this->demandes = new ArrayCollection();
