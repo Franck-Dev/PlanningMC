@@ -1,18 +1,73 @@
 {% extends '/indicateurs/Frames/Layout.html.twig' %}
 {% block body %}
 <style>
+.multiselect {
+
+}
+
+.selectBox {
+  position: relative;
+}
+
+.selectBox select {
+  width: 100%;
+  color: black;
+}
+
+.overSelect {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+#listMoyens {
+  display: none;
+  border: 1px #dadada solid;
+  color: black;
+  overflow: auto;
+  z-index: 9999;
+  position: absolute;
+  background-color: white;
+  width: 100%;
+}
+
+#listMoyens label {
+  display: block;
+}
+
+#listMoyens label:hover {
+  background-color: grey;
+  color: white;
+}
 </style>
 <div class="container-fluid">
     <div class="card shadow">
         <div class="card-header">
             <div class="row m-b-1">
-                <h4 class="col-xl-8" id='Cycle'>TRS et Nbr Polym sur {{Cycle|raw}}</h4>
-                <select class="col-xl-4" id='Type' OnChange=MaJGraph('{{ path('indic_TRSJour_NbPolymJour') }}')>
+                <h4 class="col-xl-7" id='Cycle'>TRS sur {{Cycle|raw}}</h4>
+                <select class="col-xl-2 h-50 p-0" id='Type' OnChange=MaJGraph('{{ path('indic_TRSJour_NbPolymJour') }}')>
                     <option value='Jour'selected>Jour</option>
                     <option value='Semaine'>Semaine</option>
                     <option value='Mois'>Mois</option>
                     <option value='Annee'>Année</option>
                 </select>
+                <div class="col-xl-3 p-0">
+                    <div class="multiselect">
+                        <div class="selectBox" onclick="showCheckboxes()">
+                            <select>
+                                <option>Select Moyen(s)</option>
+                            </select>
+                            <div class="overSelect"></div>
+                        </div>
+                        <div id="listMoyens">
+                            {% for moyen in ListMoyens %}
+                                <label for="{{loop.index}}" class="text-left m-0">
+                                    <input type="checkbox" id="{{loop.index}}" value={{ moyen.id }}/>{{ moyen.libelle }}</label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="card-block">
@@ -25,19 +80,30 @@
 <script src="{{ asset('build/jquery.min.js') }}"></script>
 <script src="{{ asset('build/canvasjs.min.js') }}"></script>
 <script type="text/javascript">
+var expanded = false;
+
+function showCheckboxes() {
+  var listMoyens = document.getElementById("listMoyens");
+  if (!expanded) {
+    listMoyens.style.display = "block";
+    expanded = true;
+  } else {
+    listMoyens.style.display = "none";
+    expanded = false;
+  }
+}
 //Graphique sur la répartition des pcs svt programmes et machine
     $(function () {
-        realGraph();
-            
+        realGraph();   
     })
     function toggleDataSeries(e) {
-                    if(typeof(e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
-                            e.dataSeries.visible = false;
-                    }
-                    else {
-                            e.dataSeries.visible = true;
-                    }
-                    chart.render();
+        if(typeof(e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+                e.dataSeries.visible = false;
+        }
+        else {
+                e.dataSeries.visible = true;
+        }
+        chart.render();
     }
 function realGraph() {
      //canvasjs barchart vertical Nbr Polym and line TRS
@@ -111,12 +177,16 @@ function realGraph() {
 <script type="text/javascript">
 //Mise à jour de l'indicateur d'occupation moyen à chaque click
 function MaJGraph(Url){
-    //console.log(document.getElementById(id));
+    var Moyen=[];
+    $("div#listMoyens input:checked").each(function() 
+        {
+            Moyen.push(this.value);
+        });
     var Types=document.getElementById('Type').value;
      $(document).ready(function () {
         $.ajax({
                 method: "POST",
-                data: {Type: Types},
+                data: {Type: Types, Moyens: Moyen},
                 url: Url,
                 success: function(dat){
                     var chart = new CanvasJS.Chart("chartTRSVolJours", {
@@ -184,7 +254,7 @@ function MaJGraph(Url){
                         }]
                     });
                     chart.render();
-                    document.getElementById('Cycle').textContent='TRS et Nbr Polym sur ' + dat.Cycle;
+                    document.getElementById('Cycle').textContent='TRS sur ' + dat.Cycle;
                 }})
         })
 }

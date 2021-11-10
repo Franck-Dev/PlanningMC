@@ -201,10 +201,11 @@ public function findRapportPcsH ( $date  ) : array
  * @param  date $dateD
  * @return array
  */
-public function findTRSJour ( $dateF, $dateD, $type ) : array
+public function findTRSJour ( $dateF, $dateD, $type, $Moyens ) : array
 {
     $entityManager = $this -> getEntityManager ();
-
+    if($Moyens==="All"){
+    // requette avec tous les moyens
     $query = $entityManager -> createQuery (
         'SELECT SUM(TIMETOSEC(TIMEDIFF(p.FinPolym, p.DebPolym))) as DureePolym, avg(p.PourcVolCharge) as PourVol, count(p.Programmes) as NbrProg, DAY(p.DebPolym) as jour,MONTH(p.DebPolym) as Mois, YEAR(p.DebPolym) as Annees, DATE_FORMAT (p.DebPolym,\'%j\') as Journees, DATE_FORMAT (p.DebPolym,\'%v\') as Semaines
         FROM App\Entity\PolymReal p   
@@ -212,6 +213,17 @@ public function findTRSJour ( $dateF, $dateD, $type ) : array
         GROUP BY '.$type);
     $query-> setParameter ( 'dateD' , $dateD );
     $query-> setParameter ('dateF' , $dateF);
+    } else {
+    // Requette avec les moyens sélectionnés
+    $query = $entityManager -> createQuery (
+        'SELECT SUM(TIMETOSEC(TIMEDIFF(p.FinPolym, p.DebPolym))) as DureePolym, avg(p.PourcVolCharge) as PourVol, count(p.Programmes) as NbrProg, DAY(p.DebPolym) as jour,MONTH(p.DebPolym) as Mois, YEAR(p.DebPolym) as Annees, DATE_FORMAT (p.DebPolym,\'%j\') as Journees, DATE_FORMAT (p.DebPolym,\'%v\') as Semaines
+        FROM App\Entity\PolymReal p   
+        WHERE p.DebPolym > :dateD AND p.DebPolym < :dateF  AND p.Moyens IN (:moyens) 
+        GROUP BY '.$type);
+    $query-> setParameter ( 'dateD' , $dateD );
+    $query-> setParameter ('dateF' , $dateF);
+    $query-> setParameter ('moyens' , $Moyens);
+    }
     // returns an array of Product objects
     return $query -> execute ();
 }
@@ -229,6 +241,21 @@ public function findCharMach ( $dateF,$dateD,$moyen  ) : array
     $query-> setParameter ('dateF' , $dateF);
     $query-> setParameter ('Nmoyen' , $moyen);
     // returns an array of Product objects
+    return $query -> execute ();
+}
+
+// Calcul du nombre de jour travaillés dans un intervalle
+public function findJourW($dateF,$dateD)
+{
+    $entityManager = $this -> getEntityManager ();
+
+    $query = $entityManager -> createQuery (
+        'SELECT DAY(p.DebPolym) as Jour FROM App\Entity\PolymReal p  
+        WHERE p.DebPolym > :dateD AND p.FinPolym < :dateF 
+        GROUP BY Jour');
+        $query-> setParameter ( 'dateD' , $dateD );
+        $query-> setParameter ('dateF' , $dateF);
+        // returns an array of Product objects
     return $query -> execute ();
 }
 }

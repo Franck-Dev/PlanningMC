@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Charge;
+use App\Entity\Moyens;
 use App\Entity\Planning;
 use App\Entity\PolymReal;
 use App\Services\FunctIndic;
@@ -202,9 +203,10 @@ class IndicateursController extends AbstractController
      */
     public function indicTRSVol($hier=null, FunctIndic $indic)
     {
-    // Création de la variable pour le TRS global svt format 
-        //{ y: 47, color: "#c70000", toolTipContent: "United States: " },
-        //{ y: 53, color: "#424242", toolTipContent: null }
+    //Récupération de la liste des moyens
+        $repos=$this->getDoctrine()->getRepository(Moyens::class);
+        $listMoyensDispo=$repos->findBy(['Id_Service' => '8','Activitees' => 'Realisee', 'Operationnel' => 1]);
+        $nbMoyens=count($listMoyensDispo);
         if (!$hier) {
             //Recherche date de la veille
             $DateJour = new \DateTime();
@@ -222,7 +224,7 @@ class IndicateursController extends AbstractController
         $i = 0;
         foreach($Polyms as $polym){
             $y=intval($polym['DureePolym']/3600);
-            $x=11*24;
+            $x=$nbMoyens*24;
             $z=$polym['PourVol'];
             $dato[$i] = ['y'=> ($y/$x)*100,'color' => "#c70000"];
             $datix[$i]= ['y'=> $z,'color' => "#c70000"];
@@ -297,15 +299,22 @@ class IndicateursController extends AbstractController
      */
     public function indicTRSMoyNbPolym($SemAvant=null, FunctIndic $indic)
     {
+    //Récupération de la liste des moyens
+    $repos=$this->getDoctrine()->getRepository(Moyens::class);
+    $listMoyensDispo=$repos->findBy(['Id_Service' => '8','Activitees' => 'Realisee', 'Operationnel' => 1]);
+    $nbMoyens=count($listMoyensDispo);
     //Création de la variable TRS moyen et nbr de polym par semaine,
-    
         if (!$SemAvant) {
             $SemAvant = date("Y-m-d", strtotime('- 10 weeks'.date('Y') ));
             $SemAvant=new \datetime($SemAvant);
         }
+        $DateJour = new \DateTime();
         //Tps de capacité machine en 3x8 VSD SD
-        $TpsOuv=intval(24*7*11);
         $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+        $nbJourW=count($repo->findJourW($DateJour,$SemAvant));
+        $TpsOuv=intval($nbMoyens*24*($nbJourW/7));
+        //$TpsOuv=intval(24*7*11);
+        
         $Polyms=$repo ->findCharJourSem($SemAvant);
         $daty = [];
         $daty2 = [];
@@ -334,14 +343,26 @@ class IndicateursController extends AbstractController
      * @Route("/indicateur/TRSJourNPolymJour", name="indic_TRSJour_NbPolymJour")
      * 
      */
-    public function indicTRSJourNPolymJour($SemDer=null, $DateJour=null, $Interval=null, Request $request )
+    public function indicTRSJourNPolymJour($SemDer=null, $DateJour=null, $Interval=null, $Moyens=null ,Request $request )
     {
-    //Gestion du type d'intervalle de données on va affiché, donné par liste déroulante
+    //Récupération de la liste des moyens
+    $repos=$this->getDoctrine()->getRepository(Moyens::class);
+    $listMoyensDispo=$repos->findBy(['Id_Service' => '8','Activitees' => 'Realisee', 'Operationnel' => 1]);
+    //Gestion du type d'intervalle de données qu'on va affiché, donné par liste déroulante
         if (!$request->get('Type')) {
             $Interval = "Jour";
         } else {
             $Interval = $request->get('Type');
         }
+    //Gestion des moyens a afficher, renvoyer par liste déroulante à cocher
+        if (!$request->get('Moyens')) {
+            $Moyens = "All";
+            $nbMoyens=count($listMoyensDispo);
+        } else {
+            $Moyens = $request->get('Moyens');
+            $nbMoyens=count($request->get('Moyens'));
+        }
+        
         //Récupération des paramètres types suivant choix intervalle de données
         switch ($Interval) {
             case 'Semaine':
@@ -354,7 +375,7 @@ class IndicateursController extends AbstractController
                 $Type = "week";
                 $Titre = "Semaines";
                 $Format = "D/M";
-                $x=11*24*7;
+                $x=$nbMoyens*24*7;
                 break;
             case 'Mois':
                 //Recherche du numéro des mois recherchés
@@ -372,7 +393,7 @@ class IndicateursController extends AbstractController
                 $Type = "month";
                 $Titre = "Mois";
                 $Format = "MM/YY";
-                $x=11*24*20;
+                $x=$nbMoyens*24*20;
                 break;
             case 'Annee':
                 $CycleAnal = "- 5 years";
@@ -384,7 +405,7 @@ class IndicateursController extends AbstractController
                 $Type = "year";
                 $Titre = "Annees";
                 $Format = "DD/MM/YY";
-                $x=11*24*337;
+                $x=$nbMoyens*24*337;
                 break;
             default:
                 $CycleAnal = "- 15 days";
@@ -396,17 +417,18 @@ class IndicateursController extends AbstractController
                 $Type = "day";
                 $Titre = "Journees";
                 $Format = "DDD DD/MM/YY";
-                $x=11*24;
+                $x=$nbMoyens*24;
                 break;
         }
+        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
     //Création de la variable TRS et Nbr Polym par jour
         $JourAvant = date("Y-m-d", strtotime($CycleAnal.date('Y') ));
         $JourAvant=new \datetime($JourAvant);
         $DateJour = new \DateTime();
-
-        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
-        $Polyms=$repo ->findTRSJour($DateJour, $JourAvant, $Titre);
-
+    //Récupération du nombre de jour travaillés dans l'intervalle ( à modifier avec le planning de prod)
+        $nbJourW=count($repo->findJourW($DateJour,$JourAvant));
+        $x=$nbMoyens*24*($nbJourW/7);
+        $Polyms=$repo->findTRSJour($DateJour, $JourAvant, $Titre, $Moyens);
         $datuy = [];
         $datuy1 = [];
         $datuy2 = [];
@@ -434,6 +456,7 @@ class IndicateursController extends AbstractController
                 'TxSem' => $TxSem->getcontent(),
                 'ProgSem' => $ProgSem->getcontent(),
                 'Cycle' => $Cycle,
+                'ListMoyens' => $listMoyensDispo,
                 'Type' => $Type,
                 'Titre' => $Titre,
                 'Format' => $Format
