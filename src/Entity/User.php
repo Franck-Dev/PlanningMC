@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -72,10 +74,26 @@ class User implements UserInterface
      * @ORM\Column(name="is_active", type="boolean")
      */
     private $isActive;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=NomEquipe::class, inversedBy="Collaborateurs")
+     */
+    private $nomEquipe;
+
+    /**
+     * @ORM\OneToMany(targetEntity=NomEquipe::class, mappedBy="Manager")
+     */
+    private $nomEquipes;
+
+    public function __toString(): string
+    {
+        return (string) $this->getUsername();
+    }
       
     public function __construct()
     {
         $this->isActive = true;
+        $this->nomEquipes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -190,6 +208,48 @@ class User implements UserInterface
     public function getUserIdentifier(): string
     {
         return (string) $this->email;
+    }
+
+    public function getNomEquipe(): ?NomEquipe
+    {
+        return $this->nomEquipe;
+    }
+
+    public function setNomEquipe(?NomEquipe $nomEquipe): self
+    {
+        $this->nomEquipe = $nomEquipe;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|NomEquipe[]
+     */
+    public function getNomEquipes(): Collection
+    {
+        return $this->nomEquipes;
+    }
+
+    public function addNomEquipe(NomEquipe $nomEquipe): self
+    {
+        if (!$this->nomEquipes->contains($nomEquipe)) {
+            $this->nomEquipes[] = $nomEquipe;
+            $nomEquipe->setManager($this);
+        }
+
+        return $this;
+    }
+
+    public function removeNomEquipe(NomEquipe $nomEquipe): self
+    {
+        if ($this->nomEquipes->removeElement($nomEquipe)) {
+            // set the owning side to null (unless already changed)
+            if ($nomEquipe->getManager() === $this) {
+                $nomEquipe->setManager(null);
+            }
+        }
+
+        return $this;
     }
 
 }
