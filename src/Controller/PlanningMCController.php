@@ -991,7 +991,7 @@ class PlanningMCController extends AbstractController
 
     $repo=$this->getDoctrine()->getRepository(Demandes::class);
     if(!$requette->get('UtilisateursCE')){
-        $DemRec=$repo -> findBy(['Reccurance'=>'1','UserCrea'=>$user->getUsername(),'Plannifie'=>'1','RecurValide'=>'0']);
+        $DemRec=$repo -> findBy(['Reccurance'=>'1','UserCrea'=>$user->getUserIdentifier(),'Plannifie'=>'1','RecurValide'=>'0']);
     }
     else{
         $DemRec=$repo -> findBy(['Reccurance'=>'1','UserCrea'=>$requette->get('UtilisateursCE'),'Plannifie'=>'1','RecurValide'=>'0']);

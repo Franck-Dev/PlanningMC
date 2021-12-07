@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Agenda;
 use App\Entity\Charge;
 use App\Entity\Moyens;
 use App\Entity\Planning;
@@ -219,12 +220,15 @@ class IndicateursController extends AbstractController
         $repo=$this->getDoctrine()->getRepository(PolymReal::class);
         $Polyms=$repo -> findTRS($jour,$hier);
         //dump($Polyms);
+        //Tps de capacité machine en 3x8 VSD SD
+        $repo=$this->getDoctrine()->getRepository(Agenda::class);
+        $TpsOuv=$repo->findTpsW($DateJour,$hier,'Journees');
         $dato = [];
         $datix = [];
         $i = 0;
         foreach($Polyms as $polym){
             $y=intval($polym['DureePolym']/3600);
-            $x=$nbMoyens*24;
+            $x=$nbMoyens*$TpsOuv[0][1];
             $z=$polym['PourVol'];
             $dato[$i] = ['y'=> ($y/$x)*100,'color' => "#c70000"];
             $datix[$i]= ['y'=> $z,'color' => "#c70000"];
@@ -310,19 +314,22 @@ class IndicateursController extends AbstractController
         }
         $DateJour = new \DateTime();
         //Tps de capacité machine en 3x8 VSD SD
+        $repo=$this->getDoctrine()->getRepository(Agenda::class);
+        $TpsOuv=$repo->findTpsW($DateJour,$SemAvant,'Semaines');
         $repo=$this->getDoctrine()->getRepository(PolymReal::class);
-        $nbJourW=count($repo->findJourW($DateJour,$SemAvant));
-        $TpsOuv=intval($nbMoyens*24*($nbJourW/7));
+        //$nbJourW=count($repo->findJourW($DateJour,$SemAvant));
+        //$TpsOuv=intval($nbMoyens*24*($nbJourW/7));
         //$TpsOuv=intval(24*7*11);
-        
         $Polyms=$repo ->findCharJourSem($SemAvant);
         $daty = [];
         $daty2 = [];
         $y=0;
         $i = 0;
+        
         foreach($Polyms as $polym){
             $y=intval($polym['DureTotPolyms']/3600);
-            $daty[$i] = ['label'=> $polym['semaine'],'y'=> ($y/$TpsOuv)*100];
+            $x=intval($TpsOuv[$i][1]*$nbMoyens);
+            $daty[$i] = ['label'=> $polym['semaine'],'y'=> round(($y/$x)*100,1)];
             $y2=intval($polym['NbrProg']);
             $daty2[$i] = ['label'=> $polym['semaine'],'y' => $y2];
             $i = $i + 1;
@@ -362,7 +369,6 @@ class IndicateursController extends AbstractController
             $Moyens = $request->get('Moyens');
             $nbMoyens=count($request->get('Moyens'));
         }
-        
         //Récupération des paramètres types suivant choix intervalle de données
         switch ($Interval) {
             case 'Semaine':
@@ -375,7 +381,7 @@ class IndicateursController extends AbstractController
                 $Type = "week";
                 $Titre = "Semaines";
                 $Format = "D/M";
-                $x=$nbMoyens*24*7;
+                //$x=$nbMoyens*24*7;
                 break;
             case 'Mois':
                 //Recherche du numéro des mois recherchés
@@ -393,7 +399,7 @@ class IndicateursController extends AbstractController
                 $Type = "month";
                 $Titre = "Mois";
                 $Format = "MM/YY";
-                $x=$nbMoyens*24*20;
+                //$x=$nbMoyens*24*20;
                 break;
             case 'Annee':
                 $CycleAnal = "- 5 years";
@@ -405,7 +411,7 @@ class IndicateursController extends AbstractController
                 $Type = "year";
                 $Titre = "Annees";
                 $Format = "DD/MM/YY";
-                $x=$nbMoyens*24*337;
+                //$x=$nbMoyens*24*337;
                 break;
             default:
                 $CycleAnal = "- 15 days";
@@ -417,25 +423,35 @@ class IndicateursController extends AbstractController
                 $Type = "day";
                 $Titre = "Journees";
                 $Format = "DDD DD/MM/YY";
-                $x=$nbMoyens*24;
+                //$x=$nbMoyens*24;
                 break;
         }
-        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
     //Création de la variable TRS et Nbr Polym par jour
         $JourAvant = date("Y-m-d", strtotime($CycleAnal.date('Y') ));
         $JourAvant=new \datetime($JourAvant);
         $DateJour = new \DateTime();
-    //Récupération du nombre de jour travaillés dans l'intervalle ( à modifier avec le planning de prod)
-        $nbJourW=count($repo->findJourW($DateJour,$JourAvant));
-        $x=$nbMoyens*24*($nbJourW/7);
+        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+        $primePolym=$repo->findOneBy(['id' => 12]);
+        //Vérification si le 1er jour est un jour travaillé, sinon on prend le dernier jour travaillé
+        if ($JourAvant<$primePolym->getDebPolym()) {
+            $JourAvant=$primePolym->getDebPolym();
+        }
+        
+    //Récupération du nombre d'heures par jour travaillé dans l'intervalle ( à modifier avec le planning de prod)
+        $repo=$this->getDoctrine()->getRepository(Agenda::class);
+        $qteTpsW=$repo->findTpsW($DateJour,$JourAvant,$Titre);
+        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+        //$nbJoursW=$repo->findJourW($DateJour,$JourAvant);
+        //$x=$nbMoyens*24*(count($nbJoursW)/7);
         $Polyms=$repo->findTRSJour($DateJour, $JourAvant, $Titre, $Moyens);
         $datuy = [];
         $datuy1 = [];
         $datuy2 = [];
         $i = 0;
         foreach($Polyms as $polym){
+            $x=$nbMoyens*intval($qteTpsW[$i][1]);
             $y=intval($polym['DureePolym']/3600);
-            $datuy[$i] = ['x'=> strtotime($polym['Annees'].'-'.$polym['Mois'].'-'.$polym['jour'])*1000,'y'=> ($y/$x)*100];
+            $datuy[$i] = ['x'=> strtotime($polym['Annees'].'-'.$polym['Mois'].'-'.$polym['jour'])*1000,'y'=> round(($y/$x)*100,1)];
             $y1=intval($polym['PourVol']);
             $datuy1[$i] = ['x'=> strtotime($polym['Annees'].'-'.$polym['Mois'].'-'.$polym['jour'])*1000,'y' => $y1];
             $y2=intval($polym['NbrProg']);

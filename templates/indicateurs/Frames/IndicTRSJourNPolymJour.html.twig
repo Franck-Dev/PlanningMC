@@ -147,6 +147,11 @@ function realGraph() {
                 data: [{
                     type: "column",
                     name: "Nbr Polym",
+                    indexLabelWrap: true,
+                    //indexLabel: "{y}",
+                    //indexLabelPlacement: "inside",  
+                    //indexLabelOrientation: "vertical",
+                    //indexLabelTextAlign: "left",
                     showInLegend: true,
                     xValueType: "dateTime",      
                     yValueFormatString: "#,##0.# Polyms",
@@ -155,6 +160,8 @@ function realGraph() {
                 {
                     type: "line",
                     name: "TRS",
+                    indexLabelWrap: true,
+                    indexLabel: "{y}%",
                     axisYType: "secondary",
                     xValueType: "dateTime", 
                     showInLegend: true,
@@ -164,6 +171,8 @@ function realGraph() {
                 {
                     type: "line",
                     name: "Taux remplissage",
+                    indexLabelWrap: true,
+                    indexLabel: "{y}%",
                     axisYType: "secondary",
                     xValueType: "dateTime",
                     showInLegend: true,
@@ -237,6 +246,8 @@ function MaJGraph(Url){
                         {
                             type: "line",
                             name: "TRS",
+                            indexLabelWrap: true,
+                            indexLabel: "{y}%",
                             axisYType: "secondary",
                             xValueType: "dateTime", 
                             showInLegend: true,
@@ -246,6 +257,8 @@ function MaJGraph(Url){
                         {
                             type: "line",
                             name: "Taux remplissage",
+                            indexLabelWrap: true,
+                            indexLabel: "{y}%",
                             axisYType: "secondary",
                             xValueType: "dateTime",
                             showInLegend: true,

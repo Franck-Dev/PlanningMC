@@ -250,9 +250,9 @@ public function findJourW($dateF,$dateD)
     $entityManager = $this -> getEntityManager ();
 
     $query = $entityManager -> createQuery (
-        'SELECT DAY(p.DebPolym) as Jour FROM App\Entity\PolymReal p  
+        'SELECT DATE_FORMAT (p.DebPolym,\'%j\') as journee, DATE_FORMAT (p.DebPolym,\'%w\') as Jour, DATE_FORMAT (p.DebPolym,\'%v\') as Semaine, DATE_FORMAT (p.DebPolym,\'%b\') as Mois FROM App\Entity\PolymReal p  
         WHERE p.DebPolym > :dateD AND p.FinPolym < :dateF 
-        GROUP BY Jour');
+        GROUP BY journee');
         $query-> setParameter ( 'dateD' , $dateD );
         $query-> setParameter ('dateF' , $dateF);
         // returns an array of Product objects

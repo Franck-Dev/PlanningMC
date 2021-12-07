@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\OrgaEqRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -30,12 +32,22 @@ class OrgaEq
     /**
      * @ORM\Column(type="datetime")
      */
-    private $dateDebut;
+    private $DateDebut;
 
     /**
      * @ORM\Column(type="datetime")
      */
     private $DateFin;
+
+    /**
+     * @ORM\OneToMany(targetEntity=Agenda::class, mappedBy="NomOrgaW", orphanRemoval=true)
+     */
+    private $agendas;
+
+    public function __construct()
+    {
+        $this->agendas = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -68,12 +80,12 @@ class OrgaEq
 
     public function getDateDebut(): ?\DateTimeInterface
     {
-        return $this->dateDebut;
+        return $this->DateDebut;
     }
 
-    public function setDateDebut(\DateTimeInterface $dateDebut): self
+    public function setDateDebut(\DateTimeInterface $DateDebut): self
     {
-        $this->dateDebut = $dateDebut;
+        $this->DateDebut = $DateDebut;
 
         return $this;
     }
@@ -86,6 +98,36 @@ class OrgaEq
     public function setDateFin(\DateTimeInterface $DateFin): self
     {
         $this->DateFin = $DateFin;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Agenda[]
+     */
+    public function getAgendas(): Collection
+    {
+        return $this->agendas;
+    }
+
+    public function addAgenda(Agenda $agenda): self
+    {
+        if (!$this->agendas->contains($agenda)) {
+            $this->agendas[] = $agenda;
+            $agenda->setNomOrgaW($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAgenda(Agenda $agenda): self
+    {
+        if ($this->agendas->removeElement($agenda)) {
+            // set the owning side to null (unless already changed)
+            if ($agenda->getNomOrgaW() === $this) {
+                $agenda->setNomOrgaW(null);
+            }
+        }
 
         return $this;
     }
