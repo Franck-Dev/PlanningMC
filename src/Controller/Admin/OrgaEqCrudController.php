@@ -105,8 +105,13 @@ class OrgaEqCrudController extends AbstractCrudController
                 $Equipe[$j]=['id' => $entity->getInstance()->getId(), 'content' => $entity->getInstance()->getNomEquipe()->getNom()];
                 $j++;
                 foreach($entity->getInstance()->getAgendas() as $Eq){
-                    $newDateFin=date_modify(($Eq->getDateFin()),'+'.$entity->getInstance()->getNomEquipe()->getOrgaW()->getQteHeureW().'hours');
-                    $data[$i] = ['id'=> $i,'name'=> $Eq->getNomOrgaW()->getNomEquipe()->getOrgaW()->getNom(),'start'=> ($Eq->getDateDeb())->format('c'),'end'=> $newDateFin->format('c'),'group'=> $entity->getInstance()->getId(),'background'=> $Eq->getNomOrgaW()->getNomEquipe()->getOrgaW()->getBackgroundColor()];
+                    if ($Eq->getDateDeb()==$Eq->getDateFin()) {
+                        $newDateFin=date_modify(($Eq->getDateFin()),'+'.$entity->getInstance()->getNomEquipe()->getOrgaW()->getQteHeureW().'hours');
+                    }else{
+                        $newDateFin=$Eq->getDateFin();
+                    }
+                    $data[$i] = ['id'=> $i,'name'=> $Eq->getNomOrgaW()->getNomEquipe()->getOrgaW()->getNom(),'start'=> ($Eq->getDateDeb())->format('c'),'end'=> $newDateFin->format('c'),'group'=> $entity->getInstance()->getId(),'style'=> 'background-color: '.$Eq->getNomOrgaW()->getNomEquipe()->getOrgaW()->getBackgroundColor()];
+                    $newDateFin=date_modify(($Eq->getDateFin()),'+6hours');
                     $datas[$i]=['id'=> $i,'title'=> $Eq->getNomOrgaW()->getNomEquipe()->getOrgaW()->getNom(),'startDate'=> ($Eq->getDateDeb())->format('c'),'endDate'=> $newDateFin->format('c'),'location'=>  $Eq->getNomOrgaW()->getNomEquipe()->getNom(),'color'=> $Eq->getNomOrgaW()->getNomEquipe()->getOrgaW()->getBackgroundColor()];
                     $i = $i + 1;
                 }
@@ -114,6 +119,7 @@ class OrgaEqCrudController extends AbstractCrudController
             $Equipes= new JsonResponse($Equipe);
             $taches= new JsonResponse($data);
             $rdvs=json_encode($datas);
+            dump($rdvs);
             $dateDeb=new \DateTime('first day of this year');
             $dateFin=new \DateTime('last day of next year');
             $responseParameters->set('Taches', $taches->getcontent());

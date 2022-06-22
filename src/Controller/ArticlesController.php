@@ -9,15 +9,16 @@ use App\Repository\ArticlesRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 /**
- * @Route("/METHODES/PE/Creation_PE")
+ * @Route("/METHODES/PE")
  */
 class ArticlesController extends AbstractController
 {
     /**
-     * @Route("/", name="articles_index", methods={"GET"})
+     * @Route("/Consultation", name="articles_index", methods={"GET"})
      */
     public function index(ArticlesRepository $articlesRepository): Response
     {
@@ -31,7 +32,8 @@ class ArticlesController extends AbstractController
     }
 
     /**
-     * @Route("/new", name="articles_new", methods={"GET","POST"})
+     * @Route("/Creation", name="articles_new", methods={"GET","POST"})
+     * @IsGranted("ROLE_ADMIN")
      */
     public function new(Request $request): Response
     {
@@ -73,6 +75,7 @@ class ArticlesController extends AbstractController
 
     /**
      * @Route("/{id}/edit", name="articles_edit", methods={"GET","POST"})
+     * @IsGranted("ROLE_ADMIN")
      */
     public function edit(Request $request, Articles $article): Response
     {
@@ -96,6 +99,7 @@ class ArticlesController extends AbstractController
 
     /**
      * @Route("/{id}", name="articles_delete", methods={"DELETE"})
+     * @IsGranted("ROLE_ADMIN")
      */
     public function delete(Request $request, Articles $article): Response
     {

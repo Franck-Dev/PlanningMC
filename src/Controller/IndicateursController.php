@@ -222,20 +222,30 @@ class IndicateursController extends AbstractController
         //dump($Polyms);
         //Tps de capacité machine en 3x8 VSD SD
         $repo=$this->getDoctrine()->getRepository(Agenda::class);
-        $TpsOuv=$repo->findTpsW($DateJour,$hier,'Journees');
+        $tbTpsOuv=$repo->findTpsW($DateJour,$hier,'Journees');
         $dato = [];
         $datix = [];
         $i = 0;
         foreach($Polyms as $polym){
             $y=intval($polym['DureePolym']/3600);
-            $x=$nbMoyens*$TpsOuv[0][1];
+			if (!$tbTpsOuv) {
+				$TpsOuv=0;
+			}else{
+				$TpsOuv=$tbTpsOuv[0][1];
+			}
+            $x=$nbMoyens*$TpsOuv;
+			if ($x==0) {
+				$valTRS=0;
+			} else {
+				$valTRS=$y/$x;
+			}
             $z=$polym['PourVol'];
-            $dato[$i] = ['y'=> ($y/$x)*100,'color' => "#c70000"];
+            $dato[$i] = ['y'=> ($valTRS)*100,'color' => "#c70000"];
             $datix[$i]= ['y'=> $z,'color' => "#c70000"];
             $i = $i + 1;
-            $dato[$i] = ['y'=> 100-($y/$x)*100,'color' => "#424242"];
+            $dato[$i] = ['y'=> 100-($valTRS)*100,'color' => "#424242"];
             $datix[$i]= ['y'=> 100-$z,'color' => "#424242"];
-            $RatioP=round(($y/$x)*100,1);
+            $RatioP=round(($valTRS)*100,1);
             $RatioV=round(($polym['PourVol']),1);
             
         }

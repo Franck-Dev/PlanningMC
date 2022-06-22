@@ -355,6 +355,9 @@
             "ref": "1717e67afa995e4f01a25ba9ae7aca5b2327bcaa"
         }
     },
+    "symfony/http-client": {
+        "version": "v5.4.5"
+    },
     "symfony/http-client-contracts": {
         "version": "v2.4.0"
     },

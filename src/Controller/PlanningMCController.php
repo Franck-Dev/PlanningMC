@@ -25,6 +25,7 @@ use App\Entity\TypeRecurrance;
 use App\Form\CreationProgType;
 use App\Entity\RecurrancePolym;
 use App\Form\PlanifDemandeType;
+use App\Services\CallApiService;
 use App\Services\FunctPlanning;
 use App\Form\CreationMoyensType;
 use App\Services\FunctChargPlan;
@@ -710,8 +711,9 @@ class PlanningMCController extends AbstractController
 	/**
      * @Route("/home", name="home")
      */
-    public function home()
+    public function home(CallApiService $callApiService)
     {
+        //dd($callApiService);
         $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
         $Titres=$repo -> findAll();
         
@@ -1216,7 +1218,7 @@ class PlanningMCController extends AbstractController
         $moyen= new JsonResponse($data);
 //Chargement d'une variable pour les tâches déjà plannifiées
         $repo=$this->getDoctrine()->getRepository(Planning::class);
-        $Taches=$repo -> findAll();
+        $Taches=$repo -> findBy([],['DebutDate'=>'DESC'],3000);
         //$item=array();
 
         $data = [];
@@ -1702,11 +1704,10 @@ class PlanningMCController extends AbstractController
     }
 
     /**
-     * @Route("/METHODES/PE/Consultation_PE", name="Consultation PE")
-     * @Route("METHODES/PE/Consultation_PE/{id}", name="Consul_PE")
+     * @Route("/METHODES/PE/Consultation", name="Consultation")
      * @IsGranted("ROLE_ADMIN")
      */
-    public function Consultation_PE(CategoryMoyens $moyen=null)
+    public function Consultation(CategoryMoyens $moyen=null)
     {
         return $this->redirectToRoute('home');
     }
@@ -1792,10 +1793,10 @@ class PlanningMCController extends AbstractController
     }
 
     /**
-     * @Route("/METHODES/PROGRAMMATION/Consultation", name="Consultation")
+     * @Route("/METHODES/PROGRAMMATION/Consultation", name="Consultation PRP")
      * @Route("METHODES/PROGRAMMATION/Consultation/{id}", name="Consul_ProgMoy")
      */
-    public function Consultation(CategoryMoyens $moyen=null)
+    public function Consultation_PRP(CategoryMoyens $moyen=null)
     {
 //Si pas de moyen affecté, c'est une consulation générale des programmes        
         if(!$moyen){
@@ -1970,11 +1971,9 @@ class PlanningMCController extends AbstractController
             if($form->isSubmitted() && $form->isValid()){
                 if(!$Moyen->getId()){
                     //$Moyen->setDateCreation(new \datetime());
-                    
                 }
                 else{
                     //$Moyen->setDateModif(new \datetime());
-                
                 }
     
                 $manager->persist($Moyen);
