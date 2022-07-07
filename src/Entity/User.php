@@ -206,7 +206,7 @@ class User implements UserInterface
 
     public function getSalt(){}
 
-    public function getRoles()
+    public function getRoles(): array
     {
         //dump($this->Roles);
         if (empty($this->Roles)) {

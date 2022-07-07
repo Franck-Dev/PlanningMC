@@ -8,6 +8,7 @@ use App\Entity\Moyens;
 use App\Entity\Planning;
 use App\Entity\PolymReal;
 use App\Services\FunctIndic;
+use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -111,7 +112,7 @@ class IndicateursController extends AbstractController
      * @Route("/indicateur/RatioChargePcs", name="indic_Ratio_Charge_Pcs")
      * 
      */
-    public function indicRatioChargePcs($unjouran=null, FunctIndic $indic, ManagerRegistry $manaReg)
+    public function indicRatioChargePcs(?DateTime $unjouran, FunctIndic $indic, ManagerRegistry $manaReg)
     {
         // { label: "New Jersey",  y: 19034.5 },
         //{ label: "Texas", y: 20015 },
@@ -203,7 +204,7 @@ class IndicateursController extends AbstractController
      * @Route("/indicateur/TRSVol", name="indic_TRS_Vol")
      * 
      */
-    public function indicTRSVol($hier=null, FunctIndic $indic, ManagerRegistry $manaReg)
+    public function indicTRSVol(?DateTime $hier, FunctIndic $indic, ManagerRegistry $manaReg)
     {
     //Récupération de la liste des moyens
         $repos=$manaReg->getRepository(Moyens::class);
@@ -268,7 +269,7 @@ class IndicateursController extends AbstractController
      * @Route("/indicateur/ChargMach", name="indic_Charge_Machine")
      * 
      */
-    public function indicChargMach($FinSem=null, $DebSem=null, FunctIndic $indic, ManagerRegistry $manaReg)
+    public function indicChargMach(?DateTime $FinSem,?DateTime $DebSem, ManagerRegistry $manaReg)
     {
         if (!$FinSem or !$DebSem) {
             //Recherche du début et de la fin de semaine en cours
@@ -312,7 +313,7 @@ class IndicateursController extends AbstractController
      * @Route("/indicateur/TRSMoyNbPolym", name="indic_TRSMoy_NbPolym")
      * 
      */
-    public function indicTRSMoyNbPolym($SemAvant=null, FunctIndic $indic, ManagerRegistry $manaReg)
+    public function indicTRSMoyNbPolym(?DateTime $SemAvant, ManagerRegistry $manaReg)
     {
     //Récupération de la liste des moyens
     $repos=$manaReg->getRepository(Moyens::class);
@@ -361,7 +362,7 @@ class IndicateursController extends AbstractController
      * @Route("/indicateur/TRSJourNPolymJour", name="indic_TRSJour_NbPolymJour")
      * 
      */
-    public function indicTRSJourNPolymJour($SemDer=null, $DateJour=null, $Interval=null, $Moyens=null ,Request $request, ManagerRegistry $manaReg )
+    public function indicTRSJourNPolymJour(?DateTime $SemDer,?DateTime $DateJour,?string $Interval,?string $Moyens ,Request $request, ManagerRegistry $manaReg )
     {
     //Récupération de la liste des moyens
     $repos=$manaReg->getRepository(Moyens::class);
