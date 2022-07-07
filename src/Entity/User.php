@@ -11,10 +11,9 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
- * @UniqueEntity(fields={"email"},message ="Cette adresse est deja utilise")
  */
 class User implements UserInterface
-{
+{     
     /**
      * @ORM\Id()
      * @ORM\GeneratedValue()
@@ -29,19 +28,19 @@ class User implements UserInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Assert\Email(message="Ceci n\'est pas une adresse mail valide!!'")
+     * @Assert\Email(message="Ceci n'est pas une adresse mail valide!!'")
      */
-    private $email;
+    private $mail;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Services", inversedBy="NbUser")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\Column(type="string", length=255)
+     * @Assert\Length(min=8, minMessage="Minimum de 8 caracteres")
      */
     private $service;
 
     /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\Postes", inversedBy="NbUser")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\Column(type="string", length=255)
+     * @Assert\Length(min=8, minMessage="Minimum de 8 caracteres")
      */
     private $poste;
 
@@ -63,7 +62,7 @@ class User implements UserInterface
      */
 
 
-    private $DateCreation;
+    private $createdAt;
 
     /**
      * @ORM\Column(type="json")
@@ -96,9 +95,38 @@ class User implements UserInterface
         $this->nomEquipes = new ArrayCollection();
     }
 
+    public function hydrate(array $datas)
+    {
+        foreach ($datas as $key => $value)
+        {$methodSet = 'set'.ucfirst($key);
+            if (method_exists($this, $methodSet))
+            {
+                switch ($key) {
+                    case 'createdAt':
+                        $this->$methodSet(new \DateTime($value));
+                        break;
+                    case 'poste':
+                        $this->$methodSet($value['libelle']);
+                        break;
+                    case 'service':
+                        $this->$methodSet($value['nom']);
+                        break;
+                    default:
+                    $this->$methodSet($value);
+                        break;
+                }
+            }
+        }
+    }
+
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function setId(int $id): ?int
+    {
+        return $this->id=$id;
     }
 
     public function getUsername(): ?string
@@ -113,37 +141,37 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getEmail(): ?string
+    public function getMail(): ?string
     {
-        return $this->email;
+        return $this->mail;
     }
 
-    public function setEmail(string $email): self
+    public function setMail(string $mail): self
     {
-        $this->email = $email;
+        $this->mail = $mail;
 
         return $this;
     }
 
-    public function getService(): ?Services
+    public function getService(): ?string
     {
         return $this->service;
     }
 
-    public function setService(?Services $service): self
+    public function setService(String $service): self
     {
         $this->service = $service;
 
         return $this;
     }
 
-    public function getPoste(): ?Postes
+    public function getPoste(): ?string
     {
 
          return $this->poste;
     }
 
-    public function setPoste(?Postes $poste): self
+    public function setPoste(?string $poste): self
     {
         $this->poste = $poste;
 
@@ -162,14 +190,14 @@ class User implements UserInterface
         return $this;
     }
 
-    public function getDateCreation(): ?\DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeInterface
     {
-        return $this->DateCreation;
+        return $this->createdAt;
     }
 
-    public function setDateCreation(\DateTimeInterface $DateCreation): self
+    public function setCreatedAt(\DateTimeInterface $createdAt): self
     {
-        $this->DateCreation = $DateCreation;
+        $this->createdAt = $createdAt;
 
         return $this;
     }
@@ -207,7 +235,7 @@ class User implements UserInterface
 
     public function getUserIdentifier(): string
     {
-        return (string) $this->email;
+        return (string) $this->mail;
     }
 
     public function getNomEquipe(): ?NomEquipe

@@ -15,33 +15,36 @@ use App\Repository\NomEquipeRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\TypesEquipeRepository;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Validator\Constraints\All;
+use Symfony\Component\HttpFoundation\RequestStack;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
-use EasyCorp\Bundle\EasyAdminBundle\Event\AfterEntityBuiltEvent;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Event\AfterEntityBuiltEvent;
 use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeCrudActionEvent;
+use EasyCorp\Bundle\EasyAdminBundle\Event\AfterEntityUpdatedEvent;
 use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeEntityDeletedEvent;
 use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeEntityUpdatedEvent;
 use EasyCorp\Bundle\EasyAdminBundle\Event\AfterEntityPersistedEvent;
-use EasyCorp\Bundle\EasyAdminBundle\Event\AfterEntityUpdatedEvent;
 use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeEntityPersistedEvent;
-use Symfony\Component\Validator\Constraints\All;
 
 class EasyAdminSubscriber implements EventSubscriberInterface
 {
     private $em;
     private $repo;
     private $agendaRepository;
-    private $session;
+    private $requestStack;
     protected $request;
+    private $session;
 
-    public function __construct(EntityManagerInterface  $em, OrgaEqRepository $repo, AgendaRepository $agendaRepository, SessionInterface $session)
+    public function __construct(EntityManagerInterface  $em, OrgaEqRepository $repo, AgendaRepository $agendaRepository, RequestStack $requestStack)
     {
         $this->em = $em;
         $this->repo= $repo;
         $this->agendaRepository=$agendaRepository;
-        $this->session=$session;
+        $this->requestStack=$requestStack;
         $this->request = Request::createFromGlobals();
+        $this->session=$requestStack->getSession();
     }
 
     public static function getSubscribedEvents()

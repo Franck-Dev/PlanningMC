@@ -7,7 +7,10 @@ use App\Entity\Moyens;
 use App\Entity\ConfSmenu;
 use App\Form\ModifMdPType;
 use App\Form\RegistrationType;
+use App\Security\ApiKeyAuthenticator;
+use App\Services\CallApiService;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Persistence\ObjectManager;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,6 +18,8 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
@@ -24,8 +29,8 @@ class SecurityController extends AbstractController
     /**
     * @Route("/inscription", name="security_registration")
     */
-    Public function registration(request $request, EntityManagerInterface  $manager, UserPasswordHasherInterface $encoder){
-        $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
+    Public function registration(request $request, EntityManagerInterface  $manager, UserPasswordHasherInterface $encoder, ManagerRegistry $manaReg){
+        $repo=$manaReg->getRepository(ConfSmenu::class);
 
         $Titres=$repo -> findAll();
 
@@ -94,7 +99,7 @@ class SecurityController extends AbstractController
             // get the login error if there is one
             $error = $authenticationUtils->getLastAuthenticationError();
             $Titres =[];
-            dump($error);
+            dump( $authenticationUtils);
         return $this->render('security/login.html.twig',[
             'error' => $authenticationUtils->getLastAuthenticationError(),
             'last_user' => $authenticationUtils->getLastUsername(),
@@ -116,40 +121,53 @@ class SecurityController extends AbstractController
     /**
      * * @Route("/inscription/Modification", name="Modif_Inscription")
     */
-    Public function ModifMdP(request $request, EntityManagerInterface $manager, user $user=null, UserPasswordHasherInterface $encoder, ValidatorInterface $validator){
+    Public function ModifMdP(request $request, user $user=null, ValidatorInterface $validator, ApiKeyAuthenticator $auth, CallApiService $api){
 
         $Titres=[];
-        //Si le formulaire est rempli
-        if($request->get('modif_md_p')){
-            //On va chercher dans la base l'utilisateur en question
-            $user= new User();
-            $repo=$this->getDoctrine()->getRepository(User::class);
-            $items=$repo -> findBy(['email' => $request->get('modif_md_p')['email']]);
-            $user=$items[0];
-            //On l'empile dans le formulaire
-            $form=$this->createForm(ModifMdPType::class, $user);
-            //On force la validation (pas terrible, /!\ a changer)
-            $form->submit($form->getName());
+        $errors=[];
+        $form=$this->createForm(ModifMdPType::class, $user);
+        $form->handleRequest($request);
+        if ($form->isSubmitted())
+        {
+            //Vérification si le formulaire est bien remplie
             $errors = $validator -> validate ($form);
+            //Récupération type d'identification
+            $type=$request->get('modif_md_p')['type'];
+            $username=$request->get('modif_md_p')['mail'];
+            if ($type==='email')
+            {
+                $username = strstr($request->get('modif_md_p')['mail'], '@', true);
+                $request->get('modif_md_p')['mail']=$username;
+                $type='username';
+            }
+            //Vérification si l'utilisateur est connu, pour récup matricule
+            $user=$api->getUserExist($username,$type);
+            if (!$user)
+            {
+                $error=new FormError('utilisateur inexistant pour '.$type .' : '.$username);
+                $form->addError($error);
+            }
         }
-        //Sinon on génère le formulaire vide
-        else{
-            $form=$this->createForm(ModifMdPType::class, $user);
-        }
-        //dump($request);
-        //dump($request->get('modif_md_p')['password']);
-        if($form->isSubmitted()){
-            $hash=$encoder->hashPassword($user, $request->get('modif_md_p')['password']);
+        if($form->isSubmitted() && $form->isValid()){
+            //On va chercher dans la base l'utilisateur en question
+            $userResp=$api->getDatasAPI('/api/users/'.$user[0]['id'],'Usine',['password'=>$request->get('modif_md_p')['password']],'PATCH');
+            //$hash=$encoder->hashPassword($user, $request->get('modif_md_p')['password']);
             //dump($hash);
-            $user->setIsActive('0');
-            $user->setPassword($hash);
-            $manager->persist($user);
-            $manager->flush($user);
+
+            //$user->setIsActive('0');
+            //$user->setPassword($request->get('modif_md_p')['password']);
+            //$manager->persist($user);
+            //$manager->flush($user);
             
             return $this->redirectToRoute('security_login');
         }
+         dump($errors);
+        //dump($request);
+        //dump($request->get('modif_md_p')['password']);
+
         return $this->renderForm('security/ModificationMdP.html.twig',[
             'form' => $form,
+            'errors' => $errors,
             'Titres' => $Titres
         ]);
     }

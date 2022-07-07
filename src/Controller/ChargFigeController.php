@@ -6,6 +6,7 @@ use App\Entity\ChargFige;
 use App\Entity\ConfSsmenu;
 use App\Form\ChargFigeType;
 use App\Repository\ChargFigeRepository;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -19,9 +20,9 @@ class ChargFigeController extends AbstractController
     /**
      * @Route("/", name="charg_fige_index", methods={"GET"})
      */
-    public function index(ChargFigeRepository $chargFigeRepository): Response
+    public function index(ChargFigeRepository $chargFigeRepository, ManagerRegistry $manaReg): Response
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'PROGRAMMATION']);
         
 
@@ -34,9 +35,9 @@ class ChargFigeController extends AbstractController
     /**
      * @Route("/new", name="charg_fige_new", methods={"GET","POST"})
      */
-    public function new(Request $request): Response
+    public function new(Request $request, ManagerRegistry $manaReg): Response
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'PROGRAMMATION']);
         
         $chargFige = new ChargFige();
@@ -44,7 +45,7 @@ class ChargFigeController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $manaReg->getManager();
             $entityManager->persist($chargFige);
             $entityManager->flush();
 
@@ -61,9 +62,9 @@ class ChargFigeController extends AbstractController
     /**
      * @Route("/{id}", name="charg_fige_show", methods={"GET"})
      */
-    public function show(ChargFige $chargFige): Response
+    public function show(ChargFige $chargFige, ManagerRegistry $manaReg): Response
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'PROGRAMMATION']);
         
         return $this->render('charg_fige/show.html.twig', [
@@ -75,16 +76,16 @@ class ChargFigeController extends AbstractController
     /**
      * @Route("/{id}/edit", name="charg_fige_edit", methods={"GET","POST"})
      */
-    public function edit(Request $request, ChargFige $chargFige): Response
+    public function edit(Request $request, ChargFige $chargFige, ManagerRegistry $manaReg): Response
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'PROGRAMMATION']);
         dump($chargFige);
         $form = $this->createForm(ChargFigeType::class, $chargFige);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+            $manaReg->getManager()->flush();
 
             return $this->redirectToRoute('charg_fige_index');
         }
@@ -99,11 +100,11 @@ class ChargFigeController extends AbstractController
     /**
      * @Route("/{id}", name="charg_fige_delete", methods={"DELETE"})
      */
-    public function delete(Request $request, ChargFige $chargFige): Response
+    public function delete(Request $request, ChargFige $chargFige, ManagerRegistry $manaReg): Response
     {
         
         if ($this->isCsrfTokenValid('delete'.$chargFige->getId(), $request->request->get('_token'))) {
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $manaReg->getManager();
             $entityManager->remove($chargFige);
             $entityManager->flush();
         }

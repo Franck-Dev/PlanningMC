@@ -8,6 +8,7 @@ use App\Entity\Moyens;
 use App\Entity\Planning;
 use App\Entity\PolymReal;
 use App\Services\FunctIndic;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -31,7 +32,7 @@ class IndicateursController extends AbstractController
      * @Route("/Indicateur/", name="Maj_Indicateur", condition="request.isXmlHttpRequest()")
      * @IsGranted("ROLE_PLANIF")
      */
-    public function MaJIndicateur(Request $request, FunctIndic $indic)
+    public function MaJIndicateur(Request $request, FunctIndic $indic, ManagerRegistry $manaReg)
     {
      //Création des indicateurs
         //Si modification de la date, on revoie la période des données
@@ -49,7 +50,7 @@ class IndicateursController extends AbstractController
             $currentMonthDateTime = new \DateTime($request->get('DatedebPlan'));
             $DebSem = $currentMonthDateTime->modify('monday this week');
         }
-        $repo=$this->getDoctrine()->getRepository(Planning::class);
+        $repo=$manaReg->getRepository(Planning::class);
         $CharTot= $indic->chargTot($repo, $FinSem, $DebSem);
         $TpsOuvParMach=intval(24*7);
 
@@ -69,7 +70,7 @@ class IndicateursController extends AbstractController
      * @Route("/indicateur/RepartProg", name="indic_Repart_Prog")
      * 
      */
-    public function indicRepartProg($an, $unjouran, FunctIndic $indic)
+    public function indicRepartProg($an, $unjouran, FunctIndic $indic, ManagerRegistry $manaReg)
     {
         //Recherche date de la veille
         $DateJour = new \DateTime();
@@ -81,7 +82,7 @@ class IndicateursController extends AbstractController
     // Création de la variable pour la répartition des programmes svt format ci-dessous
         //{ x: new Date("1 Jan 2015"), y: 868800 },
         //{ x: new Date("1 Feb 2015"), y: 1071550 },
-        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+        $repo=$manaReg->getRepository(PolymReal::class);
         $Polyms=$repo -> findAllPcsByDate($unjouran);
         $data = [];
         $i = 0;
@@ -95,7 +96,7 @@ class IndicateursController extends AbstractController
         }
         $RepartP= new JsonResponse($data);
     //Création de la variable pour récupérer le nombre total de pcs svt durée
-        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+        $repo=$manaReg->getRepository(PolymReal::class);
         $totPcs= $indic->totalPcs($repo, $jour, $unjouran);
 
         return $this->render('indicateurs/Frames/IndicRepartProg.html.twig', [
@@ -110,7 +111,7 @@ class IndicateursController extends AbstractController
      * @Route("/indicateur/RatioChargePcs", name="indic_Ratio_Charge_Pcs")
      * 
      */
-    public function indicRatioChargePcs($unjouran=null, FunctIndic $indic)
+    public function indicRatioChargePcs($unjouran=null, FunctIndic $indic, ManagerRegistry $manaReg)
     {
         // { label: "New Jersey",  y: 19034.5 },
         //{ label: "Texas", y: 20015 },
@@ -122,7 +123,7 @@ class IndicateursController extends AbstractController
         //Recherche du numéro de semaine en cours
         $NumSem= date("W", strtotime('today '.date('Y') ));
         //Création des variables pour le rapport charge/nbrs de pièces par semaine svt format ci dessous
-        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+        $repo=$manaReg->getRepository(PolymReal::class);
         $Polyms=$repo -> findRapportPcsH($unjouran);
         $daty = [];
         $i = 0;
@@ -163,7 +164,7 @@ class IndicateursController extends AbstractController
      * @Route("/indicateur/RepartPcsProg", name="indic_Repart_Pcs_Prog")
      * 
      */
-    public function indicRepartPcsProg(Request $request, FunctIndic $indic)
+    public function indicRepartPcsProg(Request $request, FunctIndic $indic, ManagerRegistry $manaReg)
     {        
     // Création de la variable pour la répartition des pièces suivant les programmes lancées
         //{ y: 47, color: "#c70000", toolTipContent: "United States: " },
@@ -176,7 +177,7 @@ class IndicateursController extends AbstractController
         $DateJour = new \DateTime();
         $jour=$DateJour->modify('today');
 
-        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+        $repo=$manaReg->getRepository(PolymReal::class);
         $Polyms=$repo -> findRepartPcssvtProg($jour,$hier);
 
         $dati = [];
@@ -202,10 +203,10 @@ class IndicateursController extends AbstractController
      * @Route("/indicateur/TRSVol", name="indic_TRS_Vol")
      * 
      */
-    public function indicTRSVol($hier=null, FunctIndic $indic)
+    public function indicTRSVol($hier=null, FunctIndic $indic, ManagerRegistry $manaReg)
     {
     //Récupération de la liste des moyens
-        $repos=$this->getDoctrine()->getRepository(Moyens::class);
+        $repos=$manaReg->getRepository(Moyens::class);
         $listMoyensDispo=$repos->findBy(['Id_Service' => '8','Activitees' => 'Realisee', 'Operationnel' => 1]);
         $nbMoyens=count($listMoyensDispo);
         if (!$hier) {
@@ -217,11 +218,11 @@ class IndicateursController extends AbstractController
         $DateJour = new \DateTime();
         $jour=$DateJour->modify('today');
         //dump($jour);
-        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+        $repo=$manaReg->getRepository(PolymReal::class);
         $Polyms=$repo -> findTRS($jour,$hier);
         //dump($Polyms);
         //Tps de capacité machine en 3x8 VSD SD
-        $repo=$this->getDoctrine()->getRepository(Agenda::class);
+        $repo=$manaReg->getRepository(Agenda::class);
         $tbTpsOuv=$repo->findTpsW($DateJour,$hier,'Journees');
         $dato = [];
         $datix = [];
@@ -267,7 +268,7 @@ class IndicateursController extends AbstractController
      * @Route("/indicateur/ChargMach", name="indic_Charge_Machine")
      * 
      */
-    public function indicChargMach($FinSem=null, $DebSem=null, FunctIndic $indic)
+    public function indicChargMach($FinSem=null, $DebSem=null, FunctIndic $indic, ManagerRegistry $manaReg)
     {
         if (!$FinSem or !$DebSem) {
             //Recherche du début et de la fin de semaine en cours
@@ -277,7 +278,7 @@ class IndicateursController extends AbstractController
             $DebSem = $currentMonthDateTime->modify('monday this week');
         } 
     //Création de la variable charge de chaque machine sur la semaine encours
-        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+        $repo=$manaReg->getRepository(PolymReal::class);
         $Polyms=$repo ->findCharSem($FinSem,$DebSem);
         $Tablo = [];
         $i = 0;
@@ -311,10 +312,10 @@ class IndicateursController extends AbstractController
      * @Route("/indicateur/TRSMoyNbPolym", name="indic_TRSMoy_NbPolym")
      * 
      */
-    public function indicTRSMoyNbPolym($SemAvant=null, FunctIndic $indic)
+    public function indicTRSMoyNbPolym($SemAvant=null, FunctIndic $indic, ManagerRegistry $manaReg)
     {
     //Récupération de la liste des moyens
-    $repos=$this->getDoctrine()->getRepository(Moyens::class);
+    $repos=$manaReg->getRepository(Moyens::class);
     $listMoyensDispo=$repos->findBy(['Id_Service' => '8','Activitees' => 'Realisee', 'Operationnel' => 1]);
     $nbMoyens=count($listMoyensDispo);
     //Création de la variable TRS moyen et nbr de polym par semaine,
@@ -324,9 +325,9 @@ class IndicateursController extends AbstractController
         }
         $DateJour = new \DateTime();
         //Tps de capacité machine en 3x8 VSD SD
-        $repo=$this->getDoctrine()->getRepository(Agenda::class);
+        $repo=$manaReg->getRepository(Agenda::class);
         $TpsOuv=$repo->findTpsW($DateJour,$SemAvant,'Semaines');
-        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+        $repo=$manaReg->getRepository(PolymReal::class);
         //$nbJourW=count($repo->findJourW($DateJour,$SemAvant));
         //$TpsOuv=intval($nbMoyens*24*($nbJourW/7));
         //$TpsOuv=intval(24*7*11);
@@ -360,10 +361,10 @@ class IndicateursController extends AbstractController
      * @Route("/indicateur/TRSJourNPolymJour", name="indic_TRSJour_NbPolymJour")
      * 
      */
-    public function indicTRSJourNPolymJour($SemDer=null, $DateJour=null, $Interval=null, $Moyens=null ,Request $request )
+    public function indicTRSJourNPolymJour($SemDer=null, $DateJour=null, $Interval=null, $Moyens=null ,Request $request, ManagerRegistry $manaReg )
     {
     //Récupération de la liste des moyens
-    $repos=$this->getDoctrine()->getRepository(Moyens::class);
+    $repos=$manaReg->getRepository(Moyens::class);
     $listMoyensDispo=$repos->findBy(['Id_Service' => '8','Activitees' => 'Realisee', 'Operationnel' => 1]);
     //Gestion du type d'intervalle de données qu'on va affiché, donné par liste déroulante
         if (!$request->get('Type')) {
@@ -440,7 +441,7 @@ class IndicateursController extends AbstractController
         $JourAvant = date("Y-m-d", strtotime($CycleAnal.date('Y') ));
         $JourAvant=new \datetime($JourAvant);
         $DateJour = new \DateTime();
-        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+        $repo=$manaReg->getRepository(PolymReal::class);
         $primePolym=$repo->findOneBy(['id' => 12]);
         //Vérification si le 1er jour est un jour travaillé, sinon on prend le dernier jour travaillé
         if ($JourAvant<$primePolym->getDebPolym()) {
@@ -448,9 +449,9 @@ class IndicateursController extends AbstractController
         }
         
     //Récupération du nombre d'heures par jour travaillé dans l'intervalle ( à modifier avec le planning de prod)
-        $repo=$this->getDoctrine()->getRepository(Agenda::class);
+        $repo=$manaReg->getRepository(Agenda::class);
         $qteTpsW=$repo->findTpsW($DateJour,$JourAvant,$Titre);
-        $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+        $repo=$manaReg->getRepository(PolymReal::class);
         //$nbJoursW=$repo->findJourW($DateJour,$JourAvant);
         //$x=$nbMoyens*24*(count($nbJoursW)/7);
         $Polyms=$repo->findTRSJour($DateJour, $JourAvant, $Titre, $Moyens);
@@ -494,10 +495,10 @@ class IndicateursController extends AbstractController
      * @Route("/indicateur/", name="indic_ChargeTot_Semaine")
      * 
      */
-    public function indicChargTotSem(Request $request, FunctIndic $indic)
+    public function indicChargTotSem(Request $request, FunctIndic $indic, ManagerRegistry $manaReg)
     {
     //Création de la variable charge totale sur la semaine
-        $repo=$this->getDoctrine()->getRepository(Planning::class);
+        $repo=$manaReg->getRepository(Planning::class);
         $Polyms=$repo -> findCharge($FinSem,$DebSem);
         foreach($Polyms as $polym){
             $CharTot=intval($polym['DureTheoPolym']/10000);
@@ -525,7 +526,7 @@ class IndicateursController extends AbstractController
     public function indicOTDMoulage(Request $request, FunctIndic $indic)
     {
     //Création de la variable de suivi de l'OTD entre le moulage et la polym
-        // $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+        // $repo=$manaReg->getRepository(PolymReal::class);
         // $Polyms=$repo -> findCharge($FinSem,$DebSem);
         // foreach($Polyms as $polym){
         //     $CharTot=intval($polym['DureTheoPolym']/10000);
@@ -550,10 +551,10 @@ class IndicateursController extends AbstractController
      * @Route("/indicateur/ChargeSAPUnMois", name="indic_ChargeSAP_UnMois")
      * 
      */
-    public function indicChargeSAPUnMois(Request $request, FunctIndic $indic)
+    public function indicChargeSAPUnMois(Request $request, FunctIndic $indic, ManagerRegistry $manaReg)
     {
         // Création de la table de répartition des programmes suivant OF SAP lancés sur 1 mois
-        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        $repo=$manaReg->getRepository(Charge::class);
         // Date à aujourd'hui
         $jour= new \datetime;
 
@@ -580,10 +581,10 @@ class IndicateursController extends AbstractController
      * @Route("/indicateur/ChargeRetardUnMois", name="indic_ChargeRetard_UnMois")
      * 
      */
-    public function indicChargeRetardUnMois(Request $request, FunctIndic $indic)
+    public function indicChargeRetardUnMois(Request $request, FunctIndic $indic, ManagerRegistry $manaReg)
     {
         // Création de la table de répartition des programmes en retard suivant OF SAP lancés 
-        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        $repo=$manaReg->getRepository(Charge::class);
         // Date à hier
         $jourFinRetard = date("Y-m-d", strtotime('- 1 days'.date('Y') ));
         $date=new \datetime($jourFinRetard);
@@ -607,10 +608,10 @@ class IndicateursController extends AbstractController
      * @Route("/indicateur/ChargeSAPRetard", name="indic_ChargeSAP")
      * 
      */
-    public function indicChargeSAPRetard(Request $request, FunctIndic $indic)
+    public function indicChargeSAPRetard(Request $request, FunctIndic $indic, ManagerRegistry $manaReg)
     {
         // Création de la table de répartition des programmes oubliés
-        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        $repo=$manaReg->getRepository(Charge::class);
         $ChargTot=$repo -> findAll();
         // Date à plus d'un mois
         $jourFinRetard = date("Y-m-d", strtotime('+ 365 days'.date('Y') ));

@@ -1,14 +1,27 @@
 {%extends 'base.html.twig'%}
 
 {%block body%}
+    {% if errors is not empty %}
+        <div class="alert alert-danger">
+            <ul class="list-unstyled mb-0">
+                <li><span class="initialism form-error-icon badge badge-danger">Error</span></br> 
+                    {% for error in errors %}
+                        <span class="form-error-message">{{ error.message}}</span></br>
+                    {% endfor %}   
+                </li>
+            </ul>
+        </div>
+    {% endif %}
     <h1> Modification du Mot de Passe</h1>
+    <div class="d-flex align-items-center justify-content-center vh-80 text-white">
+        {{ form_start(form)}}
 
-    {{ form_start(form)}}
+        {{ form_row(form.type)}}
+        {{ form_row(form.mail)}}
+        {{ form_row(form.password)}}
+        {# {{ form_row(form.confirm_password)}} #}
 
-    {{ form_row(form.email)}}
-    {{ form_row(form.password)}}
-    {{ form_row(form.confirm_password)}}
-
-    <button type="submit" class="btn btn-success">Enregistrement</button>
-    {{ form_end(form)}}
+        <button type="submit" class="btn btn-success">Enregistrement</button>
+        {{ form_end(form)}}
+    </div>
 {%endblock%}

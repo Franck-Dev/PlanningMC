@@ -6,6 +6,7 @@ use App\Entity\Articles;
 use App\Entity\ConfSsmenu;
 use App\Form\ArticlesType;
 use App\Repository\ArticlesRepository;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -20,9 +21,9 @@ class ArticlesController extends AbstractController
     /**
      * @Route("/Consultation", name="articles_index", methods={"GET"})
      */
-    public function index(ArticlesRepository $articlesRepository): Response
+    public function index(ArticlesRepository $articlesRepository, ManagerRegistry $manaReg): Response
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'PE']);
 
         return $this->render('articles/index.html.twig', [
@@ -35,9 +36,9 @@ class ArticlesController extends AbstractController
      * @Route("/Creation", name="articles_new", methods={"GET","POST"})
      * @IsGranted("ROLE_ADMIN")
      */
-    public function new(Request $request): Response
+    public function new(Request $request, ManagerRegistry $manaReg): Response
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'PE']);
 
         $article = new Articles();
@@ -45,7 +46,7 @@ class ArticlesController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $manaReg->getManager();
             $entityManager->persist($article);
             $entityManager->flush();
 
@@ -62,9 +63,9 @@ class ArticlesController extends AbstractController
     /**
      * @Route("/{id}", name="articles_show", methods={"GET"})
      */
-    public function show(Articles $article): Response
+    public function show(Articles $article, ManagerRegistry $manaReg): Response
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'PE']);
 
         return $this->render('articles/show.html.twig', [
@@ -77,15 +78,15 @@ class ArticlesController extends AbstractController
      * @Route("/{id}/edit", name="articles_edit", methods={"GET","POST"})
      * @IsGranted("ROLE_ADMIN")
      */
-    public function edit(Request $request, Articles $article): Response
+    public function edit(Request $request, Articles $article, ManagerRegistry $manaReg): Response
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'PE']);
 
         $form = $this->createForm(ArticlesType::class, $article);
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+            $manaReg->getManager()->flush();
 
             return $this->redirectToRoute('articles_index');
         }
@@ -101,10 +102,10 @@ class ArticlesController extends AbstractController
      * @Route("/{id}", name="articles_delete", methods={"DELETE"})
      * @IsGranted("ROLE_ADMIN")
      */
-    public function delete(Request $request, Articles $article): Response
+    public function delete(Request $request, Articles $article, ManagerRegistry $manaReg): Response
     {
         if ($this->isCsrfTokenValid('delete'.$article->getId(), $request->request->get('_token'))) {
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $manaReg->getManager();
             $entityManager->remove($article);
             $entityManager->flush();
         }

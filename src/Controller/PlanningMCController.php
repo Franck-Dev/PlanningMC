@@ -25,13 +25,14 @@ use App\Entity\TypeRecurrance;
 use App\Form\CreationProgType;
 use App\Entity\RecurrancePolym;
 use App\Form\PlanifDemandeType;
-use App\Services\CallApiService;
 use App\Services\FunctPlanning;
 use App\Form\CreationMoyensType;
+use App\Services\CallApiService;
 use App\Services\FunctChargPlan;
 use PhpParser\Node\Stmt\Foreach_;
 use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 use App\Repository\DefaultRepositoryFactory;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Persistence\ObjectManager;
@@ -66,13 +67,13 @@ class PlanningMCController extends AbstractController
      * @Route("/Planning/Edit", name="Planning_Edit")
      * @Security("is_granted('ROLE_REGLEUR')")
      */
-    public function planningEdit(Request $request, FunctPlanning $plan)
+    public function planningEdit(Request $request, FunctPlanning $plan, ManagerRegistry $manaReg)
     {
-        $repos=$this->getDoctrine()->getRepository(Moyens::class);
+        $repos=$manaReg->getRepository(Moyens::class);
         $moyens=$plan->moyens($repos);
         $statut=$request->request->get('state');
-        $repo=$this->getDoctrine()->getRepository(Planning::class);
-        $repi=$this->getDoctrine()->getRepository(PolymReal::class);
+        $repo=$manaReg->getRepository(Planning::class);
+        $repi=$manaReg->getRepository(PolymReal::class);
         $task=$plan->planning($repo, $repos, $repi, $statut);
 
         return new JsonResponse(['Taches'=> $task[0], 'moyen'=> $moyens[1], 'Ssmoyen'=> $moyens[0]]);
@@ -80,10 +81,10 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/Planning", name="Planning")
      */
-    public function index(FunctPlanning $plan)
+    public function index(FunctPlanning $plan, ManagerRegistry $manaReg)
     {
     //Gestion menu
-        $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
+        $repo=$manaReg->getRepository(ConfSmenu::class);
         $Titres=[];
     //Gestion des dates de la semaine concernée
         $currentMonthDateTime = new \DateTime();
@@ -91,21 +92,21 @@ class PlanningMCController extends AbstractController
         $currentMonthDateTime = new \DateTime();
         $lastDateTime = $currentMonthDateTime->modify('last day of this week');
     //Recherche si demande d'annulation de polym
-        $repo=$this->getDoctrine()->getRepository(Planning::class);
+        $repo=$manaReg->getRepository(Planning::class);
         $polyAnnul=$repo->findBy(['Statut'=>'ANNULATION']);
         foreach ($polyAnnul as $polymA) {
             $this->addFlash('warning', $polymA->getId().'/'.$polymA->getIdentification().'/'.$polymA->getDebutDate()->format('d-m-Y G:i'));
         }
         
     //Recherche des moyens à afficher sur planning
-        $repos=$this->getDoctrine()->getRepository(Moyens::class);
+        $repos=$manaReg->getRepository(Moyens::class);
         $moyens=$plan->moyens($repos);
         $Ssmoyen= new JsonResponse($moyens[0]);
         $moyen= new JsonResponse($moyens[1]);
         $item= $moyens[2];
 
     //Chargement d'une variable pour les tâches déjà plannifiées
-        $repi=$this->getDoctrine()->getRepository(PolymReal::class);
+        $repi=$manaReg->getRepository(PolymReal::class);
         $task=$plan->planning($repo, $repos, $repi);
         $taches = new JsonResponse($task[0]);
 
@@ -121,7 +122,7 @@ class PlanningMCController extends AbstractController
      /**
      * @Route("/PlanningMC/Creation_Polym/", name="CreaPolymRecur")
      */
-    public function CreaPolymRecur()
+    public function CreaPolymRecur(ManagerRegistry $manaReg)
     {
             
             //Chargement des dates de la semanine -1
@@ -132,7 +133,7 @@ class PlanningMCController extends AbstractController
             $lastDateTime = $lastDateTime->modify('23 hours');
 
             //Récupération des polyms récurrantes de la semaine -1    
-            $repo=$this->getDoctrine()->getRepository(RecurrancePolym::class);
+            $repo=$manaReg->getRepository(RecurrancePolym::class);
             $ListRec=$repo ->findRecur($lastDateTime,$firstDateTime);
 
             //On va créer la demande et la polym à semaine +1 de chaque polym recur de la semaine -1
@@ -146,7 +147,7 @@ class PlanningMCController extends AbstractController
                     $demande->setOutillages('');
                     $demande->setCommentaires('');
 
-                    $manager = $this->getDoctrine()->getManager();
+                    $manager = $manaReg->getManager();
                     $manager->persist($demande);
                     $manager->flush();
                 //Récupération de l'ID de la demande pour plannifier la polym en suivant
@@ -181,7 +182,7 @@ class PlanningMCController extends AbstractController
                         $Planning->setStatut("PLANNIFIE");
                         
                         //Intégration en base
-                        $manager = $this->getDoctrine()->getManager();
+                        $manager = $manaReg->getManager();
                         $manager->persist($Planning);
                         $manager->flush();
 
@@ -189,7 +190,7 @@ class PlanningMCController extends AbstractController
                         $Recur = new RecurrancePolym();
                         $Recur->setTypeRecurrance($dem->getTypeRecurrance());
                         //Récupération des données du type de récurrance
-                        $repo=$this->getDoctrine()->getRepository(TypeRecurrance::class);
+                        $repo=$manaReg->getRepository(TypeRecurrance::class);
                         $Dur=$repo ->findBy(['id' =>$dem->getTypeRecurrance()]);
                         
                         $DurRec='+ '.$Dur[0]->getNbrJourCycle().'Days';
@@ -198,15 +199,15 @@ class PlanningMCController extends AbstractController
                         $Recur->setDateFinrecurrance($NewDateRecur);
                         $Recur->setNumPlanning($Planning);
 
-                        $manager = $this->getDoctrine()->getManager();
+                        $manager = $manaReg->getManager();
                         $manager->persist($Recur);
                         $manager->flush();
 
                         //Archivage de la récurrance valider par retour du n° de la récurrance enfant
-                        $repo=$this->getDoctrine()->getRepository(RecurrancePolym::class);
+                        $repo=$manaReg->getRepository(RecurrancePolym::class);
                         $Recurrepo=$repo ->find($dem->getid());
                         $Recurrepo->setNumHeritage($Recur->getid());
-                        $manager = $this->getDoctrine()->getManager();
+                        $manager = $manaReg->getManager();
                         //$manager->persist($ModifDem);
                         $manager->flush();
                     }
@@ -218,7 +219,7 @@ class PlanningMCController extends AbstractController
      * @Route("/PlanningMC/Creation/", name="CreaDemPolymf", condition="request.isXmlHttpRequest()")
      * @IsGranted("ROLE_CE_POLYM")
      */
-    public function CreaDemPolymf(Request $request,RequestStack $requestStack, userInterface $user=null)
+    public function CreaDemPolymf(Request $request,RequestStack $requestStack, userInterface $user=null, ManagerRegistry $manaReg)
     {
         
         if($requestStack->getParentRequest()){
@@ -230,13 +231,13 @@ class PlanningMCController extends AbstractController
                 //On gère si c'est une création ou une modif
                 if (count($TabDem)===9){
                     //Récupération de l'objet cycle
-                    $Cyc = $this->getDoctrine()
+                    $Cyc = $manaReg
                         ->getRepository(ProgMoyens::class)
                         ->findBy(['id' =>$TabDem['cycle']]);
                     $demande->setCycle($Cyc[0]);
 
                     //Récupération de l'objet moyen
-                    $Moy = $this->getDoctrine()
+                    $Moy = $manaReg
                         ->getRepository(Moyens::class)
                         ->findBy(['id' =>$TabDem['moyen_utilise']]);
                     $demande->setMoyenUtilise($Moy[0]);
@@ -264,7 +265,7 @@ class PlanningMCController extends AbstractController
                     $demande->setRecurValide($TabDem["Reccurance"]);
                     $demande->setUserCrea($user->getUsername());
                     
-                        $manager = $this->getDoctrine()->getManager();
+                        $manager = $manaReg->getManager();
                         $manager->persist($demande);
                         $manager->flush();
 
@@ -300,7 +301,7 @@ class PlanningMCController extends AbstractController
                         $Planning->setStatut("PLANNIFIE");
                         //dump($Planning);
 
-                        $manager = $this->getDoctrine()->getManager();
+                        $manager = $manaReg->getManager();
                         $manager->persist($Planning);
                         $manager->flush();
 
@@ -309,7 +310,7 @@ class PlanningMCController extends AbstractController
                         if($demande->getRecurValide() == "true"){
                             $recur= new RecurrancePolym;
                             //Récupération du type de récurrence(à modifier pour automatisation)
-                            $TypRecur = $this->getDoctrine()
+                            $TypRecur = $manaReg
                             ->getRepository(TypeRecurrance::class)
                             ->findBy(['Type' => 'HEBDO']);
 
@@ -321,7 +322,7 @@ class PlanningMCController extends AbstractController
                             $NewDate=date_modify($Planning->getDebutDate(),$varCycle);
                             $recur->setDateFinrecurrance($NewDate);
 
-                            $manager = $this->getDoctrine()->getManager();
+                            $manager = $manaReg->getManager();
                             $manager->persist($recur);
                             $manager->flush();
                         }
@@ -332,7 +333,7 @@ class PlanningMCController extends AbstractController
                     $planning = new Planning();
                     //$demande->setDatePropose($request->get('DatePropose'));
                     //Récupération de l'objet polym suivant l'id concerné
-                    $PolymPla = $this->getDoctrine()
+                    $PolymPla = $manaReg
                         ->getRepository(Planning::class)
                         ->findBy(['id' =>$TabDem['id']]);
                     $planning=$PolymPla[0];
@@ -343,7 +344,7 @@ class PlanningMCController extends AbstractController
 
                     $planning->setStatut($TabDem['statut']);
 
-                    $manager = $this->getDoctrine()->getManager();
+                    $manager = $manaReg->getManager();
                     $manager->persist($planning);
                     $manager->flush();
                 }            
@@ -355,7 +356,7 @@ class PlanningMCController extends AbstractController
      /**
      * @Route("/PlanningMC/Creation/{id}", name="Polym_Crea", condition="request.isXmlHttpRequest()")
      */
-    public function creapolym(Request $request,Demandes $demande=null)
+    public function creapolym(Request $request,Demandes $demande=null, ManagerRegistry $manaReg)
     {
 
     $Planning = new Planning();
@@ -366,7 +367,7 @@ class PlanningMCController extends AbstractController
             //C'est une création
             //dump($request);
             //Récupération de l'ID moyen suivant nom
-            $moyen = $this->getDoctrine()
+            $moyen = $manaReg
                 ->getRepository(Moyens::class)
                 ->findBy(['Libelle' => $request->get('Moyen')]);
             //dump($moyen);
@@ -395,11 +396,11 @@ class PlanningMCController extends AbstractController
                 $Planning->setNumDemande($demande);
                 $Planning->setStatut("PLANNIFIE");
                 //Création dans la table appropriée
-                $manager = $this->getDoctrine()->getManager();
+                $manager = $manaReg->getManager();
                 $manager->persist($Planning);
                 $manager->flush();
                 //On verifie si la récurrance existe pour modification si oui
-                $RecurD = $this->getDoctrine()
+                $RecurD = $manaReg
                     ->getRepository(RecurrancePolym::class)
                     ->findBy(['NumPlanning' => $Planning->getid()]);
                 if(!$RecurD){
@@ -407,7 +408,7 @@ class PlanningMCController extends AbstractController
                     if($request->get('Reccurance')=="true"){
                         $recurP = new RecurrancePolym();
                         //Récupération du type de récurrence(à modifier pour automatisation)
-                        $TypRecur = $this->getDoctrine()
+                        $TypRecur = $manaReg
                         ->getRepository(TypeRecurrance::class)
                         ->findBy(['Type' => 'HEBDO']);
 
@@ -419,7 +420,7 @@ class PlanningMCController extends AbstractController
                         $NewDate=date_modify($Planning->getDebutDate(),$varCycle);
                         $recurP->setDateFinrecurrance($NewDate);
 
-                        $manager = $this->getDoctrine()->getManager();
+                        $manager = $manaReg->getManager();
                         $manager->persist($recurP);
                         $manager->flush();
                         $demande->SetRecurValide(1);
@@ -432,19 +433,19 @@ class PlanningMCController extends AbstractController
                 }
                 else{
                     $recurP = new RecurrancePolym($RecurD);
-                    $manager = $this->getDoctrine()->getManager();
+                    $manager = $manaReg->getManager();
                     $manager->remove($RecurD->getNumPlanning());
                     $manager->flush();
 
                     $recurP = new RecurrancePolym();
-                    $TypRecur = $this->getDoctrine()
+                    $TypRecur = $manaReg
                         ->getRepository(TypeRecurrance::class)
                         ->findBy(['Type' => 'HEBDO']);
                     $recurP->setTypeRecurrance($TypRecur[0]);
                     $recurP->setNumPlanning($Planning);
                     $recurP->setDateFinrecurrance(new \Datetime("9999-12-30"));
 
-                    $manager = $this->getDoctrine()->getManager();
+                    $manager = $manaReg->getManager();
                     $manager->persist($recurP);
                     $manager->flush();
                     $demande->SetRecurValide(1);
@@ -452,12 +453,12 @@ class PlanningMCController extends AbstractController
                     
                 }
                 //Création dans les tables appropriés
-                $manager = $this->getDoctrine()->getManager();
+                $manager = $manaReg->getManager();
                 $manager->persist($demande);
                 $manager->flush();
 
                 //Récupération de l'ID moyen suivant nom
-                $Planning = $this->getDoctrine()
+                $Planning = $manaReg
                 ->getRepository(Planning::class)
                 ->findBy(['NumDemande' => $request->get('id')]);
                 
@@ -469,7 +470,7 @@ class PlanningMCController extends AbstractController
             $demande->setPlannifie($request->get('Statut'));
             //On verifie si la récurrance existée avant la modif
             //dump($demande->getPlanning()->getid());
-            $RecurD = $this->getDoctrine()
+            $RecurD = $manaReg
             ->getRepository(RecurrancePolym::class)
             ->findBy(['NumPlanning' => $demande->getPlanning()->getid()]);
                 //Donne s'il y a une recurrance ou pas            
@@ -478,7 +479,7 @@ class PlanningMCController extends AbstractController
                         $RecurDel= new RecurrancePolym($RecurD[0]);
                         $RecurDel=$RecurD[0];
                         
-                        $manager = $this->getDoctrine()->getManager();
+                        $manager = $manaReg->getManager();
                         $manager->remove($RecurDel->getNumPlanning());
                         $manager->flush();
                         $StatRecur=true;
@@ -488,7 +489,7 @@ class PlanningMCController extends AbstractController
                     }
                 }
                 else{           
-                    $manager = $this->getDoctrine()->getManager();
+                    $manager = $manaReg->getManager();
                     $manager->remove($demande->getPlanning());
                     $manager->flush();
                     $StatRecur=false;
@@ -503,7 +504,7 @@ class PlanningMCController extends AbstractController
      * @Route("/PlanningMC/", name="Polym_Edit", condition="request.isXmlHttpRequest()")
      * @IsGranted("ROLE_PLANIF")
      */
-    public function editpolym(Request $request)
+    public function editpolym(Request $request, ManagerRegistry $manaReg)
     {
         $demande = new Demandes();
 
@@ -515,7 +516,7 @@ class PlanningMCController extends AbstractController
 
         $demande->setHeurePropose($newfindate);
         //Récupération de l'objet moyen
-        $Moy = $this->getDoctrine()
+        $Moy = $manaReg
         ->getRepository(Moyens::class)
         ->findBy(['id' =>$request->get('Moyen')]);
         $demande->setMoyenUtilise($Moy[0]);
@@ -564,11 +565,11 @@ class PlanningMCController extends AbstractController
      * @Route("/PlanningMC/Modification", name="Polym_Modif")//, condition="request.isXmlHttpRequest()"
      * @IsGranted("ROLE_REGLEUR")
      */
-    public function polymodif(Request $request)
+    public function polymodif(Request $request, ManagerRegistry $manaReg)
     {
         if ($request->isXmlHttpRequest() == false) {
             $user = $this->getUser();
-            $repo=$this->getDoctrine()->getRepository(Planning::class);
+            $repo=$manaReg->getRepository(Planning::class);
             $planning=$repo->findOneBy(['id'=>$request->query->get('id')]);
             $planning->setStatut('ANNULER');
             $jour=new \Datetime;
@@ -578,7 +579,7 @@ class PlanningMCController extends AbstractController
             $planning->getNumDemande()->setDateModif(new \DateTime());
             $planning->getNumDemande()->setUserModif($user->getUsername());
 
-            $manager = $this->getDoctrine()->getManager();
+            $manager = $manaReg->getManager();
             $manager->persist($planning);
             $manager->flush();
             
@@ -588,7 +589,7 @@ class PlanningMCController extends AbstractController
             //Remonté d'info pour modification du statut de la polymérisation
             $idPolym=substr($request->get('PolymId'),1,strlen($request->get('PolymId'))-1);
             //dump($idPolym);
-            $PolymPla = $this->getDoctrine()
+            $PolymPla = $manaReg
                 ->getRepository(Planning::class)
                 ->findBy(['id' => $idPolym]);
             //$planning->setMoyenUtilise($PolymPla[0]);
@@ -631,7 +632,7 @@ class PlanningMCController extends AbstractController
      * @Route("/PlanningMC/ModificationPolym", name="CreaDemPolym")
      * @IsGranted("ROLE_REGLEUR")
      */
-    public function CreaDemPolym(Request $request,RequestStack $requestStack, userInterface $user=null)
+    public function CreaDemPolym(Request $request,RequestStack $requestStack, userInterface $user=null, ManagerRegistry $manaReg)
     {
         //Modification du statut de la polym
         if($requestStack->getParentRequest()){
@@ -644,7 +645,7 @@ class PlanningMCController extends AbstractController
                 $TabDem=$request->request->get('form');
                 //dump($TabDem);
                 //Récupération de l'objet cycle
-                $PolymPla = $this->getDoctrine()
+                $PolymPla = $manaReg
                     ->getRepository(Planning::class)
                     ->findBy(['id' =>$TabDem['id']]);
                 $planning=$PolymPla[0];
@@ -654,7 +655,7 @@ class PlanningMCController extends AbstractController
                 $demande->setOutillages($TabDem["num_demande"]["Outillages"]);
                 $demande->setCommentaires($TabDem["num_demande"]["Commentaires"]);
 
-                $manager = $this->getDoctrine()->getManager();
+                $manager = $manaReg->getManager();
                 $manager->persist($planning);
                 $manager->flush();
                     $request->getSession()->getFlashbag()->add('success', 'Création de la polym n°' . $planning->getId() . ' réalisée');
@@ -668,7 +669,7 @@ class PlanningMCController extends AbstractController
      * @Route("/PlanningMC/Suppression", name="Polym_Del", condition="request.isXmlHttpRequest()")
      * @IsGranted("ROLE_PLANIF")
      */
-    public function deletepolym(Request $request)
+    public function deletepolym(Request $request, ManagerRegistry $manaReg)
     {
         //Suppression de la polym
         dump($request->get('PolymId'));
@@ -677,19 +678,19 @@ class PlanningMCController extends AbstractController
                 $planning = new Planning();
                 $idPolym=substr($request->get('PolymId'),1,strlen($request->get('PolymId'))-1);
                 dump($idPolym);
-                $PolymPla = $this->getDoctrine()
+                $PolymPla = $manaReg
                     ->getRepository(Planning::class)
                     ->findBy(['id' => $idPolym]);
                 $planning=$PolymPla[0];
 
                 //On va rechercher la demande liée pour modifier son statut et la récurrence si besoin
                 $Demande = new Demandes();
-                $Dem = $this->getDoctrine()
+                $Dem = $manaReg
                     ->getRepository(Demandes::class)
                     ->findBy(['id' => $planning->getNumDemande()]);
                 $Demande = $Dem[0];
 
-                $manager = $this->getDoctrine()->getManager();
+                $manager = $manaReg->getManager();
                 $manager->remove($planning);
                 $manager->flush();
 
@@ -699,7 +700,7 @@ class PlanningMCController extends AbstractController
                 $Demande->setMoyenUtilise(Null);
                 dump($planning);
 
-                $manager = $this->getDoctrine()->getManager();
+                $manager = $manaReg->getManager();
                     $manager->persist($Demande);
                     $manager->flush();
                     dump($planning);
@@ -711,10 +712,10 @@ class PlanningMCController extends AbstractController
 	/**
      * @Route("/home", name="home")
      */
-    public function home(CallApiService $callApiService)
+    public function home(CallApiService $callApiService, ManagerRegistry $manaReg)
     {
         //dd($callApiService);
-        $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
+        $repo=$manaReg->getRepository(ConfSmenu::class);
         $Titres=$repo -> findAll();
         
         //Recherche du début de l'année avec n+1 mois pour effectuer les calcul des indicateurs         
@@ -770,7 +771,7 @@ class PlanningMCController extends AbstractController
      * @Route("/Demandes/Creation", name="Crea_Demandes")
      * @Route("/Demandes/Modification/{id}", name="Modif_Demandes")
      */
-    public function DemandesCrea( Request $requette,RequestStack $requestStack,EntityManagerInterface $manager,Demandes $demande=null,$datejour=null, userInterface $user=null)
+    public function DemandesCrea( Request $requette,RequestStack $requestStack,EntityManagerInterface $manager,Demandes $demande=null,$datejour=null, userInterface $user=null, ManagerRegistry $manaReg)
     {
 //Si la demande n'est pas déjà faite(modification), on l'a crée
         //dump($datejour);    
@@ -778,16 +779,16 @@ class PlanningMCController extends AbstractController
             //Création automatique par CE_POLYM
             if($requette->get('Demandes')){
                 //Récupération des données de la polym plannifié
-                $repo=$this->getDoctrine()->getRepository(Planning::class);
+                $repo=$manaReg->getRepository(Planning::class);
                 $Plan=$repo -> findBy(['id'=> $requette->get('IdPla')]);
                 //Récupération des données de la demande réccurante
-                $repo=$this->getDoctrine()->getRepository(Demandes::class);
+                $repo=$manaReg->getRepository(Demandes::class);
                 $Dem=$repo -> findBy(['id'=> $requette->get('Demandes')]);
                 //On marque cette récurrance comme validée
                 //dump($Dem[0]);
                 $demande=$Dem[0];
                 $demande->SetRecurValide(1);
-                $manager = $this->getDoctrine()->getManager();
+                $manager = $manaReg->getManager();
                 $manager->persist($demande);
                 $manager->flush();
                 //dump($demande);
@@ -887,7 +888,7 @@ class PlanningMCController extends AbstractController
                     $demande->setUserModif($user->getUsername());
                     $mode=false;
                 }
-                $manager = $this->getDoctrine()->getManager();
+                $manager = $manaReg->getManager();
                 $manager->persist($demande);
                 $manager->flush();
                 
@@ -918,7 +919,7 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/Demandes", name="Demandes")
      */
-    public function Demandes(Request $requette, EntityManagerInterface $manager,userInterface $user=null)
+    public function Demandes(Request $requette, EntityManagerInterface $manager,userInterface $user=null, ManagerRegistry $manaReg)
     {
         
 //Recherche des dates de la semaine encours pour les demandes avec récurrences
@@ -941,17 +942,17 @@ class PlanningMCController extends AbstractController
 //Visualisation des demandes en cours
     $demande=new Demandes();  
         if(!$demande){
-            $cycles = $this->getDoctrine()
+            $cycles = $manaReg
             ->getRepository(Demandes::class)
             ->findDemSem( $firstDateTime,$lastDateTime);
         }
         else{
-            $cycles = $this->getDoctrine()
+            $cycles = $manaReg
             ->getRepository(Demandes::class)
             ->findDemSem( $firstDateTime,$lastDateTime);
         }
     //Recherche des moyens à afficher sur planning
-        $repos=$this->getDoctrine()->getRepository(Moyens::class);
+        $repos=$manaReg->getRepository(Moyens::class);
         $moyens=$repos -> findBy(['Id_Service' => '8','Activitees' => 'Plannifie']);
         $item=$moyens;
         //$serializer = new Serializer();
@@ -966,10 +967,10 @@ class PlanningMCController extends AbstractController
         }
         $moyen= new JsonResponse($data);
 //Chargement d'une variable pour la réalisation de la nav-bar du menu et des sous-titres
-        $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
+        $repo=$manaReg->getRepository(ConfSmenu::class);
         $Titres=$repo -> findAll();
 //Chargement d'une variable pour les tâches déjà plannifiées
-    $repo=$this->getDoctrine()->getRepository(Planning::class);
+    $repo=$manaReg->getRepository(Planning::class);
     $Taches=$repo -> myFindByDays($firstDateTime,$lastDateTime);
     //$item=array();
         $data = [];
@@ -981,7 +982,7 @@ class PlanningMCController extends AbstractController
             $i = $i + 1;
         }
 //Chargement des polyms réalisées
-    $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+    $repo=$manaReg->getRepository(PolymReal::class);
     //$Polyms=$repo -> findAll();
     $Polyms=$repo->myFindByDays($firstDateTime);
         foreach($Polyms as $polym){ 
@@ -991,7 +992,7 @@ class PlanningMCController extends AbstractController
         $taches= new JsonResponse($data);
 //récupération des demandes récurrantes de la semaine dernière
 
-    $repo=$this->getDoctrine()->getRepository(Demandes::class);
+    $repo=$manaReg->getRepository(Demandes::class);
     if(!$requette->get('UtilisateursCE')){
         $DemRec=$repo -> findBy(['Reccurance'=>'1','UserCrea'=>$user->getUserIdentifier(),'Plannifie'=>'1','RecurValide'=>'0']);
     }
@@ -1000,7 +1001,7 @@ class PlanningMCController extends AbstractController
     }
     //$DemRec=$repo ->findDemRecur($lastDateTime,$firstDateTime,$user->getUsername());
 //Récupération des CE du moulage pour listing
-    $repo=$this->getDoctrine()->getRepository(User::class);    
+    $repo=$manaReg->getRepository(User::class);    
     $utilisateurs=$repo -> findByRole('ROLE_CE_MOULAGE');
 //Transfert des variables à la vue
         return $this->render('planning_mc/Demandes.html.twig',[
@@ -1019,9 +1020,9 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/Demandes/Supression/{id}", name="Sup_Demandes")
      */
-    public function demandeSup(EntityManagerInterface $manager,Demandes $demande=null)
+    public function demandeSup(EntityManagerInterface $manager,Demandes $demande=null, ManagerRegistry $manaReg)
     {
-        $manager = $this->getDoctrine()->getManager();
+        $manager = $manaReg->getManager();
             $manager->remove($demande);
             $manager->flush();
         return $this->redirectToRoute('Demandes');
@@ -1030,10 +1031,10 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/Demandes/Deprogrammation/{id}", name="Deprog_Demandes")
      */
-    public function demandeDeprog(Demandes $demande=null, \Swift_Mailer $mailer, userInterface $user=null)
+    public function demandeDeprog(Demandes $demande=null, \Swift_Mailer $mailer, userInterface $user=null, ManagerRegistry $manaReg)
     {
         //On récupère le CE polym
-        $repo=$this->getDoctrine()->getRepository(User::class);
+        $repo=$manaReg->getRepository(User::class);
         //$CEPolym= new User;
         //$CEPolym=$repo->findBy(['Roles'=> [0=>"ROLE_CE_POLYM"]]);
         $CEPolym="f.dartois@daher.com";
@@ -1059,12 +1060,12 @@ class PlanningMCController extends AbstractController
         $jour=new \datetime();
         $now=$jour->format('d/m/Y H:i');
         $demande->setCommentaires($comment."Demande d\'annulation faite par ".$user->getUsername()." le : ".$now);
-        $manager = $this->getDoctrine()->getManager();
+        $manager = $manaReg->getManager();
         $manager->persist($demande);
         $manager->flush();
 
         //Mettre le statut ANNULER sur la polym
-        $repoPla=$this->getDoctrine()->getRepository(Planning::class);
+        $repoPla=$manaReg->getRepository(Planning::class);
         $polPla=new Planning;
         $polPla=$repoPla->findOneBy(['NumDemande'=>$demande->getId()]);
         $polPla->setStatut('ANNULATION');
@@ -1079,19 +1080,19 @@ class PlanningMCController extends AbstractController
      * @Route("/Demandes/Plannification/{id}", name="Planif_Demandes")
      * @IsGranted("ROLE_PLANIF")
      */
-    public function DemandesPlanif( Request $requette,EntityManagerInterface $manager,Demandes $demande=null, ValidatorInterface $validator )
+    public function DemandesPlanif( Request $requette,EntityManagerInterface $manager,Demandes $demande=null, ValidatorInterface $validator, ManagerRegistry $manaReg )
     {
         $action= new Planning();
         $cycles= new ProgMoyens();
         $moyen= new Moyens();
         //dump($demande->getId('id'));
 //Récupération de la demande suivant ID
-        $cycles = $this->getDoctrine()
+        $cycles = $manaReg
                 ->getRepository(ProgMoyens::class)
                 ->findBy(['id' => $demande->getCycle('id')]);
         //dump($cycles[0]->getNom($demande->getCycle('id')));
 //Récupération de l'ID moyen suivant nom
-        $moyen = $this->getDoctrine()
+        $moyen = $manaReg
             ->getRepository(Moyens::class)
             ->findBy(['Libelle' => $requette->get('Moyen'.$demande->getId('id'))]);
 //Récupération du numéro d'action (içi le cycle)
@@ -1130,7 +1131,7 @@ class PlanningMCController extends AbstractController
                 $demande->setDateModif(new \datetime());
                 $mode=false;
             }
-            $manager = $this->getDoctrine()->getManager();
+            $manager = $manaReg->getManager();
             if(!$demande->getPlanning()){
                 $manager->persist($action);
                 $manager->flush();
@@ -1163,7 +1164,7 @@ class PlanningMCController extends AbstractController
      * @Route("/Planification", name="Planification")
      * @IsGranted("ROLE_PLANIF")
      */
-    public function Planification(request $requette,Demandes $demande=null, FunctIndic $indic)
+    public function Planification(request $requette,Demandes $demande=null, FunctIndic $indic, ManagerRegistry $manaReg)
     {
 //Création des indicateurs
     //Recherche du début et de la fin de semaine à plannifier
@@ -1172,7 +1173,7 @@ class PlanningMCController extends AbstractController
         $currentMonthDateTime = new \DateTime();
         $DebSem = $currentMonthDateTime->modify('monday next week');
     //Création de la variable charge totale sur la semaine
-        $repo=$this->getDoctrine()->getRepository(Planning::class);
+        $repo=$manaReg->getRepository(Planning::class);
         $CharTot= $indic->chargTot($repo, $FinSem, $DebSem);
 
     $TpsOuvParMach=intval(24*7);
@@ -1197,12 +1198,12 @@ class PlanningMCController extends AbstractController
         $lastDateTime = $lastDateTime->modify('23 hours');
     }
 //Chargement d'une variable pour toutes les demandes créées
-    $test = $this->getDoctrine()
+    $test = $manaReg
     ->getRepository(demandes::class)
     ->myFindByDays($firstDateTime);
 
 //Recherche des moyens à afficher sur planning
-        $repos=$this->getDoctrine()->getRepository(Moyens::class);
+        $repos=$manaReg->getRepository(Moyens::class);
         $moyens=$repos -> findBy(['Id_Service' => '8','Activitees' => 'Plannifie']);
         $item=$moyens;
         //$serializer = new Serializer();
@@ -1217,7 +1218,7 @@ class PlanningMCController extends AbstractController
         }
         $moyen= new JsonResponse($data);
 //Chargement d'une variable pour les tâches déjà plannifiées
-        $repo=$this->getDoctrine()->getRepository(Planning::class);
+        $repo=$manaReg->getRepository(Planning::class);
         $Taches=$repo -> findBy([],['DebutDate'=>'DESC'],3000);
         //$item=array();
 
@@ -1238,7 +1239,7 @@ class PlanningMCController extends AbstractController
         $taches= new JsonResponse($data);
         
 //Chargement des éléments du nav-bar menu
-        $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
+        $repo=$manaReg->getRepository(ConfSmenu::class);
         $Titres=$repo -> findAll();
 //Envoie au template Plannification
         return $this->render('planning_mc/Planification.html.twig',[
@@ -1259,7 +1260,7 @@ class PlanningMCController extends AbstractController
      * @Route("/Plannification/Modification", name="Modif_Polym_Pla")
      * @IsGranted("ROLE_PLANIF")
      */
-    public function Modif_Polym_Pla(Request $request, Planning $Polyms=null)
+    public function Modif_Polym_Pla(Request $request, Planning $Polyms=null, ManagerRegistry $manaReg)
     {
         //Si c'est le retour de la requette AJAX, on récupère les données
         if($request->isXmlHttpRequest()) {
@@ -1277,12 +1278,12 @@ class PlanningMCController extends AbstractController
             $lastDateTime=date("Y-m-d H:i",strtotime($request->request->get('newdatefin')));
             $newfindate = new \DateTime($lastDateTime);
             //Récupération de la désignation du moyen suivant id
-            $basemoy = $this->getDoctrine()->getRepository(Moyens::class);
+            $basemoy = $manaReg->getRepository(Moyens::class);
             $moyen = $basemoy->findBy(['id' => $idmoyen]);
             //dump($idPolymPla);//die();
             if($idPolymPla) {
 
-                $mr = $this->getDoctrine()->getRepository(Planning::class);
+                $mr = $manaReg->getRepository(Planning::class);
                 //$maga = $mr->findOneBySomeField($olddebdate,$oldfindate,$moyen[0]->getLibelle($idmoyen));
                 $maga=$mr->findBy(['id' => $idPolymPla]);
                 $old=$request->request->get('olddatedeb');
@@ -1293,7 +1294,7 @@ class PlanningMCController extends AbstractController
                 $maga[0]->getNumDemande()->setMoyenUtilise($moyen[0]);
                 $maga[0]->setIdentification($moyen[0]->getLibelle());
 
-                $manager = $this->getDoctrine()->getManager();
+                $manager = $manaReg->getManager();
                 $manager->persist($maga[0]);
                 $manager->flush();
                 
@@ -1308,9 +1309,9 @@ class PlanningMCController extends AbstractController
 	/**
      * @Route("/Utilisateurs", name="Utilisateurs")
      */
-    public function Utilisateurs()
+    public function Utilisateurs(ManagerRegistry $manaReg)
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
+        $repo=$manaReg->getRepository(ConfSmenu::class);
 
         $Titres=$repo -> findAll();
 
@@ -1321,9 +1322,9 @@ class PlanningMCController extends AbstractController
 	/**
      * @Route("/Ameliorations", name="Ameliorations")
      */
-    public function Ameliorations()
+    public function Ameliorations(ManagerRegistry $manaReg)
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
+        $repo=$manaReg->getRepository(ConfSmenu::class);
 
         $Titres=$repo -> findAll();
 
@@ -1334,9 +1335,9 @@ class PlanningMCController extends AbstractController
 	/**
      * @Route("/Tracabilite", name="Tracabilite")
      */
-    public function Tracabilite()
+    public function Tracabilite(ManagerRegistry $manaReg)
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
+        $repo=$manaReg->getRepository(ConfSmenu::class);
 
         $Titres=$repo -> findAll();
 
@@ -1347,9 +1348,9 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/METHODES/PE", name="PE")
      */
-    public function PE()
+    public function PE( ManagerRegistry $manaReg)
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
 
         $Titres=$repo -> findBy(['Description' => 'PE']);
 
@@ -1361,9 +1362,9 @@ class PlanningMCController extends AbstractController
      * @Route("/METHODES/PROGRAMMATION", name="PROGRAMMATION")
      * @IsGranted("ROLE_PROGRAMMEUR")
      */
-    public function PROGRAMMATION()
+    public function PROGRAMMATION( ManagerRegistry $manaReg)
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
 
         $Titres=$repo -> findBy(['Description' => 'PROGRAMMATION']);
 
@@ -1374,9 +1375,9 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/METHODES/OUTILLAGES", name="OUTILLAGES")
      */
-    public function OUTILLAGE()
+    public function OUTILLAGE( ManagerRegistry $manaReg)
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
 
         $Titres=$repo -> findBy(['Description' => 'OUTILLAGE']);
 
@@ -1387,9 +1388,9 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/METHODES/DATA_TOOLS", name="DATA_TOOLS")
      */
-    public function DATATOOLS()
+    public function DATATOOLS( ManagerRegistry $manaReg)
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
 
         $Titres=$repo -> findBy(['Description' => 'DATA_TOOLS']);
 
@@ -1402,14 +1403,14 @@ class PlanningMCController extends AbstractController
      * @Route("/LOGISTIQUE/Ordonnancement", name="Ordo")
      * @IsGranted("ROLE_PLANIF")
      */
-    public function Ordo(FunctChargPlan $charge)
+    public function Ordo(FunctChargPlan $charge, ManagerRegistry $manaReg)
         {
             dump($charge);
-        $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
+        $repo=$manaReg->getRepository(ConfSmenu::class);
         $Titres=$repo -> findAll();
 
         // Création de la charge totale SAP
-        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        $repo=$manaReg->getRepository(Charge::class);
         $ChargTot=$repo -> findAll();
         
         // Création de la table de répartition des programmes suivant OF SAP lancés sur 1 mois
@@ -1442,10 +1443,10 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/LOGISTIQUE/Plannification", name="PreviPlannif")
      */
-    public function PreviPlannif(FunctChargPlan $charge)
+    public function PreviPlannif(FunctChargPlan $charge, ManagerRegistry $manaReg)
     {
         //Création de la planification à long terme avec les chargements figés
-        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        $repo=$manaReg->getRepository(Charge::class);
         // Création de la table de répartition des programmes suivant OF SAP lancés sur 1 mois
         // Date à aujourd'hui
         $jour= new \datetime;
@@ -1453,7 +1454,7 @@ class PlanningMCController extends AbstractController
         $jourVisu = date("Y-m-d", strtotime('+ 31 days'.date('Y') ));
         $jourVisu=new \datetime($jourVisu);
         //Récupération des chargements validés pour ces dates 
-        $repoChargmnt=$this->getDoctrine()->getRepository(Chargement::class);
+        $repoChargmnt=$manaReg->getRepository(Chargement::class);
         $ChargPlaMois=$charge->listCharg($jour, $jourVisu, $repoChargmnt, $repo);
         // $ChargPlaMois=$repoChargmnt->myFindChargtMois($jour,$jourVisu);
         // //On rajoute les OF aux données de chargement
@@ -1480,10 +1481,10 @@ class PlanningMCController extends AbstractController
         $m=0;
         $nbMessErr=0;
         foreach($ChargeTot as $Creno){
-            $cata=$this->getDoctrine()->getRepository(ChargFige::class);
-            $STD=$this->getDoctrine()->getRepository(ProgMoyens::class);
-            $Out=$this->getDoctrine()->getRepository(Outillages::class);
-            $Art=$this->getDoctrine()->getRepository(Articles::class);
+            $cata=$manaReg->getRepository(ChargFige::class);
+            $STD=$manaReg->getRepository(ProgMoyens::class);
+            $Out=$manaReg->getRepository(Outillages::class);
+            $Art=$manaReg->getRepository(Articles::class);
             $ListCTO=$charge->checkCTO($repoChargmnt, $cata, $STD, $repo, $Out, $Art, $Creno, $TbPcSsOT, $m);
             dump($ListCTO);
             $TbRepartChargeTot[$i]=$ListCTO;
@@ -1507,10 +1508,10 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/LOGISTIQUE/Creation/ChargeOF", name="Charge_OF", condition="request.isXmlHttpRequest()")
      */
-    public function chargeOF(Request $request)
+    public function chargeOF(Request $request, ManagerRegistry $manaReg)
     {
         //Récupération des OF contenus dans la charge du jour
-        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        $repo=$manaReg->getRepository(Charge::class);
         $listOFCharge=$repo->findBy(['DateDeb' => new \datetime($request->request->get('date')), 'NumProg' => $request->request->get('prog')]);
         
         return $this->render('planning_mc/form/_formChargeOF.html.twig', [
@@ -1522,16 +1523,16 @@ class PlanningMCController extends AbstractController
      /**
      * @Route("/LOGISTIQUE/Creation/Chargement", name="Chargt_Crea", condition="request.isXmlHttpRequest()")
      */
-    public function chargtCrea(Request $request, EntityManagerInterface $manager)
+    public function chargtCrea(Request $request, EntityManagerInterface $manager, ManagerRegistry $manaReg)
     {
         $chargt= new Chargement;
         //On va récupérer le cycle machine par la désignation
-        $repo=$this->getDoctrine()->getRepository(ProgMoyens::class);
+        $repo=$manaReg->getRepository(ProgMoyens::class);
         $idProgram=$repo->findOneBy(['Nom'=> $request->get('cycle')]);
         dump($idProgram);
         //Création d'un tableau des OF du chargement
-        $repoChar=$this->getDoctrine()->getRepository(Charge::class);
-        $manager = $this->getDoctrine()->getManager();
+        $repoChar=$manaReg->getRepository(Charge::class);
+        $manager = $manaReg->getManager();
         foreach ($request->get('charge') as $OT) {
             foreach ($OT as $OF) {
                 $tbOF=$repoChar->FindOneBy(['OrdreFab'=> $OF['OF'],'NumProg'=> $request->get('cycle')]);
@@ -1549,12 +1550,12 @@ class PlanningMCController extends AbstractController
         $chargt->setProgramme($request->get('cycle'));
         $chargt->setDatePlannif(new \datetime($request->get('jour')));
 
-        $manager = $this->getDoctrine()->getManager();
+        $manager = $manaReg->getManager();
         $manager->persist($chargt);
         $manager->flush();
 
         //Une fois le chargement créé, on valide les OF dans la charge en mettant l'ID
-        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        $repo=$manaReg->getRepository(Charge::class);
         
         $this->addFlash('success', "Enregistrement du chargement n° ".$chargt->getId()." effectué avec succès");
 
@@ -1564,10 +1565,10 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/LOGISTIQUE/Export/Chargement", name="Chargt_ExportSAP")
      */
-    public function ChargtExport(FunctChargPlan $charge)
+    public function ChargtExport(FunctChargPlan $charge, ManagerRegistry $manaReg)
     {
         //Création de la planification à long terme avec les chargements figés
-        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        $repo=$manaReg->getRepository(Charge::class);
         // Création de la table de répartition des programmes suivant OF SAP lancés sur 1 mois
         // Date à aujourd'hui
         $jour= new \datetime;
@@ -1575,7 +1576,7 @@ class PlanningMCController extends AbstractController
         $jourVisu = date("Y-m-d", strtotime('+ 31 days'.date('Y') ));
         $jourVisu=new \datetime($jourVisu);
         //Récupération des chargements validés pour ces dates 
-        $repoChargmnt=$this->getDoctrine()->getRepository(Chargement::class);
+        $repoChargmnt=$manaReg->getRepository(Chargement::class);
 
         $tbChargement=$charge->listCharg($jour, $jourVisu, $repoChargmnt, $repo);
         $myFileOFOP="OF;OP;CONF;DATE;ID;\n";
@@ -1606,15 +1607,15 @@ class PlanningMCController extends AbstractController
      /**
      * @Route("/LOGISTIQUE/Delete/Chargement", name="Chargt_Delete", condition="request.isXmlHttpRequest()")
      */
-    public function ChargtDelete(Request $request, EntityManagerInterface $manager)
+    public function ChargtDelete(Request $request, EntityManagerInterface $manager, ManagerRegistry $manaReg)
     {
         $chargt= new Chargement;
         //On va récupérer le chargement suivant l'id donné
-        $repo=$this->getDoctrine()->getRepository(Chargement::class);
+        $repo=$manaReg->getRepository(Chargement::class);
         $chargt=$repo->findOneBy(['id'=> $request->get('id')]);
         dump($chargt);
         //Suppression des OF du chargement
-        $repoChar=$this->getDoctrine()->getRepository(Charge::class);
+        $repoChar=$manaReg->getRepository(Charge::class);
         $datasOF=new Charge;
         $OFs=$repoChar->FindBy(['chargement'=>$request->get('id')]);
         foreach($OFs as $OF) {
@@ -1623,7 +1624,7 @@ class PlanningMCController extends AbstractController
             $OF->setStatut('OUV');
         }
 
-        $manager = $this->getDoctrine()->getManager();
+        $manager = $manaReg->getManager();
         $manager->remove($chargt);
         $manager->flush();
 
@@ -1635,7 +1636,7 @@ class PlanningMCController extends AbstractController
      /**
      * @Route("/LOGISTIQUE/Creation/Datas_Chargement", name="tbDatasChargt_Crea", condition="request.isXmlHttpRequest()")
      */
-    public function tbDatasChargtCrea(Request $request)
+    public function tbDatasChargtCrea(Request $request, ManagerRegistry $manaReg)
     {
         return $this->render('planning_mc/form/_form_tbDatasCharg.html.twig', [
             'Datas' => $request->get('chargement'),
@@ -1645,10 +1646,10 @@ class PlanningMCController extends AbstractController
      /**
      * @Route("/LOGISTIQUE/Creation/Datas_CTO", name="tbDatasCTO_Crea", condition="request.isXmlHttpRequest()")
      */
-    public function tbDatasCTOCrea(Request $request, FunctChargPlan $charge)
+    public function tbDatasCTOCrea(Request $request, FunctChargPlan $charge, ManagerRegistry $manaReg)
     {
-        $Out=$this->getDoctrine()->getRepository(Outillages::class);
-        $Art=$this->getDoctrine()->getRepository(Articles::class);
+        $Out=$manaReg->getRepository(Outillages::class);
+        $Art=$manaReg->getRepository(Articles::class);
         $listeOT = $Out->myFindByCharFiG($request->get('Code'));
             $TbListeOT=$charge->tboDatasCTO($listeOT);
             foreach ($TbListeOT as $OTCTO) {
@@ -1665,9 +1666,9 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/LOGISTIQUE/Urgences", name="Urgences")
      */
-    public function Urgences(Request $requette, EntityManagerInterface $manager)
+    public function Urgences(Request $requette, EntityManagerInterface $manager, ManagerRegistry $manaReg)
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
+        $repo=$manaReg->getRepository(ConfSmenu::class);
         $Titres=$repo -> findAll();
 
         return $this->render('planning_mc/Urgences.html.twig', [
@@ -1679,9 +1680,9 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/LOGISTIQUE/Bloquants", name="Bloquants")
      */
-    public function Bloquants()
+    public function Bloquants(ManagerRegistry $manaReg)
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSmenu::class);
+        $repo=$manaReg->getRepository(ConfSmenu::class);
         $Titres=$repo -> findAll();
 
         return $this->render('planning_mc/Bloquants.html.twig', [
@@ -1693,9 +1694,9 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/LOGISTIQUE/Bloquants/OFErrConf", name="OFErrConf")
      */
-    public function OFErrConf()
+    public function OFErrConf(ManagerRegistry $manaReg)
     {
-        $repo=$this->getDoctrine()->getRepository(Charge::class);
+        $repo=$manaReg->getRepository(Charge::class);
         $ChargeOFDefConf=$repo -> myFindOFStatut("ERRCONF");
 
         return $this->render('planning_mc/form/_form_tbOFDefConf.html.twig', [
@@ -1725,9 +1726,9 @@ class PlanningMCController extends AbstractController
      * @Route("/METHODES/PE/Creation_PE", name="Creation PE")
      * @Route("/METHODES/PE/Modification_PE/{id}", name="Modification_PE")
      */
-    public function Creation_PE(Request $Requet,EntityManagerInterface $manager,ProgMoyens $Prog=null)
+    public function Creation_PE(Request $Requet,EntityManagerInterface $manager,ProgMoyens $Prog=null, ManagerRegistry $manaReg)
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'PE']);
         
         return $this->render('planning_mc/articles/edit.html.twig',[
@@ -1739,7 +1740,7 @@ class PlanningMCController extends AbstractController
      * @Route("/METHODES/PROGRAMMATION/Creation_PRP", name="Creation PRP")
      * @Route("/METHODES/PROGRAMMATION/Modification_PRP/{id}", name="Modification_PRP")
      */
-    public function Creation_PRP(Request $Requet,EntityManagerInterface $manager,ProgMoyens $Prog=null)
+    public function Creation_PRP(Request $Requet,EntityManagerInterface $manager,ProgMoyens $Prog=null, ManagerRegistry $manaReg)
     {
 //Si pas de programmes connus, c'est une création sinon une modif
         if(!$Prog){
@@ -1766,7 +1767,7 @@ class PlanningMCController extends AbstractController
             return $this->redirectToRoute('Consultation');
         }
 
-        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
 
         $Titres=$repo -> findBy(['Description' => 'PROGRAMMATION']);
         //dump($Titres);
@@ -1781,9 +1782,9 @@ class PlanningMCController extends AbstractController
      * @Route("/METHODES/PROGRAMMATION/Creation_ChargF", name="Creation Chargement Fige")
      * @Route("/METHODES/PROGRAMMATION/Modification_ChargF/{id}", name="Modification_Charge")
      */
-    public function Creation_ChargeF(Request $Requet,EntityManagerInterface $manager,ProgMoyens $Prog=null)
+    public function Creation_ChargeF(Request $Requet,EntityManagerInterface $manager,ProgMoyens $Prog=null, ManagerRegistry $manaReg)
     {
-        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'PROGRAMMATION']);
         //dump($Titres);
         
@@ -1796,16 +1797,16 @@ class PlanningMCController extends AbstractController
      * @Route("/METHODES/PROGRAMMATION/Consultation", name="Consultation PRP")
      * @Route("METHODES/PROGRAMMATION/Consultation/{id}", name="Consul_ProgMoy")
      */
-    public function Consultation_PRP(CategoryMoyens $moyen=null)
+    public function Consultation_PRP(CategoryMoyens $moyen=null, ManagerRegistry $manaReg)
     {
 //Si pas de moyen affecté, c'est une consulation générale des programmes        
         if(!$moyen){
-            $cycles = $this->getDoctrine()
+            $cycles = $manaReg
             ->getRepository(ProgMoyens::class)
             ->findAll();
         }
 //Sinon par type de moyen du programme consulté
-        else{$cycles = $this->getDoctrine()
+        else{$cycles = $manaReg
             ->getRepository(ProgMoyens::class)
             ->findOneBySomeField($moyen->getId());
 
@@ -1815,11 +1816,11 @@ class PlanningMCController extends AbstractController
         //$category = $cycles->getCateMoyen();}
         //dump($category);
         $moyen=new CategoryMoyens();
-        $repo=$this->getDoctrine()->getRepository(CategoryMoyens::class);
+        $repo=$manaReg->getRepository(CategoryMoyens::class);
         $moyen=$repo -> findall();
         dump($moyen);
 
-        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'PROGRAMMATION']);
         dump($Titres);
         dump($cycles);
@@ -1835,9 +1836,9 @@ class PlanningMCController extends AbstractController
      * @Route("/OUTILLAGE/Article/Creation", name="CreationO")
      * @Route("/OUTILLAGE/Article/Modification/{id}", name="ModificationO")
      */
-    public function CreationO(Request $Requet,EntityManagerInterface $manager,Outillages $OT=null)
+    public function CreationO(Request $Requet,EntityManagerInterface $manager,Outillages $OT=null, ManagerRegistry $manaReg)
         {
-        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'OUTILLAGE']);
 
         if(!$OT){
@@ -1859,7 +1860,7 @@ class PlanningMCController extends AbstractController
                 //$Prog->setDateModif(new \datetime());
             
             }
-            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager = $manaReg->getManager();
             $entityManager->persist($OT);
             $entityManager->flush();
             dump($OT);
@@ -1878,13 +1879,13 @@ class PlanningMCController extends AbstractController
      * @Route("/OUTILLAGE/Article/Consultation", name="ConsultationO")
      * @Route("/OUTILLAGE/Article/Consultation/{id}", name="ConsulO")
      */
-    public function ConsultationO(Outillages $OT=null)
+    public function ConsultationO(Outillages $OT=null, ManagerRegistry $manaReg)
     {
         $OT=new Outillages();
-        $repo=$this->getDoctrine()->getRepository(Outillages::class);
+        $repo=$manaReg->getRepository(Outillages::class);
         $OTs=$repo -> findall();
 
-        $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'OUTILLAGE']);
         
         return $this->render('planning_mc/ConsultationOutil.html.twig',[
@@ -1904,7 +1905,7 @@ class PlanningMCController extends AbstractController
      /**
      * @Route("/METHODES/Moyens", name="MOYENS_INDUS")
      */
-    public function CreationM(Request $Requet,EntityManagerInterface $manager,ProgMoyens $Prog=null)
+    public function CreationM(Request $Requet,EntityManagerInterface $manager,ProgMoyens $Prog=null, ManagerRegistry $manaReg)
         {
         //Recherche date du jour
         $DateJour = new \DateTime();
@@ -1913,7 +1914,7 @@ class PlanningMCController extends AbstractController
         $dateDebAn->modify('First day of january this year');
 
         //La requête remonte les moyens inférieur à 23 du service 8
-        $repo=$this->getDoctrine()->getRepository(Moyens::class);
+        $repo=$manaReg->getRepository(Moyens::class);
         $Moyen=$repo ->findMoyens(intval('8'),intval('23'));
         $Tablo = [];
         $i = 0;
@@ -1922,7 +1923,7 @@ class PlanningMCController extends AbstractController
             $JourDep = $currentMonthDateTime->modify('monday this week');
             $TboData = [];
             $j = 0;
-            $repo=$this->getDoctrine()->getRepository(PolymReal::class);
+            $repo=$manaReg->getRepository(PolymReal::class);
             $PMoy=$repo ->findCharMach($jour,$dateDebAn,$moyen['Moyen']);
             foreach($PMoy as $pmoy){
                 $y=intval($pmoy['DureTotPolyms'])/3600;
@@ -1959,7 +1960,7 @@ class PlanningMCController extends AbstractController
      * @Route("/ADMIN/Moyen/Creation", name="CreationMoyen")
      * @Route("/ADMIN/Moyen/Modification/{id}", name="ModificationMoyen")
      */
-    public function CreationMoyen(Request $Requet,EntityManagerInterface $manager,Moyens $Moyen=null)
+    public function CreationMoyen(Request $Requet,EntityManagerInterface $manager,Moyens $Moyen=null, ManagerRegistry $manaReg)
         {
             if(!$Moyen){
                 $Moyen=new Moyens();
@@ -1982,7 +1983,7 @@ class PlanningMCController extends AbstractController
     
                 return $this->redirectToRoute('Utilisateurs');
             }
-            $repo=$this->getDoctrine()->getRepository(ConfSsmenu::class);
+            $repo=$manaReg->getRepository(ConfSsmenu::class);
             $Titres=$repo -> findall();
             //dump($Titres);
         $form = $this->createForm(CreationMoyensType::class, $Moyen);
