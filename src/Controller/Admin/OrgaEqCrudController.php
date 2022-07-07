@@ -38,6 +38,7 @@ class OrgaEqCrudController extends AbstractCrudController
     {
         return $crud
         ->overrideTemplate('crud/index','admin/custom/my_index.html.twig')
+        ->setPageTitle('index','Planification')
         ;
     }
 
@@ -126,7 +127,7 @@ class OrgaEqCrudController extends AbstractCrudController
             $responseParameters->set('Equipes', $Equipes->getcontent());
             $responseParameters->set('datedeb', $dateDeb);
             $responseParameters->set('datefin', $dateFin);
-            $responseParameters->set('NomEquipe', $this->getUser()->getService()->getNom());
+            $responseParameters->set('NomEquipe', $this->getUser()->getService());
             $responseParameters->set('Rdvs', $rdvs);
         }
         return $responseParameters;

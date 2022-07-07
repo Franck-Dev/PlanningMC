@@ -19,7 +19,13 @@ class NomEquipeCrudController extends AbstractCrudController
     {
         return NomEquipe::class;
     }
-
+    
+    /**
+     * getNomManager
+     * @deprecated 
+     *
+     * @return void
+     */
     public function getNomManager()
     {
         $ListManager= $this->getDoctrine()
