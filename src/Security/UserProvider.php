@@ -71,6 +71,7 @@ class UserProvider implements UserProviderInterface, PasswordUpgraderInterface
 
     /**
      * Tells Symfony to use this provider for this User class.
+     * @return boolean
      */
     public function supportsClass(string $class)
     {
