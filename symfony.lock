@@ -343,6 +343,15 @@
             "ref": "1717e67afa995e4f01a25ba9ae7aca5b2327bcaa"
         }
     },
+    "symfony/google-mailer": {
+        "version": "6.1",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "4.4",
+            "ref": "f8fd4ddb9b477510f8f4bce2b9c054ab428c0120"
+        }
+    },
     "symfony/http-client": {
         "version": "v5.4.5"
     },
@@ -361,6 +370,18 @@
     "symfony/intl": {
         "version": "v3.4.17"
     },
+    "symfony/mailer": {
+        "version": "6.1",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "4.3",
+            "ref": "97a61eabb351d7f6cb7702039bcfe07fe9d7e03c"
+        },
+        "files": [
+            "./config/packages/mailer.yaml"
+        ]
+    },
     "symfony/maker-bundle": {
         "version": "1.0",
         "recipe": {
@@ -369,6 +390,18 @@
             "version": "1.0",
             "ref": "fadbfe33303a76e25cb63401050439aa9b1a9c7f"
         }
+    },
+    "symfony/messenger": {
+        "version": "6.1",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "6.0",
+            "ref": "2523f7d31488903e247a522e760dc279be7f7aaf"
+        },
+        "files": [
+            "./config/packages/messenger.yaml"
+        ]
     },
     "symfony/mime": {
         "version": "v4.3.2"
@@ -384,6 +417,18 @@
             "version": "3.1",
             "ref": "18ebf5a940573a20de06f9c4060101eeb438cf3d"
         }
+    },
+    "symfony/notifier": {
+        "version": "6.1",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "5.0",
+            "ref": "c31585e252b32fe0e1f30b1f256af553f4a06eb9"
+        },
+        "files": [
+            "./config/packages/notifier.yaml"
+        ]
     },
     "symfony/options-resolver": {
         "version": "v3.4.17"

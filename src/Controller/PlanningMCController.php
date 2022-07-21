@@ -35,6 +35,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use App\Repository\DefaultRepositoryFactory;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Mailer\MailerInterface;
 use Doctrine\Common\Persistence\ObjectManager;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -57,6 +58,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Mime\Email;
 
 //use Symfony\Component\HttpFoundation\Session\Session ;
 //use Symfony\Component\Serializer\Serializer;
@@ -1031,7 +1033,7 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/Demandes/Deprogrammation/{id}", name="Deprog_Demandes")
      */
-    public function demandeDeprog(Demandes $demande=null, \Swift_Mailer $mailer, userInterface $user=null, ManagerRegistry $manaReg)
+    public function demandeDeprog(Demandes $demande=null, userInterface $user=null, ManagerRegistry $manaReg, MailerInterface $mailer)
     {
         //On récupère le CE polym
         $repo=$manaReg->getRepository(User::class);
@@ -1040,26 +1042,28 @@ class PlanningMCController extends AbstractController
         $CEPolym="f.dartois@daher.com";
 
         //Envoyer un mail pour faire la demande de modification
-        $message = (new \Swift_Message('Demande de déprogrammation'))
+        $message = (new Email())
+            // Sujet du mail
+            ->subject('Demande de déprogramation')
             // On attribue l'expéditeur
-            ->setFrom($user->getEmail())
+            ->From($user->getMail())
 
             // On attribue le destinataire
-            ->setTo($CEPolym)
+            ->To($CEPolym)
+
+            // Copie au demandeur
+            ->cc($user->getMail())
 
             // On crée le texte avec la vue
-            ->setBody("Déprogrammation de la polymérisation n°...". $demande->getPlanning()->getId(),
-                'text/plain'
-            )
-        ;
+            ->html("<p>Deprogrammation de la polymerisation n° ". $demande->getPlanning()->getId()."</p>");
         $mailer->send($message);
 
-        $this->addFlash('Annulation', 'Votre message concernant l\'annulation de la demande n°'.$demande->getId(). 'a été transmis, nous vous répondrons dans les meilleurs délais.'); // Permet un message flash de renvoi
+        $this->addFlash('Annulation', 'Votre message concernant l\'annulation de la demande n°'.$demande->getId(). ' a été transmis, nous vous répondrons dans les meilleurs délais.'); // Permet un message flash de renvoi
         //Mettre commentaire sur la demande pour tracer la modification
         $comment=$demande->getCommentaires();
         $jour=new \datetime();
         $now=$jour->format('d/m/Y H:i');
-        $demande->setCommentaires($comment."Demande d\'annulation faite par ".$user->getUsername()." le : ".$now);
+        $demande->setCommentaires($comment."Demande d'annulation faite par ".$user->getUsername()." le : ".$now);
         $manager = $manaReg->getManager();
         $manager->persist($demande);
         $manager->flush();

@@ -111,6 +111,14 @@
             </div>
         </nav>
 		<div class="conteiner" >
+        {% if app.session.flashBag.has('Annulation') %}
+            <div class="alert alert-success">
+                {% for msg in app.session.flashBag.get('Annulation') %}
+                    {{ msg }}
+                {% endfor %}
+                <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+            </div>
+        {% endif %}
 			{% block body %}{% endblock %}
 		</div>
 		{% block javascripts %}

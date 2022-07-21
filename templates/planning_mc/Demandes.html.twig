@@ -33,6 +33,7 @@
             {% for msg in app.session.flashBag.get('Annulation') %}
                 {{ msg }}
             {% endfor %}
+			<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
         </div>
     {% endif %}
 	<div class="row">
