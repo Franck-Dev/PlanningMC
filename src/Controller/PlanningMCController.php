@@ -34,6 +34,7 @@ use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use App\Repository\DefaultRepositoryFactory;
+use App\Services\ComService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Mailer\MailerInterface;
 use Doctrine\Common\Persistence\ObjectManager;
@@ -773,7 +774,14 @@ class PlanningMCController extends AbstractController
      * @Route("/Demandes/Creation", name="Crea_Demandes")
      * @Route("/Demandes/Modification/{id}", name="Modif_Demandes")
      */
-    public function DemandesCrea( Request $requette,RequestStack $requestStack,EntityManagerInterface $manager,Demandes $demande=null,$datejour=null, userInterface $user=null, ManagerRegistry $manaReg)
+    public function DemandesCrea( Request $requette,
+    RequestStack $requestStack,
+    EntityManagerInterface $manager,
+    ManagerRegistry $manaReg,
+    ComService $com,
+    Demandes $demande=null,
+    $datejour=null,
+    userInterface $user=null)
     {
 //Si la demande n'est pas déjà faite(modification), on l'a crée
         //dump($datejour);    
@@ -894,15 +902,15 @@ class PlanningMCController extends AbstractController
                 $manager->persist($demande);
                 $manager->flush();
                 
-                $requette->getSession()->getFlashbag()->add('success', 'La demande'. $demande->getId() . 'a bien été enregistré.');
+                $com->sendNotif('La demande n° '. $demande->getId() . ' a bien été enregistré.');
+                //$requette->getSession()->getFlashbag()->add('success', 'La demande'. $demande->getId() . 'a bien été enregistré.');
 
                 if($mode==false){
-                    //dump($demande);
                     
                     return $this->redirectToRoute('Demandes');
                 }
                 else{
-                    dump($demande);
+                    //dump($demande);
                     //return $this->redirectToRoute('Demandes');
                 }
             }
@@ -921,7 +929,10 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/Demandes", name="Demandes")
      */
-    public function Demandes(Request $requette, EntityManagerInterface $manager,userInterface $user=null, ManagerRegistry $manaReg)
+    public function Demandes(Request $requette,
+    EntityManagerInterface $manager,
+    userInterface $user=null,
+    ManagerRegistry $manaReg)
     {
         
 //Recherche des dates de la semaine encours pour les demandes avec récurrences
@@ -1022,7 +1033,10 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/Demandes/Supression/{id}", name="Sup_Demandes")
      */
-    public function demandeSup(EntityManagerInterface $manager,Demandes $demande=null, ManagerRegistry $manaReg)
+    public function demandeSup(EntityManagerInterface $manager,
+    Demandes $demande=null,
+    ManagerRegistry $manaReg,
+    ComService $mailer)
     {
         $manager = $manaReg->getManager();
             $manager->remove($demande);
@@ -1033,32 +1047,28 @@ class PlanningMCController extends AbstractController
     /**
      * @Route("/Demandes/Deprogrammation/{id}", name="Deprog_Demandes")
      */
-    public function demandeDeprog(Demandes $demande=null, userInterface $user=null, ManagerRegistry $manaReg, MailerInterface $mailer)
+    public function demandeDeprog(Demandes $demande=null,
+    userInterface $user=null,
+    ManagerRegistry $manaReg,
+    ComService $com)
     {
         //On récupère le CE polym
         $repo=$manaReg->getRepository(User::class);
         //$CEPolym= new User;
         //$CEPolym=$repo->findBy(['Roles'=> [0=>"ROLE_CE_POLYM"]]);
-        $CEPolym="f.dartois@daher.com";
-
+        
         //Envoyer un mail pour faire la demande de modification
-        $message = (new Email())
-            // Sujet du mail
-            ->subject('Demande de déprogramation')
-            // On attribue l'expéditeur
-            ->From($user->getMail())
+        $datePolym=$demande->getPlanning()->getDebutDate()->format('l Y-m-d H:i:s');
+        $message="<p>Deprogrammation de la polymerisation n° ". $demande->getPlanning()->getId()." du ".$datePolym."</p>";
+        $subject='Demande de deprogrammation cycle : '.$demande->getCycle()->getNom();
+        //TODO : Faire la recherche du mail du chef d'équipe des moyens chauds et responsables
+        $CEPolym="f.dartois@daher.com";
+        $com->sendEmail($user->getMail(),$CEPolym,$subject,$message);
 
-            // On attribue le destinataire
-            ->To($CEPolym)
-
-            // Copie au demandeur
-            ->cc($user->getMail())
-
-            // On crée le texte avec la vue
-            ->html("<p>Deprogrammation de la polymerisation n° ". $demande->getPlanning()->getId()."</p>");
-        $mailer->send($message);
-
-        $this->addFlash('Annulation', 'Votre message concernant l\'annulation de la demande n°'.$demande->getId(). ' a été transmis, nous vous répondrons dans les meilleurs délais.'); // Permet un message flash de renvoi
+        //Envoie notification flash
+        $com->sendNotif('Votre message concernant l\'annulation de la demande n°'.$demande->getId(). ' a été transmis, nous vous répondrons dans les meilleurs délais.',['browser']);
+        //$this->addFlash($canal,$message); // Permet un message flash de renvoi
+        
         //Mettre commentaire sur la demande pour tracer la modification
         $comment=$demande->getCommentaires();
         $jour=new \datetime();
@@ -1084,7 +1094,12 @@ class PlanningMCController extends AbstractController
      * @Route("/Demandes/Plannification/{id}", name="Planif_Demandes")
      * @IsGranted("ROLE_PLANIF")
      */
-    public function DemandesPlanif( Request $requette,EntityManagerInterface $manager,Demandes $demande=null, ValidatorInterface $validator, ManagerRegistry $manaReg )
+    public function DemandesPlanif( Request $requette,
+    EntityManagerInterface $manager,
+    Demandes $demande=null, 
+    ValidatorInterface $validator, 
+    ManagerRegistry $manaReg,
+    ComService $com)
     {
         $action= new Planning();
         $cycles= new ProgMoyens();
@@ -1146,8 +1161,8 @@ class PlanningMCController extends AbstractController
                 $manager->remove($demande->getPlanning());
                 $manager->flush();
             }
-            
-            $requette->getSession()->getFlashbag()->add('success', 'Votre polym a été enregistré.');
+            $com->sendNotif('Votre polym a été enregistré.',['sucess']);
+            //$requette->getSession()->getFlashbag()->add('success', 'Votre polym a été enregistré.');
                 
             if($mode==false){
                     
