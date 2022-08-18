@@ -5,30 +5,68 @@
 {% block title %}Demandes de créneaux de polymérisations{% endblock %}
 
 {% block body %}
+
 	<h1>Demandes de créneaux de polymérisations ✅</h1>
+	<div class="d-flex align-items-center justify-content-center">
+		{{ form_start(formDemande) }}
+		<div class="form-row">
+			<div class="form-group col-md-4">
+				{{form_row(formDemande.cycle, {'attr' : {'placeholder' : "Nom de la polymérisation" }}) }}
+			</div>
+			<div class="form-group col-md-8">
+				{{form_row(formDemande.outillages, {'attr' : {'placeholder' : "Entrez les outillages" }}) }}
+			</div>
+		</div>
+		<div class="form-row align-items-center">
+			<div class="form-group col-md-4">
+				{{form_row(formDemande.date_propose, {'attr' : {'placeholder' : "Proposer une date" }}) }}
+			</div>
+			<div class="form-group col-md-3">
+				{{form_row(formDemande.heure_propose, {'attr' : {'placeholder' : "Proposer une horaire" }}) }}
+			</div>
+			<div class="form-group col-md-5">
+				{{form_row(formDemande.Reccurance, {'attr' : {'placeholder' : "True ou False" }}) }}
+			</div>
+		</div>
+		<div class="form-group">
+			{{form_row(formDemande.commentaires, {'attr' : {'placeholder' : "Entrez vos commentaires si besoin" }})}}
+		</div>
+		<div class="form-group">
+			{% if existDem == true %}
+				<button type="submit" class="btn btn-warning">
+					Modifier la Demande
+				</button>
+			{% else %}
+				<button type="submit" class="btn btn-success">
+					Enregistrer la Demande
+				</button>
+			{% endif %}
+		</div>
+		{{ form_end(formDemande) }}
+	</div>
+{% endblock %}
 
-
+{% block javascripts %}
+<script src="{{ asset('build/jquery.min.js') }}"></script>
+<script type="text/javascript">
+	//On récupère le programme sélectionné
+	$(document.forms.form[0]).change(function(){
+		console.log($(this).children("option:selected").text());
+		var prog =$(this).children("option:selected").text();
+		//On récupère les outillages liés au programme sélectionné
+		$.ajax({
+			cache: false,
+			type: 'GET',
+			data: {cycle: prog},
+			url: "{{ path('Crea_Demandes') }}",
+			success: function(data) 
+			{
+				console.log(data);
+				//$('#exampleModal').show();
+				//$('#content').show().html(data);
+			}
+		})
+	})  
 	
-	{{ form_start(formDemande) }}
-
-	{{form_row(formDemande.cycle, {'attr' : {'placeholder' : "Nom de la polymérisation" }}) }}
-	{{form_row(formDemande.date_propose, {'attr' : {'placeholder' : "Proposer une date" }}) }}
-	{{form_row(formDemande.heure_propose, {'attr' : {'placeholder' : "Proposer une horaire" }}) }}
-	{{form_row(formDemande.outillages, {'attr' : {'placeholder' : "Entrez les outillages" }}) }}
-	{{form_row(formDemande.commentaires, {'attr' : {'placeholder' : "Entrez vos commentaires si besoin" }}) }}
-	{{form_row(formDemande.Reccurance, {'attr' : {'placeholder' : "True ou False" }}) }}
-	
-	{% if existDem == true %}
-		<button type="submit" class="btn btn-warning">
-			Modifier la Demande
-		</button>
-	{% else %}
-		<button type="submit" class="btn btn-success">
-			Enregistrer la Demande
-		</button>
-	{% endif %}
-
-	{{ form_end(formDemande) }}
-
-
+</script>
 {% endblock %}

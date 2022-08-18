@@ -19,6 +19,7 @@ use App\Form\ComOutilType;
 use App\Form\DatePlanning;
 use App\Form\CreationOType;
 use App\Form\PolymFormType;
+use App\Services\ComService;
 use App\Services\FunctIndic;
 use App\Entity\CategoryMoyens;
 use App\Entity\TypeRecurrance;
@@ -30,11 +31,13 @@ use App\Form\CreationMoyensType;
 use App\Services\CallApiService;
 use App\Services\FunctChargPlan;
 use PhpParser\Node\Stmt\Foreach_;
+use Symfony\Component\Mime\Email;
 use Doctrine\ORM\EntityRepository;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use App\Repository\DefaultRepositoryFactory;
-use App\Services\ComService;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Mailer\MailerInterface;
 use Doctrine\Common\Persistence\ObjectManager;
@@ -55,11 +58,11 @@ use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
+use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Mime\Email;
 
 //use Symfony\Component\HttpFoundation\Session\Session ;
 //use Symfony\Component\Serializer\Serializer;
@@ -783,8 +786,7 @@ class PlanningMCController extends AbstractController
     $datejour=null,
     userInterface $user=null)
     {
-//Si la demande n'est pas déjà faite(modification), on l'a crée
-        //dump($datejour);    
+//Si la demande n'est pas déjà faite(modification), on l'a crée 
         if(!$demande){
             //Création automatique par CE_POLYM
             if($requette->get('Demandes')){
@@ -835,8 +837,15 @@ class PlanningMCController extends AbstractController
                       ])
                       -> add('date_propose', DateType::class, ['disabled' => 'true'])
                       -> add('heure_propose', TimeType::class, ['disabled' => 'true'])
-                      -> add('outillages')
-                      -> add('commentaires')
+                      -> add('outillages',ChoiceType::class, [
+                        'label'    => 'Outillages',
+                        'choices'  => [
+                            'NON' => false,
+                            'OUI' => true],
+                        'placeholder' =>   'Sélectionner les outillages à polymériser'
+                        ])
+                      -> add('commentaires', TextareaType::class, [
+                        'row_attr' => ['class' => 'text-editor', 'id' => 'Commentaire'],])
                       -> add('Reccurance',ChoiceType::class, [
                         'label'    => 'si besoin de figer cette polymérisation suivant une réccurance',
                         'choices'  => [
@@ -852,12 +861,24 @@ class PlanningMCController extends AbstractController
                 $form = $this -> createFormBuilder($demande)
                       -> add('cycle', EntityType::class, [
                           'class' => ProgMoyens::class,
-                          'choice_label' => 'nom'
-                      ])
+                          'query_builder' => function (EntityRepository $er) {
+                            return $er->createQueryBuilder('u')
+                                ->orderBy('u.Nom', 'DESC');
+                          },
+                          'choice_label' => 'nom',
+                          'placeholder' => 'Sélectionner votre cycle'
+                        ])
                       -> add('date_propose', DateType::class)
                       -> add('heure_propose', TimeType::class)
-                      -> add('outillages')
-                      -> add('commentaires')
+                      -> add('outillages',ChoiceType::class, [
+                        'label'    => 'Outillages',
+                        'choices'  => [
+                            'NON' => false,
+                            'OUI' => true],
+                        'placeholder' =>   'Sélectionner les outillages à polymériser'
+                        ])
+                      -> add('commentaires', TextareaType::class, [
+                        'row_attr' => ['class' => 'text-editor', 'id' => 'Commentaire'],])
                       -> add('Reccurance',ChoiceType::class, [
                         'label'    => 'si besoin de figer cette polymérisation suivant une réccurance',
                         'choices'  => [

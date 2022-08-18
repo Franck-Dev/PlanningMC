@@ -104,7 +104,7 @@
     	{% set moy ={id:  Moyen.id ,content: Moyen.Libelle} %}
 	{% endfor %}
 		<!-- Modal -->
-		<div class="modal" id="exampleModal" aria-hidden="true">
+		<div class="modal" id="demandesModal" aria-hidden="true">
 			<div class="modal-dialog" role="document">
 					{# <pre>{{dump('myDat')}}</pre>  #}
 				<div class="modal-content">
@@ -135,7 +135,7 @@
 				<tr>
 					<td colspan="11">
 						<button type="button" class="btn btn-info btn-block">
-							<a href="" data-toggle="modal" data-target="#exampleModal" data-jour={{ myDateJour|date('Y-m-d') }}>
+							<a href="{{ path('Crea_Demandes', {'datejour': myDateJour|date('Y-m-d')}) }}"  data-jour={{ myDateJour|date('Y-m-d') }}>
 									<span>CREER UNE DEMANDE POUR LE {{myDa}} {{myDat}}</span></a>
 						</button>
 					</td>
@@ -231,7 +231,6 @@ const locale = (lang && lang !== undefined) ? lang.match(/^\w{2}/)[0] :
         // create a handlebars template
         var source = document.getElementById('item-template').innerHTML;
         var template = Handlebars.compile(source);
-        console.log(template)
 var conteneur = document.getElementById ('visualization');
 
 var groups = {{Moyens|raw}};
@@ -251,23 +250,6 @@ var timeline = new vis.Timeline (conteneur, items, groups, options);
 
 <script src="{{ asset('build/jquery.min.js') }}"></script>
 <script type="text/javascript">   
-	$("a[data-toggle=modal]").click(function() 
-    { 	
-	var jour = $(this).attr('data-jour');
-	console.log(jour);
-	$.ajax({
-		cache: false,
-		type: 'POST',
-		data: {datejour: jour},
-		url: "{{ path('Crea_Demandes') }}",
-		success: function(data) 
-		{
-			console.log(data);
-			$('#exampleModal').show();
-            $('#content').show().html(data);
-		}
-	});
-});
 
 function Changeheure()
 {
