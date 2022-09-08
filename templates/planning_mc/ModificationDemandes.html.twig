@@ -2,16 +2,16 @@
 
 {% form_theme formDemande 'bootstrap_4_layout.html.twig'%}
 
-{% block title %}Demandes de créneaux de polymérisations{% endblock %}
+{% block title %}Modification d'une demande de polymérisation{% endblock %}
 
 {% block body %}
 
-	<h1>Demandes de créneaux de polymérisations ✅</h1>
+	<h1>Demande de polymérisations ✅</h1>
 	<div class="d-flex align-items-center justify-content-center">
 		{{ form_start(formDemande) }}
 		<div class="form-row">
 			<div class="form-group col-md-4">
-				{{form_row(formDemande.cycle, {'attr' : {'placeholder' : "Nom de la polymérisation" }}) }}
+				{{form_row(formDemande.cycle, {'attr' : {'placeholder' : "Nom de la polymérisation", 'readonly' : true }}) }}
 			</div>
 			<div class="form-group col-md-8">
 				{{form_row(formDemande.ListOF, {'attr' : {'placeholder' : "Sélectionner les OF" }}) }}
@@ -19,13 +19,13 @@
 		</div>
 		<div class="form-row align-items-center">
 			<div class="form-group col-md-4">
-				{{form_row(formDemande.date_propose, {'attr' : {'placeholder' : "Proposer une date" }}) }}
+				{{form_row(formDemande.date_propose, {'attr' : {'placeholder' : "Proposer une date", 'readonly' : true }}) }}
 			</div>
 			<div class="form-group col-md-3">
-				{{form_row(formDemande.heure_propose, {'attr' : {'placeholder' : "Proposer une horaire" }}) }}
+				{{form_row(formDemande.heure_propose, {'attr' : {'placeholder' : "Proposer une horaire", 'readonly' : true }}) }}
 			</div>
 			<div class="form-group col-md-5">
-				{{form_row(formDemande.Reccurance, {'attr' : {'placeholder' : "True ou False" }}) }}
+				{{form_row(formDemande.Reccurance, {'attr' : {'placeholder' : "True ou False", 'readonly' : true }}) }}
 			</div>
 		</div>
 		<div class="form-group">
@@ -35,9 +35,9 @@
 			{{form_row(formDemande.outillages, {'attr' : {'placeholder' : "Entrez les outillages si besoin" }})}}
 		</div>
 		<div class="form-group">
-			<button type="submit" class="btn btn-success">
-				Enregistrer la Demande
-			</button>
+				<button type="submit" class="btn btn-warning">
+					Modifier la Demande
+				</button>
 		</div>
 		{{ form_end(formDemande) }}
 	</div>

@@ -17,6 +17,7 @@ use App\Entity\Outillages;
 use App\Entity\ProgMoyens;
 use App\Form\ComOutilType;
 use App\Form\DatePlanning;
+use App\Form\DemandesType;
 use App\Form\CreationOType;
 use App\Form\PolymFormType;
 use App\Services\ComService;
@@ -33,6 +34,7 @@ use App\Services\FunctChargPlan;
 use PhpParser\Node\Stmt\Foreach_;
 use Symfony\Component\Mime\Email;
 use Doctrine\ORM\EntityRepository;
+use App\Repository\ChargeRepository;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
 use Doctrine\ORM\EntityManagerInterface;
@@ -63,6 +65,8 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+
+use function PHPUnit\Framework\isNull;
 
 //use Symfony\Component\HttpFoundation\Session\Session ;
 //use Symfony\Component\Serializer\Serializer;
@@ -786,164 +790,54 @@ class PlanningMCController extends AbstractController
     $datejour=null,
     userInterface $user=null)
     {
-//Si la demande n'est pas déjà faite(modification), on l'a crée 
-        if(!$demande){
-            //Création automatique par CE_POLYM
-            if($requette->get('Demandes')){
-                //Récupération des données de la polym plannifié
-                $repo=$manaReg->getRepository(Planning::class);
-                $Plan=$repo -> findBy(['id'=> $requette->get('IdPla')]);
-                //Récupération des données de la demande réccurante
-                $repo=$manaReg->getRepository(Demandes::class);
-                $Dem=$repo -> findBy(['id'=> $requette->get('Demandes')]);
-                //On marque cette récurrance comme validée
-                //dump($Dem[0]);
-                $demande=$Dem[0];
-                $demande->SetRecurValide(1);
-                $manager = $manaReg->getManager();
-                $manager->persist($demande);
-                $manager->flush();
-                //dump($demande);
-                //On créé la nouvelle demande avec les données de la récurrante
-                $demande = new Demandes();
-                $date=$requette->get('DatePla');
-                $DateSemAv = date("Y-m-d",strtotime(date("Y-m-d", strtotime($date)) . " +7 day"));
-                $HeurPolym=$requette->get('HeurePla');
-                $demande->setDatepropose(new \Datetime($DateSemAv));
-                $demande->setHeurePropose(new \Datetime($HeurPolym));
-                $demande->setCycle($Dem[0]->getCycle());
-                $demande->setOutillages($Dem[0]->getOutillages());
-                $demande->setMoyenUtilise($Dem[0]->getMoyenUtilise());
-                $demande->setCommentaires($Dem[0]->getCommentaires());
-                $newdemande=false;
-            }
-            else{
-                $demande = new Demandes();
-                $demande->setDatepropose(new \Datetime($requette->get('datejour')));
-                $newdemande=true; 
-            }
+        if (!$demande) {
+            $demande= new Demandes();
+            $demande->setDatepropose(new \Datetime($requette->get('datejour')));
+        } else {
+            # code...
         }
-        else{
-            $newdemande=false;
-            //dump($user);
-        }
-            //Dans la construction du form, on vérifie si la demande est déjà validée lors d'une modif et on bloque des éléments
-            if($demande->getPlannifie()==true){
-                $form = $this -> createFormBuilder($demande)
-                      -> add('cycle', EntityType::class, [
-                          'class' => ProgMoyens::class,
-                          'choice_label' => 'nom',
-                          'disabled' => 'true'
-                      ])
-                      -> add('date_propose', DateType::class, ['disabled' => 'true'])
-                      -> add('heure_propose', TimeType::class, ['disabled' => 'true'])
-                      -> add('outillages',ChoiceType::class, [
-                        'label'    => 'Outillages',
-                        'choices'  => [
-                            'NON' => false,
-                            'OUI' => true],
-                        'placeholder' =>   'Sélectionner les outillages à polymériser'
-                        ])
-                      -> add('commentaires', TextareaType::class, [
-                        'row_attr' => ['class' => 'text-editor', 'id' => 'Commentaire'],])
-                      -> add('Reccurance',ChoiceType::class, [
-                        'label'    => 'si besoin de figer cette polymérisation suivant une réccurance',
-                        'choices'  => [
-                            'NON' => false,
-                            'OUI' => true]])
-                      -> add('planning', DatePlanning::class,[
-                          'label'=> 'Planification de la demande pour info :'
-                      ])
-                      ->getForm();
-                $ExDem = true;
-            }
-            else{   
-                $form = $this -> createFormBuilder($demande)
-                      -> add('cycle', EntityType::class, [
-                          'class' => ProgMoyens::class,
-                          'query_builder' => function (EntityRepository $er) {
-                            return $er->createQueryBuilder('u')
-                                ->orderBy('u.Nom', 'DESC');
-                          },
-                          'choice_label' => 'nom',
-                          'placeholder' => 'Sélectionner votre cycle'
-                        ])
-                      -> add('date_propose', DateType::class)
-                      -> add('heure_propose', TimeType::class)
-                      -> add('outillages',ChoiceType::class, [
-                        'label'    => 'Outillages',
-                        'choices'  => [
-                            'NON' => false,
-                            'OUI' => true],
-                        'placeholder' =>   'Sélectionner les outillages à polymériser'
-                        ])
-                      -> add('commentaires', TextareaType::class, [
-                        'row_attr' => ['class' => 'text-editor', 'id' => 'Commentaire'],])
-                      -> add('Reccurance',ChoiceType::class, [
-                        'label'    => 'si besoin de figer cette polymérisation suivant une réccurance',
-                        'choices'  => [
-                            'NON' => false,
-                            'OUI' => true]])
-                      ->getForm();
-                $ExDem = false;
-            }
-//Si la demande existe c'est une modification , sinon une création
-        if($newdemande==false){
-            //dump($requette);
-        }
-        else{
-//C'est le résultat de la requette du template Demandes pour la création
-            if($requestStack->getParentRequest()){
-                $requette=$requestStack->getParentRequest();
-                $mode=true;
-            }
-            else{
-                $mode=false;
-            }
-        }
+        $form = $this->createForm(DemandesType::class, $demande);
         $form->handleRequest($requette);
-        if ($requette->isMethod('POST')) {
-        //$form->submit($requette->request->get($form->getName()));
-//On vérifie la validité des données avant de persister en base
-            if($form->isSubmitted() && $form->isValid()){
-                if(!$demande->getId()){
-                    $demande->setDateCreation(new \datetime());
-                    $demande->setPlannifie(0);
-                    $demande->setRecurValide(0);
-                    $demande->setUserCrea($user->getUsername());
-                    
-                }
-                else{
-                    $demande->setDateModif(new \datetime());
-                    //dump($user);
-                    $demande->setUserModif($user->getUsername());
-                    $mode=false;
-                }
-                $manager = $manaReg->getManager();
-                $manager->persist($demande);
-                $manager->flush();
-                
-                $com->sendNotif('La demande n° '. $demande->getId() . ' a bien été enregistré.');
-                //$requette->getSession()->getFlashbag()->add('success', 'La demande'. $demande->getId() . 'a bien été enregistré.');
 
-                if($mode==false){
-                    
-                    return $this->redirectToRoute('Demandes');
-                }
-                else{
-                    //dump($demande);
-                    //return $this->redirectToRoute('Demandes');
-                }
+        if ($form->isSubmitted() && $form->isValid()) {
+            //dd($demande->getListOF());
+            if(!$demande->getId()){
+                $demande->setDateCreation(new \datetime());
+                $demande->setPlannifie(0);
+                $demande->setRecurValide(0);
+                $demande->setUserCrea($user->getUsername());
+                //$demande->addListOF($demande->getListOF());                   
             }
+            else{
+                $demande->setDateModif(new \datetime());
+                //dump($user);
+                $demande->setUserModif($user->getUsername());
+            }
+            //Enregistrement de la demande
+            $manager = $manaReg->getManager();
+            $manager->persist($demande);
+            $manager->flush();
+            
+            $com->sendNotif('La demande n° '. $demande->getId() . ' a bien été enregistré.');
+            //$requette->getSession()->getFlashbag()->add('success', 'La demande'. $demande->getId() . 'a bien été enregistré.');
+                
+                return $this->redirectToRoute('Demandes');
         }
-//Pas de menu pour la fenêtre modale, juste le retour à l'accueil
+
         $Titres=[];
 
-        return $this->render('planning_mc/CreationDemandes.html.twig',[
-           'Titres' => $Titres,
-           'existDem' => $ExDem,
-           'formDemande' => $form->createView()
-        ]);
+        if (!$demande->getId()){
+            return $this->render('planning_mc/CreationDemandes.html.twig',[
+                'Titres' => $Titres,
+                'formDemande' => $form->createView()
+             ]);
+        } else {
+            return $this->render('planning_mc/ModificationDemandes.html.twig',[
+                'Titres' => $Titres,
+                'formDemande' => $form->createView()
+             ]);
+        }
+
         
     }
 
@@ -1444,8 +1338,8 @@ class PlanningMCController extends AbstractController
      * @IsGranted("ROLE_PLANIF")
      */
     public function Ordo(FunctChargPlan $charge, ManagerRegistry $manaReg)
-        {
-            dump($charge);
+        {   
+        //Titres pour le menu
         $repo=$manaReg->getRepository(ConfSmenu::class);
         $Titres=$repo -> findAll();
 

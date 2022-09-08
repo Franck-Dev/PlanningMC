@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -91,6 +93,16 @@ class Demandes
      * @ORM\Column(type="boolean", nullable=true)
      */
     private $RecurValide;
+
+    /**
+     * @ORM\OneToMany(targetEntity=Charge::class, mappedBy="demandes")
+     */
+    private $ListOF;
+
+    public function __construct()
+    {
+        $this->ListOF = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -279,6 +291,37 @@ class Demandes
     public function setRecurValide(?bool $RecurValide): self
     {
         $this->RecurValide = $RecurValide;
+
+        return $this;
+    }
+
+     /**
+     * @return Collection|Charge[]
+     */
+    public function getListOF(): Collection
+    {
+        return $this->ListOF;
+    }
+
+    public function addListOF(Charge $listOF): self
+    {
+        if (!$this->ListOF->contains($listOF)) {
+            $this->ListOF[] = $listOF;
+            $listOF->setDemandes($this);
+        }
+
+        return $this;
+    }
+
+    public function removeListOF(Charge $listOF): self
+    {
+        if ($this->ListOF->contains($listOF)) {
+            $this->ListOF->removeElement($listOF);
+            // set the owning side to null (unless already changed)
+            if ($listOF->getDemandes() === $this) {
+                $listOF->setDemandes(null);
+            }
+        }
 
         return $this;
     }

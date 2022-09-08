@@ -81,6 +81,31 @@ class Charge
      */
     private $Polym;
 
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $ficheInstruc;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $outillage;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $equipement;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=Demandes::class, cascade={"persist", "remove"}, inversedBy="ListOF")
+     */
+    private $demandes;
+
+    public function __toString(): string
+    {
+        return (string) $this->getOrdreFab().$this->getDesignationPcs();
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -238,6 +263,54 @@ class Charge
     public function setPolym(?PolymReal $Polym): self
     {
         $this->Polym = $Polym;
+
+        return $this;
+    }
+
+    public function getFicheInstruc(): ?string
+    {
+        return $this->ficheInstruc;
+    }
+
+    public function setFicheInstruc(?string $ficheInstruc): self
+    {
+        $this->ficheInstruc = $ficheInstruc;
+
+        return $this;
+    }
+
+    public function getOutillage(): ?string
+    {
+        return $this->outillage;
+    }
+
+    public function setOutillage(?string $outillage): self
+    {
+        $this->outillage = $outillage;
+
+        return $this;
+    }
+
+    public function getEquipement(): ?string
+    {
+        return $this->equipement;
+    }
+
+    public function setEquipement(?string $equipement): self
+    {
+        $this->equipement = $equipement;
+
+        return $this;
+    }
+
+    public function getDemandes(): ?Demandes
+    {
+        return $this->demandes;
+    }
+
+    public function setDemandes(?Demandes $demandes): self
+    {
+        $this->demandes = $demandes;
 
         return $this;
     }

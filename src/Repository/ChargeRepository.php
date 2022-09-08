@@ -104,7 +104,15 @@ class ChargeRepository extends ServiceEntityRepository
         // returns an array of Product objects
         return $query -> execute ();
     }
-    
+        
+    /**
+     * findReparChargeWCycle
+     *
+     * @param  mixed $dateD
+     * @param  mixed $dateF
+     * @param  string $cycle
+     * @return array
+     */
     public function findReparChargeWCycle ( $dateD,$dateF,$cycle ) : array
     {
         $entityManager = $this -> getEntityManager ();
@@ -190,15 +198,35 @@ class ChargeRepository extends ServiceEntityRepository
             // returns an array of Product objects
         return $query -> execute ();
     }
-    /*
-    public function findOneBySomeField($value): ?Charge
+    
+    /**
+     * findByCyc Récupération du vol de charge par cycle
+     *
+     * @param  mixed $cyc
+     * @param  mixed $dateF
+     * @return Charge
+     */
+    public function findByCyc($cyc, $dateF)
     {
-        return $this->createQueryBuilder('c')
-            ->andWhere('c.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
+        $qb = $this->_em->createQueryBuilder();
+        $qb->select('c.OrdreFab')
+            ->addSelect('c.PosteW')
+            ->addSelect('c.ReferencePcs')
+            ->addSelect('c.DesignationPcs')
+            ->addSelect('c.Conf')
+            ->addSelect('c.DateDeb')
+            ->addSelect('c.outillage')
+            ->from($this->_entityName, 'c')
+            ->andWhere('c.NumProg = :val')
+            ->andWhere('c.Statut = :stat')
+            ->andWhere('c.DateDeb < :dateF')
+            ->setParameter('val', $cyc)
+            ->setParameter('stat', 'OUV')
+            ->setParameter('dateF', $dateF)
+            ->orderBy('c.DateDeb', 'ASC')
         ;
+        
+        return $qb->getQuery()->getResult();
     }
-    */
+
 }
