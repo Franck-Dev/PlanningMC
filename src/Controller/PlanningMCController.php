@@ -950,12 +950,18 @@ class PlanningMCController extends AbstractController
      */
     public function demandeSup(EntityManagerInterface $manager,
     Demandes $demande=null,
+    userInterface $user=null,
     ManagerRegistry $manaReg,
-    ComService $mailer)
+    ComService $com)
     {
         $manager = $manaReg->getManager();
             $manager->remove($demande);
             $manager->flush();
+
+            $com->sendNotif('La demande n° '. $demande->getId() . ' a bien été supprimée.');
+            $message="<p>Supression de la demande n° ". $demande->getId()." du ".$demande->getDatePropose(). " ". $demande->getHeurePropose()."</p>";
+            $com->sendEmail($user->getMail(),'f.dartois@daher.com', 'La demande n° '. $demande->getId() . ' a bien été supprimée.', $message );
+
         return $this->redirectToRoute('Demandes');
     }
 
