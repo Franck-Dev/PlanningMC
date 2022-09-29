@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Services\CallApiService;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -101,9 +102,12 @@ class Charge
      */
     private $demandes;
 
+    private $perempCrit;
+
     public function __toString(): string
     {
-        return (string) $this->getOrdreFab().$this->getDesignationPcs();
+        return (string) $this->getOrdreFab()." / ".$this->getDesignationPcs()." / ".
+        $this->getDateDeb()->format('Y-m-d')." / ".$this->getPerempCrit();
     }
 
     public function getId(): ?int
@@ -313,5 +317,13 @@ class Charge
         $this->demandes = $demandes;
 
         return $this;
+    }
+
+    public function getPerempCrit(): ?string
+    {
+        //$idMM = ($this->demandes) ? 1 : $this->getOrdreFab();
+        //dd($this);
+        //return $this->api->getDatasAPI('/api/datasKits?page=1&itemsPerPage=25&idMM='.$idMM,'tracakit',[] ,'GET');
+        return $this->perempCrit;
     }
 }

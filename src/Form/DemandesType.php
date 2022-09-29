@@ -6,6 +6,7 @@ use App\Entity\Charge;
 use App\Entity\Demandes;
 use App\Entity\Planning;
 use App\Entity\ProgMoyens;
+use App\Services\ComService;
 use App\Repository\ChargeRepository;
 use Symfony\Component\Form\FormEvent;
 use Symfony\Component\Form\FormEvents;
@@ -23,10 +24,12 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 class DemandesType extends AbstractType
 {
     private $chargeRepository;
+    private $com;
 
-    public function __construct(chargeRepository $chargeRepository)
+    public function __construct(chargeRepository $chargeRepository, ComService $com)
     {
         $this->chargeRepository = $chargeRepository;
+        $this->com = $com;
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options)
@@ -42,8 +45,10 @@ class DemandesType extends AbstractType
         ]);
 
         $formModifier = function (FormInterface $form, ProgMoyens $cycle = null, $chargeRepository) {
-            $listOFCycle =  null === $cycle ? $chargeRepository->findBy(['Statut' => 'OUV']) : $chargeRepository->findBy(['NumProg' => $cycle->getNom(),'Statut' => 'OUV']);
-            //dump($listOFCycle);
+            $listOFCycle =  null === $cycle ? $chargeRepository->findBy(['Statut' => 'OUV'],['DateDeb' => 'ASC']) : $chargeRepository->findBy(['NumProg' => $cycle->getNom(),'Statut' => 'OUV'],
+            ['DateDeb' => 'ASC']);
+            //dump($chargeRepository->findByCyc('FP A34 STC', '2022-10-10', 'OUV'));
+            //dd($listOFCycle);
             $form->add('ListOF', EntityType::class, [
                 'class' => Charge::class,
                 'placeholder' => 'Sélectionner les OF',

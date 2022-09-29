@@ -5,6 +5,9 @@
 {% block stylesheets %}
     <link rel="stylesheet" href="{{ asset('build/vis.css') }}">
     <style type="text/css">
+		@media only screen and (max-width: 320px) {
+			
+		}
         table {
 			width: 100%;
 			font-size: 2vmin;
@@ -183,13 +186,19 @@
 						<td>{{ cycle.dateModif ? cycle.dateModif|date('d/m/Y H:i:s') : '' }}</td>
 						<td>
 							{% if app.user.username == cycle.UserCrea and cycle.plannifie == 0 %}
-								<a href="{{ path('Modif_Demandes', {'id': cycle.id}) }}" class="text-warning"><span class="m-1" style="font-size: 1.3em; 
-								color: Orange;"><i class="fa fa-pencil"></i></span>Modifier</a>
-								<a href="{{ path('Sup_Demandes', {'id': cycle.id}) }}"><span class="m-1" style="font-size: 1.3em; color: Tomato;"><i class="fa fa-trash"></i></span></a>
+								<ul class="fa-ul">
+									<li><a href="{{ path('Modif_Demandes', {'id': cycle.id}) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="Modifier"><span class="m-1" style="font-size: 1.3em; 
+									color: Orange;"><i class="fa fa-pencil"></i></span></a></li>
+									<li><a href="{{ path('Sup_Demandes', {'id': cycle.id}) }}" class="text-danger" data-toggle="tooltip" data-animation="false" title="Supprimer"><span class="m-1" style="font-size: 1.3em;
+									color: Tomato;"><i class="fa fa-trash"></i></span></a></li>
+								</ul>	
 							{% elseif  app.user.username == cycle.UserCrea and cycle.planning.Statut != 'ANNULER' %}
-								<a href="{{ path('Deprog_Demandes', {'id': cycle.id}) }}" class="text-danger"><span class="m-1" style="font-size: 1.3em;
-								 color: Tomato;"><i class="fa fa-envelope-o"></i></span>Annuler</a>
-								<a href="{{ path('Modif_Demandes', {'id': cycle.id}) }}"><span class="m-1" style="font-size: 1.3em; color: Tomato;"><i class="fa fa-edit"></i></span>Insérer</a>
+								<ul class="fa-ul">
+									<li><a href="{{ path('Deprog_Demandes', {'id': cycle.id}) }}" class="text-danger" data-toggle="tooltip" data-animation="false" title="Annuler"><span class="m-1" style="font-size: 1.3em;
+								 	color: Tomato;"><i class="fa fa-envelope-o"></i></span></a></li>
+									<li><a href="{{ path('Modif_Demandes', {'id': cycle.id}) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="Modifier"><span class="m-1" style="font-size: 1.3em; 
+									color: Tomato;"><i class="fa fa-edit"></i></span></a></li>
+								</ul>
 							{% endif %}
 						</td>
 					</tr>

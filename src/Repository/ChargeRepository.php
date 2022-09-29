@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Charge;
+use App\Services\CallApiService;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -15,9 +16,12 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
  */
 class ChargeRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    private $api;
+    
+    public function __construct(ManagerRegistry $registry, CallApiService $api)
     {
         parent::__construct($registry, Charge::class);
+        $this->api = $api;
     }
 
     // /**
@@ -200,20 +204,17 @@ class ChargeRepository extends ServiceEntityRepository
     }
     
     /**
-     * findByCyc Récupération du vol de charge par cycle
+     * findByCyc Récupération du vol de charge par cycle avec péremption
      *
      * @param  mixed $cyc
      * @param  mixed $dateF
      * @return Charge
      */
-    public function findByCyc($cyc, $dateF)
+    public function findByCyc($cyc, $dateF, $statut)
     {
         $qb = $this->_em->createQueryBuilder();
         $qb->select('c.OrdreFab')
-            ->addSelect('c.PosteW')
-            ->addSelect('c.ReferencePcs')
             ->addSelect('c.DesignationPcs')
-            ->addSelect('c.Conf')
             ->addSelect('c.DateDeb')
             ->addSelect('c.outillage')
             ->from($this->_entityName, 'c')
@@ -221,12 +222,64 @@ class ChargeRepository extends ServiceEntityRepository
             ->andWhere('c.Statut = :stat')
             ->andWhere('c.DateDeb < :dateF')
             ->setParameter('val', $cyc)
-            ->setParameter('stat', 'OUV')
+            ->setParameter('stat', $statut)
             ->setParameter('dateF', $dateF)
             ->orderBy('c.DateDeb', 'ASC')
         ;
         
-        return $qb->getQuery()->getResult();
+        $listOFCharge = $qb->getQuery()->getResult();
+        //Récupération des OF encours qui ont une péremption
+        $tabPerempOF = $this->api->getDatasAPI('/api/datas_kits?status=false','tracakit',[] ,'GET');
+        // Rajout de la péremption de chaque OF si découpe déjà réalisée
+        
+        $i=0;
+        foreach ($listOFCharge as $OF) {
+            $tabPerempOF = $this->search($tabPerempOF, 'idMM', '53894219-1');
+            // $tabPerempOF = $this->api->getDatasAPI('/api/datas_kits?idMM=53894219-1','tracakit',[] ,'GET');
+            $datePeremp = $tabPerempOF[0]['PeremptionMoins18'];
+            if ($datePeremp > $tabPerempOF[0]['ADrapAv']) {
+                $datePeremp = $tabPerempOF[0]['ADrapAv'];
+            } elseif ($datePeremp > $tabPerempOF[0]['ACuirAv']) {
+                $datePeremp = $tabPerempOF[0]['ACuirAv'];
+            }
+            $OF['Peremption']=$datePeremp;
+            $i++;
+            $listOFPeremp[$i]=$OF;
+        }
+            //dd($listOFPeremp);
+        return $listOFPeremp;
+    }
+    
+    /**
+     * search Recherche de valeur dans un tableau
+     *
+     * @param  array $array
+     * @param  string $key
+     * @param  mixed $value
+     * @return void
+     */
+    private function search($array, $key, $value) {
+        $results = array();
+          
+        // if it is array
+        if (is_array($array)) {
+              
+            // if array has required key and value
+            // matched store result 
+            if (isset($array[$key]) && $array[$key] == $value) {
+                $results[] = $array;
+            }
+              
+            // Iterate for each element in array
+            foreach ($array as $subarray) {
+                  
+                // recur through each element and append result 
+                $results = array_merge($results, 
+                        $this->search($subarray, $key, $value));
+            }
+        }
+      
+        return $results;
     }
 
 }
