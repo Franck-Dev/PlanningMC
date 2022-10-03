@@ -5,6 +5,8 @@ namespace App\Entity;
 use App\Services\CallApiService;
 use Doctrine\ORM\Mapping as ORM;
 
+use function PHPUnit\Framework\isNull;
+
 /**
  * @ORM\Entity(repositoryClass="App\Repository\ChargeRepository")
  */
@@ -104,10 +106,22 @@ class Charge
 
     private $perempCrit;
 
+    /**
+     * @ORM\Column(type="datetime_immutable", nullable=true)
+     */
+    private $tackLife;
+
+    /**
+     * @ORM\Column(type="datetime_immutable", nullable=true)
+     */
+    private $workLife;
+
     public function __toString(): string
     {
-        return (string) $this->getOrdreFab()." / ".$this->getDesignationPcs()." / ".
-        $this->getDateDeb()->format('Y-m-d')." / ".$this->getPerempCrit();
+        return (string) $this->getDateDeb()->format('Y-m-d')." | ".
+        $this->getNumProg()." | ".$this->getOrdreFab()."/".$this->getPosteW()." | ".
+        $this->getDesignationPcs()." | ".$this->getDateIfIsnotNull($this->getTackLife()).
+        " | ".$this->getDateIfIsnotNull($this->getWorkLife());
     }
 
     public function getId(): ?int
@@ -319,11 +333,37 @@ class Charge
         return $this;
     }
 
-    public function getPerempCrit(): ?string
+    public function getTackLife(): ?\DateTimeImmutable
     {
-        //$idMM = ($this->demandes) ? 1 : $this->getOrdreFab();
-        //dd($this);
-        //return $this->api->getDatasAPI('/api/datasKits?page=1&itemsPerPage=25&idMM='.$idMM,'tracakit',[] ,'GET');
-        return $this->perempCrit;
+        return $this->tackLife;
+    }
+
+    public function setTackLife(?\DateTimeImmutable $tackLife): self
+    {
+        $this->tackLife = $tackLife;
+
+        return $this;
+    }
+
+    public function getWorkLife(): ?\DateTimeImmutable
+    {
+        return $this->workLife;
+    }
+
+    public function setWorkLife(?\DateTimeImmutable $workLife): self
+    {
+        $this->workLife = $workLife;
+
+        return $this;
+    }
+
+    private function getDateIfIsnotNull($date)
+    {
+        if (isnull($date)) {
+            return "00-00-00";
+        } else {
+            return $date->format('Y-m-d');
+        }
+        
     }
 }
