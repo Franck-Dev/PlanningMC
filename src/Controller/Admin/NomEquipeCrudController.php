@@ -35,7 +35,7 @@ class NomEquipeCrudController extends AbstractCrudController
     
     public function configureFields(string $pageName): iterable
     {
-        $Managers = $this->getNomManager();
+        //$Managers = $this->getNomManager();
         return [
             TextField::new('Nom'),
             TextEditorField::new('Description'),

@@ -94,6 +94,11 @@ class ProgMoyens
      */
     private $chargFiges;
 
+    /**
+     * @ORM\Column(type="string", length=100)
+     */
+    private $codeAvion;
+
     public function __toString(): string
     {
         return (string) $this->getNom();
@@ -341,6 +346,18 @@ class ProgMoyens
                 $chargFige->setProgramme(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getCodeAvion(): ?string
+    {
+        return $this->codeAvion;
+    }
+
+    public function setCodeAvion(string $codeAvion): self
+    {
+        $this->codeAvion = $codeAvion;
 
         return $this;
     }

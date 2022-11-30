@@ -84,6 +84,11 @@ class User implements UserInterface
      */
     private $nomEquipes;
 
+    /**
+     * @ORM\Column(type="array", nullable=true)
+     */
+    private $programmeAvion = [];
+
     public function __toString(): string
     {
         return (string) $this->getUsername();
@@ -276,6 +281,18 @@ class User implements UserInterface
                 $nomEquipe->setManager(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getProgrammeAvion(): ?array
+    {
+        return $this->programmeAvion;
+    }
+
+    public function setProgrammeAvion(?array $programmeAvion): self
+    {
+        $this->programmeAvion = $programmeAvion;
 
         return $this;
     }

@@ -13,6 +13,7 @@ use Symfony\Component\Form\FormEvents;
 use App\Repository\ProgMoyensRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -25,19 +26,31 @@ class DemandesType extends AbstractType
 {
     private $chargeRepository;
     private $com;
+    private $security;
 
-    public function __construct(chargeRepository $chargeRepository, ComService $com)
+    public function __construct(chargeRepository $chargeRepository, ComService $com, Security $security)
     {
         $this->chargeRepository = $chargeRepository;
         $this->com = $com;
+        $this->security = $security;
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
+        //Récupération du user pour filtrer sur les programmes avions de ce dernier
+        $user = $this->security->getUser();
+        //Liste des avions en charge du user
+        $progAvions=$user->getProgrammeAvion();
+        //Création du tableau de recherche
+        foreach ($progAvions as $key=>$avion) {
+            $listAvions[$key]=$avion['designation'];
+        }
         $builder -> add('cycle', EntityType::class, [
             'class' => ProgMoyens::class,
-            'query_builder' => function (ProgMoyensRepository $er) {
+            'query_builder' => function (ProgMoyensRepository $er)  use ($listAvions){
               return $er->createQueryBuilder('u')
+                  ->where('u.codeAvion IN  (:avions)')
+                  ->setParameter('avions', $listAvions)
                   ->orderBy('u.Nom', 'DESC');
             },
             'choice_label' => 'nom',
@@ -47,8 +60,7 @@ class DemandesType extends AbstractType
         $formModifier = function (FormInterface $form, ProgMoyens $cycle = null, $chargeRepository) {
             $listOFCycle =  null === $cycle ? $chargeRepository->findBy(['Statut' => 'OUV'],['DateDeb' => 'ASC']) : $chargeRepository->findBy(['NumProg' => $cycle->getNom(),'Statut' => 'OUV'],
             ['DateDeb' => 'ASC']);
-            //dump($chargeRepository->findByCyc('FP A34 STC', '2022-10-10', 'OUV'));
-            //dd($listOFCycle);
+
             $form->add('ListOF', EntityType::class, [
                 'class' => Charge::class,
                 'placeholder' => 'Sélectionner les OF',
@@ -63,7 +75,6 @@ class DemandesType extends AbstractType
         $builder->addEventListener(
             FormEvents::PRE_SET_DATA,
             function (FormEvent $event) use ($formModifier) {
-                // this would be your entity, i.e. SportMeetup
                 $data = $event->getData();
                 $formModifier($event->getForm(), $data->getCycle(), $this->chargeRepository);
             }
