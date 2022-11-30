@@ -93,6 +93,10 @@ class DemandesType extends AbstractType
         );
         $builder -> add('date_propose', DateType::class,[
             'widget' => 'single_text',
+            'attr' => [
+                'class' => 'js-datepicker',
+                'min' => date('Y-m-d',strtotime(date('Y-m-d').'+ 2 days'))
+            ]
         ]);
         $builder -> add('heure_propose', TimeType::class,[
             'widget' => 'single_text',
