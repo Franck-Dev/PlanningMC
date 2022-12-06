@@ -81,17 +81,29 @@ class CallApiService
         }
         $path=$_ENV['APP_SERVER'].$port_api;
         //Requette
-        dump($path.$url);
-        $response = $this->client->request(
-            $method,
-            $path.$url,
-            [
-                'headers' => ['content-type'=>'application/json',
-                                'X-AUTH-TOKEN'=>$apiToken
-            ],
-                'json' => $tabBody
-            ]
-        );
+        //dump($path.$url);
+        
+        if (!$tabBody) {
+            $response = $this->client->request(
+                $method,
+                $path.$url,
+                [
+                    'headers' => ['content-type'=>'application/json',
+                                    'X-AUTH-TOKEN'=>$apiToken
+                ]]
+            );
+        } else {
+            dump($tabBody);
+            $response = $this->client->request(
+                $method,
+                $path.$url,
+                [
+                    'headers' => ['content-type'=>'application/json',
+                                    'X-AUTH-TOKEN'=>$apiToken
+                ],
+                    'json' => $tabBody
+                ]
+            );}
         return $response->toArray();
     }
     
