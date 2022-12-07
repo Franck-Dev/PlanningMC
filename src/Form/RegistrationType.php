@@ -104,6 +104,7 @@ class RegistrationType extends AbstractType
                 'label'    => 'Choisir les programmes qui vous sont attribués',
                 'expanded' => true,
                 'multiple' => true,
+                'required' => true,
                 'choices'  => $listAvions,
                 'choice_label' => function($listAvions, $key, $avion){
                     return $key;

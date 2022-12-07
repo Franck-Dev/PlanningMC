@@ -5,6 +5,7 @@ namespace App\Security;
 
 use App\Entity\User;
 use App\Services\CallApiService;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,6 +16,7 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
@@ -27,11 +29,16 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
 {
     private $CallApi;
     private $router;
+    private $manaReg;
+    private $encoder;
 
-    public function __construct(CallApiService $CallApi, UrlGeneratorInterface $router)
+    public function __construct(CallApiService $CallApi, UrlGeneratorInterface $router,
+    ManagerRegistry $manaReg, UserPasswordHasherInterface $encoder)
     {
         $this->CallApi = $CallApi;
         $this->router = $router;
+        $this->manaReg = $manaReg;
+        $this->encoder = $encoder;
     }
     
     /**
@@ -83,7 +90,7 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
             throw new CustomUserMessageAuthenticationException('No API token provided');
         }
 
-        return new SelfValidatingPassport(new UserBadge($apiToken['apiToken'],function($apiToken){
+        return new SelfValidatingPassport(new UserBadge($apiToken['apiToken'],function($apiToken) use ($request){
             $userToken=$this->CallApi->getUserApiToken($apiToken);
             //Gestion des erreurs d'authentification
             if ($userToken instanceof JsonResponse) {
@@ -101,7 +108,6 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
             }
             $user=new User;
             //Hydratation du User
-            dump($userToken);
             $user->hydrate($userToken);
             return $user;
         }));
@@ -109,7 +115,6 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
-        //return null;
         return new RedirectResponse($this->router->generate('home'),301);
     }
 

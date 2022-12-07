@@ -67,8 +67,8 @@ class EasyAdminSubscriber implements EventSubscriberInterface
             //dd($crudAction->getCurrentAction());
             return;
         } else {
-            $dateDeb = $entity->getInstance()->getDateDebut();
-            $dateFin = $entity->getInstance()->getDateFin();
+            $dateDeb = $entity->getInstance()->getDateDebut()->format('Y-m-d H:i:s');
+            $dateFin = $entity->getInstance()->getDateFin()->format('Y-m-d H:i:s');
             $this->request->cookies->add(['olDateDeb' => $dateDeb, 'olDateFin' => $dateFin ]);
         }  
     }
@@ -86,65 +86,78 @@ class EasyAdminSubscriber implements EventSubscriberInterface
 
     public function upJourWAgenda(BeforeEntityUpdatedEvent $event)
     {
-        //Récupérer les anciennes dates
         $entity = $event->getEntityInstance();
-        $oldatedeb=$this->request->cookies->get('olDateDeb');
-        $oldatefin=$this->request->cookies->get('olDateFin');
-        $newdatedeb=$entity->getDateDebut();
-        $newdatefin=$entity->getDateFin();
-        //Faire la différence avec les nouvelles dates
-        //Si date pas encore atteinte, et plus tôt on enlève les tâches de l'agenda, sinon on rajoute
-        if ($oldatedeb<new datetime && $oldatedeb!=$entity->getDateDebut()) {
-            $msgAlert='La date de début de l\'organisation "'. $entity->getNomEquipe() .'" ne peux pas être modifiée car elle est dans le passé';
-            $this->session->getFlashBag()->add('warning', $msgAlert);
-            $entity->setDateDebut($oldatedeb);
-            $entity->setDateFin($oldatefin);
+
+        if (!($entity instanceof OrgaEq)) {
             return;
-        }
-        //Si nouvelle date dans le futur par rapport à l'ancienne
-        if ($oldatedeb<$entity->getDateDebut()) {
-            //On enlève des tâches de l'agenda
-            $entity->setDateFin(date_modify($entity->getDateDebut(),'- 1 days'));
-            $entity->setDateDebut($oldatedeb);
-            $this->deleteJourWAgenda($entity);
-        } elseif ($oldatedeb>$entity->getDateDebut()) {
-            //On rajoute des tâches à l'agenda
-            $entity->setDateDebut($newdatedeb);
-            dump($oldatedeb);
-            $entity->setDateFin(date_modify($oldatedeb ,'- 1 days'));
-            //dd($entity);
-            $this->putJourWAgenda($entity);
         } else {
-            $msgInfo='Pas de modification de la date de début';
+            //Récupérer les anciennes dates
+            $entity = $event->getEntityInstance();
+            $oldatedeb=new datetime($this->request->cookies->get('olDateDeb'));
+            $oldatefin=new datetime($this->request->cookies->get('olDateFin'));
+
+            $newdatedeb=$entity->getDateDebut();
+            $newdatefin=$entity->getDateFin();
+            //Faire la différence avec les nouvelles dates
+            //Si date pas encore atteinte, et plus tôt on enlève les tâches de l'agenda, sinon on rajoute
+            if ($oldatedeb<new datetime && $oldatedeb!=$entity->getDateDebut()) {
+                $msgAlert='La date de début de l\'organisation "'. $entity->getNomEquipe() .'" ne peux pas être modifiée car elle est dans le passé';
+                $this->session->getFlashBag()->add('warning', $msgAlert);
+                $entity->setDateDebut($oldatedeb);
+                $entity->setDateFin($oldatefin);
+                return;
+            }
+            //Si nouvelle date dans le futur par rapport à l'ancienne
+            if ($oldatedeb<$entity->getDateDebut()) {
+                //On enlève des tâches de l'agenda
+                $entity->setDateFin(date_modify($entity->getDateDebut(),'- 1 days'));
+                $entity->setDateDebut($oldatedeb);
+                $this->deleteJourWAgenda($entity);
+            } elseif ($oldatedeb>$entity->getDateDebut()) {
+                //On rajoute des tâches à l'agenda
+                $entity->setDateDebut($newdatedeb);
+                dump($oldatedeb);
+                $entity->setDateFin(date_modify($oldatedeb ,'- 1 days'));
+                //dd($entity);
+                $this->putJourWAgenda($entity);
+            } else {
+                $msgInfo='Pas de modification de la date de début';
+            }
+            
+            if ($oldatefin<new datetime) {
+                $msgAlert='La date de fin ne peux pas être modifiée car dans le passé';
+                $this->session->getFlashBag()->add('warning', $msgAlert);
+                $entity->setDateFin($oldatefin);
+                return;
+            }
+            if ($oldatefin<$entity->getDateFin()) {
+                //On rajoute des tâches à l'agenda
+                $entity->setDateDebut(new datetime(date_modify($oldatefin,'+ 1 days')->format('Y-m-d').' '.$entity->getDateDebut()->format('H:i')));
+                $entity->setDateFin($newdatefin);
+                $this->putJourWAgenda($entity);
+            } elseif ($oldatefin>$newdatefin) {
+                //On enlève des tâches à l'agenda
+                $entity->setDateDebut(date_modify($newdatefin,'+ 1 days'));
+                $entity->setDateFin($oldatefin);
+                $this->deleteJourWAgenda($entity);
+            } else {
+                if ($msgInfo) {
+                    $msgInfo=$msgInfo. ' '. 'Pas de modification de la date de fin';
+                } else {
+                    $msgInfo= 'Pas de modification de la date de fin';
+                }
+                                
+                $this->session->getFlashBag()->add('info', $msgInfo);
+            }
+            $entity->setDateDebut($newdatedeb);
+            $entity->setDateFin($newdatefin);
         }
         
-        if ($oldatefin<new datetime) {
-            $msgAlert='La date de fin ne peux pas être modifiée car dans le passé';
-            $this->session->getFlashBag()->add('warning', $msgAlert);
-            $entity->setDateFin($oldatefin);
-            return;
-        }
-        if ($oldatefin<$entity->getDateFin()) {
-            //On rajoute des tâches à l'agenda
-            $entity->setDateDebut(new datetime(date_modify($oldatefin,'+ 1 days')->format('Y-m-d').' '.$entity->getDateDebut()->format('H:i')));
-            $entity->setDateFin($newdatefin);
-            $this->putJourWAgenda($entity);
-        } elseif ($oldatefin>$newdatefin) {
-            //On enlève des tâches à l'agenda
-            $entity->setDateDebut(date_modify($newdatefin,'+ 1 days'));
-            $entity->setDateFin($oldatefin);
-            $this->deleteJourWAgenda($entity);
-        } else {
-            $msgInfo=$msgInfo. ' '. 'Pas de modification de la date de fin';
-            $this->session->getFlashBag()->add('info', $msgInfo);
-        }
-        $entity->setDateDebut($newdatedeb);
-        $entity->setDateFin($newdatefin);
     }
 
     public function moveJJourWAgenda(BeforeEntityDeletedEvent $event)
     {
-        dd($event);
+        dump($event);
     }
 
     public function getJourWAgenda(BeforeEntityPersistedEvent $event)

@@ -9,6 +9,7 @@ use App\Form\ModifMdPType;
 use App\Form\RegistrationType;
 use App\Security\ApiKeyAuthenticator;
 use App\Services\CallApiService;
+use App\Services\ComService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,7 +29,7 @@ class SecurityController extends AbstractController
     /**
     * @Route("/inscription", name="security_registration")
     */
-    Public function registration(request $request, ManagerRegistry $manaReg, CallApiService $api, UserPasswordHasherInterface $encoder){
+    Public function registration(request $request, ManagerRegistry $manaReg, CallApiService $api, UserPasswordHasherInterface $encoder, ComService $com){
         $repo=$manaReg->getRepository(ConfSmenu::class);
 
         $Titres=$repo -> findAll();
@@ -38,12 +39,17 @@ class SecurityController extends AbstractController
         $form->handleRequest($request);
 
         if($form->isSubmitted() && $form->isValid()){
-            // Création du body à envoyer
-            foreach($request->request as $key => $data){
-                // Création liste avions
-                foreach($data['programmeAvion'] as $index => $avion){
+            // Création liste avions
+            if ($form->getData()->getProgrammeAvion()){
+                foreach($form->getData()->getProgrammeAvion() as $index => $avion){
                     $listAvions[$index]='/api/programme_avions/'.explode("-", $avion)[0];
                 }
+            }else{
+                $listAvions=[];
+            }
+            
+            // Création du body à envoyer
+            foreach($request->request as $key => $data){
                 $body['password']=$data['password'];
                 $body['matricule']=intval($data['matricule']);
                 $body['nom']=$data['nom'];
@@ -64,12 +70,17 @@ class SecurityController extends AbstractController
             $hash=$encoder->hashPassword($user, $user->getPassword());
             $user->setPassword($hash);
             // Mise en tableau simple des programmes avions
-            $user->setProgrammeAvion(call_user_func_array('array_merge', $user->getProgrammeAvion()));
+            //$user->setProgrammeAvion(call_user_func_array('array_merge', $user->getProgrammeAvion()));
             // Enregistrement
             $manager = $manaReg->getManager();
             $manager->persist($user);
             $manager->flush();
 
+            //Notification du user de son inscription
+            $com->sendNotif('Bonjour '. $user->getUsername(). ' , merci de vous être inscrit sur l\'APAMC. 
+            Votre compte doit être vérifier et valider par votre supérieur hiérarchique si vous n\'êtes pas opérateur.');
+            //Notification de l'admin pour vérification et validation du compte
+            $com->sendNotif('Un nouvel utilisateur: '. $user->getUsername(). ' est inscrit.',['admin']);
             return $this->redirectToRoute('security_login');
         }
 
@@ -107,7 +118,7 @@ class SecurityController extends AbstractController
     }
 
     /**
-     * * @Route("/inscription/Modification", name="Modif_Inscription")
+    ** @Route("/inscription/Modification_MdP", name="Modif_MdP")
     */
     Public function ModifMdP(request $request, user $user=null, ValidatorInterface $validator, ApiKeyAuthenticator $auth, CallApiService $api){
 
@@ -135,6 +146,37 @@ class SecurityController extends AbstractController
                 $error=new FormError('utilisateur inexistant pour '.$type .' : '.$username);
                 $form->addError($error);
             }
+        }
+        if($form->isSubmitted() && $form->isValid()){
+            //On va chercher dans la base l'utilisateur en question
+            $userResp=$api->getDatasAPI('/api/users/'.$user[0]['id'],'Usine',['password'=>$request->get('modif_md_p')['password']],'PATCH');
+            
+            return $this->redirectToRoute('security_login');
+        }
+
+        return $this->renderForm('security/ModificationMdP.html.twig',[
+            'form' => $form,
+            'errors' => $errors,
+            'Titres' => $Titres
+        ]);
+    }
+
+    /**
+    ** @Route("/inscription/Modification_User/{id}", name="Modif_User")
+    */
+
+    Public function ModifUser(request $request, user $user=null, ValidatorInterface $validator, ApiKeyAuthenticator $auth, CallApiService $api){
+
+        $Titres=[];
+        $errors=[];
+
+        dd($user);
+        $form=$this->createForm(RegistrationType::class, $user);
+        $form->handleRequest($request);
+
+        if($form->isSubmitted() && $form->isValid())
+        {
+           dd($form);
         }
         if($form->isSubmitted() && $form->isValid()){
             //On va chercher dans la base l'utilisateur en question

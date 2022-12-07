@@ -780,6 +780,7 @@ class PlanningMCController extends AbstractController
 	/**
      * @Route("/Demandes/Creation", name="Crea_Demandes")
      * @Route("/Demandes/Modification/{id}", name="Modif_Demandes")
+     * @IsGranted("ROLE_CE_MOULAGE")
      */
     public function DemandesCrea( Request $requette,
     RequestStack $requestStack,
