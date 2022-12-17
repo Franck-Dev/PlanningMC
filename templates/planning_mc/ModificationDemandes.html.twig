@@ -1,13 +1,6 @@
-{% extends 'base.html.twig' %}
+{% extends 'planning_mc/BaseDemandesPolym.html.twig' %}
 
-{% form_theme formDemande 'bootstrap_4_layout.html.twig'%}
-
-{% block title %}Modification d'une demande de polymérisation{% endblock %}
-
-{% block body %}
-
-	<h1>Demande de polymérisations ✅</h1>
-	<div class="d-flex align-items-center justify-content-center">
+{% block form %}
 		{{ form_start(formDemande) }}
 		<div class="form-row">
 			<div class="form-group col-md-4">
@@ -18,11 +11,14 @@
 			</div>
 		</div>
 		<div class="form-row align-items-center">
+			{{form_row(formDemande.ListCTO, {'attr' : {'placeholder' : "Sélectionner les CTO" }}) }}
+		</div>
+		<div class="form-row align-items-center">
 			<div class="form-group col-md-4">
 				{{form_row(formDemande.date_propose, {'attr' : {'placeholder' : "Proposer une date", 'readonly' : true }}) }}
 			</div>
 			<div class="form-group col-md-3">
-				{{form_row(formDemande.heure_propose, {'attr' : {'placeholder' : "Proposer une horaire", 'readonly' : true }}) }}
+				{{form_row(formDemande.heure_propose, {'attr' : {'placeholder' : "Proposer un horraire", 'readonly' : true }}) }}
 			</div>
 			<div class="form-group col-md-5">
 				{{form_row(formDemande.Reccurance, {'attr' : {'placeholder' : "True ou False", 'readonly' : true }}) }}
@@ -41,39 +37,4 @@
 		</div>
 		{{ form_end(formDemande) }}
 	</div>
-{% endblock %}
-
-{% block javascripts %}
-<script src="{{ asset('build/jquery.min.js') }}"></script>
-<script type="text/javascript">
-var $cycle = $('#demandes_cycle');
-var $datW = $('#demandes_date_propose');
-var $heurW = $('#demandes_heure_propose');
-
-// When sport gets selected ...
-$cycle.change(function() {
-  // ... retrieve the corresponding form.
-  var $form = $(this).closest('form');
-  // Simulate form data, but only include the selected sport value.
-  var data = {};
-  data[$cycle.attr('name')] = $cycle.val();
-  data[$datW.attr('name')] = $datW.val();
-  data[$heurW.attr('name')] = $heurW.val();
-  // Submit data via AJAX to the form's action path.
-  $.ajax({
-    url : $form.attr('action'),
-    type: $form.attr('method'),
-    data : data,
-    complete: function(html) {
-      // Replace current position field ...
-      $('#demandes_ListOF').replaceWith(
-        // ... with the returned one from the AJAX response.
-        $(html.responseText).find('#demandes_ListOF')
-      );
-      // Position field now displays the appropriate positions.
-    }
-  });
-});
-	
-</script>
 {% endblock %}

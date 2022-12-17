@@ -118,7 +118,7 @@ class FunctChargPlan
      * @return void
      * Retourne un array comportant la liste des OTs du CTO
      */
-    private function checkOTCTO($ChargementsFiG, $repo, $Out, $Art, $Creno) {
+    public function checkOTCTO($ChargementsFiG, $repo, $Out, $Art, $Creno) {
          
         $q=0;         
         //On  va récupérer les OT composants chaque CTO
@@ -169,7 +169,7 @@ class FunctChargPlan
             //On cherche les articles liés à chaque OT
             $ArtOFCTJ=$Art->myFindByOT($OTCTO->getRef());
             // Cas des OT multi empreintes
-            dump('Liste des articles composant l\'OT'.$OTCTO->getRef());
+            dump('Liste des articles composant l\''.$OTCTO->getRef());
             dump($ArtOFCTJ);
             if (sizeof($ArtOFCTJ)>1) {
                 dump('Attention multi empreintes à traiter');
@@ -231,7 +231,7 @@ class FunctChargPlan
         if ($OFPast) {
             //Récupération de l'article trouvé
             $deltaJours=date_diff(clone($Creno['Jour']), $OFPast[0]['DateDeb']);
-                $datasOF=["OF" => $OFPast[0]['OF'], "Designation" => $OFPast[0]['Designation'], "Horizon"=> $deltaJours->format('%R%a')];
+                $datasOF=["OF" => $OFPast[0]['OF'], "Designation" => $OFPast[0]['Designation'], "Horizon"=> $deltaJours->format('%R%a'), "Ref" => $ArtOT->getReference()];
                 $refOK=true;
             } else {
             //On va chercher dans l'horizon si on trouve des OF correspondant au cycle en cours
@@ -245,7 +245,7 @@ class FunctChargPlan
                 //Dans les OF trouvés, vérification si un OF de la ref existe
                 foreach ($chargeTotJour as $ArtCTJ) {
                     if ($ArtOT->getReference() == $ArtCTJ->getReferencePcs()) {
-                        $datasOF=["OF" => $ArtCTJ->getOrdreFab(), "Designation" => $ArtCTJ->getDesignationPCS(), "Horizon"=> $ix];
+                        $datasOF=["OF" => $ArtCTJ->getOrdreFab(), "Designation" => $ArtCTJ->getDesignationPCS(), "Horizon"=> $ix, "Ref" => $ArtCTJ->getReferencePcs()];
                         $refOK=true;
                         dump('On a trouvé la référence');
                         dump($datasOF);
@@ -261,7 +261,7 @@ class FunctChargPlan
             dump($OFArtManq);
             if ($OFArtManq) {
                 $deltaJours=date_diff($dateInit, $OFArtManq->getDateDeb());
-                $datasOF=["OF" => $OFArtManq->getOrdreFab(), "Designation" => $OFArtManq->getDesignationPCS(), "Horizon"=> $deltaJours->format('%R%a')];
+                $datasOF=["OF" => $OFArtManq->getOrdreFab(), "Designation" => $OFArtManq->getDesignationPCS(), "Horizon"=> $deltaJours->format('%R%a'), "Ref" => $ArtCTJ->getReferencePcs()];
             } else {
                 $Message[$i]='Manque la référence '.$ArtOT->getReference(). ', '.$ArtOT->getDesignation();
                 dump($Message);

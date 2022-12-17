@@ -36,7 +36,13 @@ use Symfony\Component\Mime\Email;
 use Doctrine\ORM\EntityRepository;
 use App\Repository\ChargeRepository;
 use Symfony\Component\Form\FormEvent;
+use App\Repository\ArticlesRepository;
+use function PHPUnit\Framework\isNull;
 use Symfony\Component\Form\FormEvents;
+use App\Repository\ChargFigeRepository;
+use App\Repository\ChargementRepository;
+use App\Repository\OutillagesRepository;
+use App\Repository\ProgMoyensRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 use App\Repository\DefaultRepositoryFactory;
@@ -59,14 +65,13 @@ use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-
-use function PHPUnit\Framework\isNull;
 
 //use Symfony\Component\HttpFoundation\Session\Session ;
 //use Symfony\Component\Serializer\Serializer;
@@ -826,7 +831,7 @@ class PlanningMCController extends AbstractController
         }
 
         $Titres=[];
-
+            
         if (!$demande->getId()){
             return $this->render('planning_mc/CreationDemandes.html.twig',[
                 'Titres' => $Titres,
@@ -837,9 +842,7 @@ class PlanningMCController extends AbstractController
                 'Titres' => $Titres,
                 'formDemande' => $form->createView()
              ]);
-        }
-
-        
+        } 
     }
 
     /**
@@ -1099,6 +1102,79 @@ class PlanningMCController extends AbstractController
         return $this->render('planning_mc/CreationPolyms.html.twig',[
             'Titres' => $Titres
         ]);
+    }
+
+    /**
+     * @Route("/Demandes/Charge_Fige/{id}/OF", name="list_OT_chargement", methods={"POST"})
+     * @IsGranted("ROLE_CE_MOULAGE")
+     */
+    Public function checkOFOTsvtCTO(Request $request, FunctChargPlan $chargeFige, ChargFigeRepository $cata, ChargeRepository $repo, OutillagesRepository $Out, ArticlesRepository $Art)
+    {
+        // On va récupérer le CTO correspondant à l'id
+        $CTO=$cata->findOneBy(['id' => $request->attributes->get('id')]);
+        //Intégration dans une liste de 1 CTO
+        $listCTO[0]=$CTO;
+        //Contruction du créno à chercher $Creno['Jour']), $Creno['Cycles']
+        $creno['Jour']= new \datetime($request->get('DateJour'));
+        $creno['Cycles']=$CTO->getProgramme()->getNom();
+        $creno['NbrPcs']=1;
+        $listCreno[0]=$creno;
+        
+        //Récupération de la liste des outillages de ce CTO
+        $test=$chargeFige->checkOTCTO($listCTO, $repo, $Out, $Art, $creno);
+
+        return $this->render('planning_mc/form/_form_tbDatasCharg.html.twig', [
+            'Datas' => $test[0]['Contenu'],
+            'CTO' => $test
+        ]);
+    }
+
+    /**
+     * @Route("/Demandes/Charge_Fige/Modification/OFsOT", name="modif_OFs_OT", methods={"GET"})
+     * @IsGranted("ROLE_CE_MOULAGE")
+     */
+    Public function modifOFsOT(Request $request, FunctChargPlan $chargeFige, ChargFigeRepository $cata, ChargeRepository $repo, OutillagesRepository $Out, ArticlesRepository $Art)
+    {
+        dd($request);
+    }
+
+    /**
+     * @Route("/Demandes/Charge_Fige/Modification/OFOT", name="modif_OF_OT", methods={"GET"})
+     * @IsGranted("ROLE_CE_MOULAGE")
+     */
+    Public function modifOFOT(Request $request, FunctChargPlan $chargeFige, ChargFigeRepository $cata, ChargeRepository $repo, OutillagesRepository $Out, ArticlesRepository $Art)
+    {
+        $listOF= $repo->findBy(['ReferencePcs' => $request->get('Ref'), 'Statut' => 'OUV']);
+
+        foreach ($listOF as $key => $OF) {
+            $deltaJours=date_diff(clone($OF->getDateDeb()), new \datetime());
+            $listOFs[$key] = ['OF' => strval($OF->getOrdreFab())];
+            $listHorizon[$key] = [$deltaJours->format('%a')];
+        }
+
+        return $this->render('planning_mc/form/_select.html.twig',[
+            'listOFs' => $listOFs,
+            'art' => $request->get('Ref'),
+            'listHorizon' => $listHorizon
+        ]);
+    }
+
+    /**
+     * @Route("/Demandes/Charge_Fige/Supression/OT", name="sup_OT", methods={"GET"})
+     * @IsGranted("ROLE_CE_MOULAGE")
+     */
+    Public function supOT(Request $request, FunctChargPlan $chargeFige, ChargFigeRepository $cata, ChargeRepository $repo, OutillagesRepository $Out, ArticlesRepository $Art)
+    {
+
+    }
+
+    /**
+     * @Route("/Demandes/Charge_Fige/Visualisation", name="affichagePlanningMoul", methods={"GET"})
+     * @IsGranted("ROLE_CE_MOULAGE")
+     */
+    Public function affichagePlanningMoul(Request $request, FunctChargPlan $chargeFige, ChargFigeRepository $cata, ChargeRepository $repo, OutillagesRepository $Out, ArticlesRepository $Art)
+    {
+
     }
 
 	/**

@@ -1,19 +1,17 @@
-{% extends 'base.html.twig' %}
+{% extends 'planning_mc/BaseDemandesPolym.html.twig' %}
 
-{% form_theme formDemande 'bootstrap_4_layout.html.twig'%}
-
-{% block title %}Demandes de créneaux de polymérisations{% endblock %}
-
-{% block body %}
-
-	<h1>Demandes de créneaux de polymérisations ✅</h1>
-	<div class="d-flex align-items-center justify-content-center">
+{% block form %}
 		{{ form_start(formDemande) }}
 		<div class="form-row">
-			<div class="form-group col-md-4">
+			<div class="form-group col-md-6">
 				{{form_row(formDemande.cycle, {'attr' : {'placeholder' : "Nom de la polymérisation" }}) }}
 			</div>
-			<div class="form-group col-md-8">
+			<div class="form-group col-md-6">
+				{{form_row(formDemande.ListCTO, {'attr' : {'placeholder' : "Sélectionner le CTO" }}) }}
+			</div>
+		</div>
+		<div class="form-row">
+			<div class="form-group col-md-12">
 				{{form_row(formDemande.ListOF, {'attr' : {'placeholder' : "Sélectionner les OF" }}) }}
 			</div>
 		</div>
@@ -40,40 +38,4 @@
 			</button>
 		</div>
 		{{ form_end(formDemande) }}
-	</div>
-{% endblock %}
-
-{% block javascripts %}
-<script src="{{ asset('build/jquery.min.js') }}"></script>
-<script type="text/javascript">
-var $cycle = $('#demandes_cycle');
-var $datW = $('#demandes_date_propose');
-var $heurW = $('#demandes_heure_propose');
-
-// When sport gets selected ...
-$cycle.change(function() {
-  // ... retrieve the corresponding form.
-  var $form = $(this).closest('form');
-  // Simulate form data, but only include the selected sport value.
-  var data = {};
-  data[$cycle.attr('name')] = $cycle.val();
-  data[$datW.attr('name')] = $datW.val();
-  data[$heurW.attr('name')] = $heurW.val();
-  // Submit data via AJAX to the form's action path.
-  $.ajax({
-    url : $form.attr('action'),
-    type: $form.attr('method'),
-    data : data,
-    complete: function(html) {
-      // Replace current position field ...
-      $('#demandes_ListOF').replaceWith(
-        // ... with the returned one from the AJAX response.
-        $(html.responseText).find('#demandes_ListOF')
-      );
-      // Position field now displays the appropriate positions.
-    }
-  });
-});
-	
-</script>
 {% endblock %}

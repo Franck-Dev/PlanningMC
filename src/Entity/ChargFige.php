@@ -53,6 +53,13 @@ class ChargFige
      */
     private $Programme;
 
+    private $Remplissage;
+
+    public function __toString(): string
+    {
+        return (string) $this->getCode()." | Remplissage (". $this->getRemplissage() . '%)';
+    }
+
     public function __construct()
     {
         $this->OT = new ArrayCollection();
@@ -145,6 +152,18 @@ class ChargFige
     public function setProgramme(?ProgMoyens $Programme): self
     {
         $this->Programme = $Programme;
+
+        return $this;
+    }
+
+    public function getRemplissage(): ?string
+    {
+        return $this->Remplissage;
+    }
+    
+    public function setRemplissage(string $Remplissage): self
+    {
+        $this->Remplissage = $Remplissage;
 
         return $this;
     }

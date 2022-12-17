@@ -3,8 +3,10 @@
         <thead>	
             <tr>
                 <th>OF</th>
+                <th>Ref</th>
                 <th>Désignation</th>
                 <th>Horizon</th>
+                <th>Action</th>
             </tr>	
         </thead>
         {% for key, OT in Datas %}                               
@@ -12,14 +14,28 @@
                     <tbody class="border bg-secondary">
                         {# <tr id="{{nameTR}}"> #}
                         <tr>
-                            <td colspan="11" class="text-center bg-primary">{{key}}</td>
+                            <td colspan="11" class="text-center bg-primary">{{key}}
+                            <a href="{{ path('modif_OFs_OT', {'OT': key}) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="Modifier"><span class="m-1" style="font-size: 1em;
+                            color: Blue;"><i class="fa fa-edit"></i></span></a>
+                            <a href="{{ path('sup_OT', {'OT': key}) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="Supprimer"><span class="m-1" style="font-size: 1em;
+                            color: Red;"><i class="fa fa-trash"></i></span></a>
+                            <a href="{{ path('affichagePlanningMoul', {'CTO': Datas}) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="Visualiser"><span class="m-1" style="font-size: 1em;
+                            color: Green;"><i class="fa fa-eye"></i></span></a>
+                            </td>
                         </tr>
                             {% for Data in OT %}
                                 <tr>
-                                    <td><a href="#">{{Data.OF}}</a></td>
+                                    {# <td><a href="#">{{Data.OF}}</a></td> #}
+                                    <td>
+                                        <select class="select" name="OF" id="{{Data.Ref}}">
+                                            <option value="">{{Data.OF}}</option>
+                                        </select>
+                                    </td>
+                                    <td><a href="#" class="h6">{{Data.Ref}}</a></td>
                                     <td><a href="#" class="h6">{{Data.Designation}}</a></td>
-                                    <td><span class="col-auto"><i class="fa fa-calendar fa-1x text-gray">{{Data.Horizon}}</i></span></td>
-                                    {# <td><b ref=""  id="btn-success" class="btn btn-success" style="border-radius:40px;background-color:blue;color:white" onclick='SelectCTO({{nameTR}},"{{myDate|date('Y-m-d H:i')}}","{{ test.PlanningSAP.Cycles }}")'>Sélectionner</b></td> #}
+                                    <td><span class="col-auto"><i id="{{Data.Ref}}" class="fa fa-calendar fa-1x text-gray">{{Data.Horizon}}</i></span></td>
+                                    <td><a href="#" class="text-warning" data-toggle="tooltip" data-animation="false" title="Modifier cet OF" onclick="affichageSelectOF({{ Data.Ref}}, '{{ path('modif_OF_OT') }}')">
+                                    <span class="m-1" style="font-size: 1em;color: Blue;"><i class="fa fa-edit"></i></span></a></td>
                                 </tr>
                             {% endfor %}
                     </tbody>
