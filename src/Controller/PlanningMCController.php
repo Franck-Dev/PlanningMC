@@ -829,12 +829,13 @@ class PlanningMCController extends AbstractController
                 
                 return $this->redirectToRoute('Demandes');
         }
-
+        $datas['Liste OT vide'] = 'Pas d\'outillage'; 
         $Titres=[];
             
         if (!$demande->getId()){
             return $this->render('planning_mc/CreationDemandes.html.twig',[
                 'Titres' => $Titres,
+                'Datas' => $datas,
                 'formDemande' => $form->createView()
              ]);
         } else {
@@ -1108,7 +1109,9 @@ class PlanningMCController extends AbstractController
      * @Route("/Demandes/Charge_Fige/{id}/OF", name="list_OT_chargement", methods={"POST"})
      * @IsGranted("ROLE_CE_MOULAGE")
      */
-    Public function checkOFOTsvtCTO(Request $request, FunctChargPlan $chargeFige, ChargFigeRepository $cata, ChargeRepository $repo, OutillagesRepository $Out, ArticlesRepository $Art)
+    Public function checkOFOTsvtCTO(Request $request, 
+    FunctChargPlan $chargeFige, ChargFigeRepository $cata, 
+    ChargeRepository $repo, OutillagesRepository $Out, ArticlesRepository $Art)
     {
         // On va récupérer le CTO correspondant à l'id
         $CTO=$cata->findOneBy(['id' => $request->attributes->get('id')]);

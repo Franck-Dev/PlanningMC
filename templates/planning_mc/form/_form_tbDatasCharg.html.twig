@@ -9,18 +9,32 @@
                 <th>Action</th>
             </tr>	
         </thead>
-        {% for key, OT in Datas %}                               
+        {% for key, OT in Datas %}
+            {% set nbPol = random(0, 10) %}                              
             {# {% set nameTR = ['IDChargt',jour,CTO.Nom,loop.index]|join %} #}
                     <tbody class="border bg-secondary">
                         {# <tr id="{{nameTR}}"> #}
                         <tr>
                             <td colspan="11" class="text-center bg-primary">{{key}}
-                            <a href="{{ path('modif_OFs_OT', {'OT': key}) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="Modifier"><span class="m-1" style="font-size: 1em;
-                            color: Blue;"><i class="fa fa-edit"></i></span></a>
-                            <a href="{{ path('sup_OT', {'OT': key}) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="Supprimer"><span class="m-1" style="font-size: 1em;
-                            color: Red;"><i class="fa fa-trash"></i></span></a>
-                            <a href="{{ path('affichagePlanningMoul', {'CTO': Datas}) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="Visualiser"><span class="m-1" style="font-size: 1em;
-                            color: Green;"><i class="fa fa-eye"></i></span></a>
+                                {# <a href="{{ path('modif_OFs_OT', {'OT': key}) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="Modifier"><span class="m-1" style="font-size: 1em;
+                                color: Blue;"><i class="fa fa-edit"></i></span></a>
+                                <a href="{{ path('affichagePlanningMoul', {'CTO': Datas}) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="Visualiser"><span class="m-1" style="font-size: 1em;
+                                color: Green;"><i class="fa fa-eye"></i></span></a> #}
+                                <a href="{{ path('sup_OT', {'OT': key}) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="Supprimer"><span class="m-1" style="font-size: 1em;
+                                color: Red;"><i class="fa fa-trash"></i></span></a>
+                                {% if nbPol > 7 and nbPol <= 9 %}
+                                    <a href="#" class="text-warning" data-toggle="tooltip" data-animation="false" title="valider"><span class="m-1" style="font-size: 1em;
+                                    color: Green;"><i class="fa fa-check" aria-hidden="true"></i></a>
+                                    <a href="#" class="badge badge-warning" title="Nombre de polymérisation">{{nbPol}}</a>              
+                                {% elseif nbPol > 9 %}
+                                    <a href="#" class="text-warning" data-toggle="tooltip" data-animation="false" title="planifier B15"><span class="m-1" style="font-size: 1em;
+                                    color: Green;"><i class="fa fa-calendar" aria-hidden="true"></i></a>
+                                    <a href="#" class="badge badge-danger" title="Nombre de polymérisation">{{nbPol}}</a>
+                                {% else %}
+                                    <a href="#" class="text-warning" data-toggle="tooltip" data-animation="false" title="valider"><span class="m-1" style="font-size: 1em;
+                                    color: Green;"><i class="fa fa-check" aria-hidden="true"></i></a>
+                                    <a href="#" class="badge badge-success" title="Nombre de polymérisation">{{nbPol}}</a> 
+                                {% endif %}
                             </td>
                         </tr>
                             {% for Data in OT %}

@@ -26,6 +26,45 @@
                 font-weight: bold;
                 color:  #6EB4CD;
             }
+            .lds-dual-ring.hidden { 
+             display: none;
+            }
+            .lds-dual-ring {
+                display: inline-block;
+                width: 80px;
+                height: 80px;
+            }
+            .lds-dual-ring:after {
+                content: "WAIT";
+                display: block;
+                width: 64px;
+                height: 64px;
+                margin: 5% auto;
+                border-radius: 50%;
+                border: 6px solid #fff;
+                border-color: #fff transparent #fff transparent;
+                animation: lds-dual-ring 1.2s linear infinite;
+            }
+            @keyframes lds-dual-ring {
+                0% {
+                    transform: rotate(0deg);
+            }
+                100% {
+                    transform: rotate(360deg);
+            }
+            }
+
+            .overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
+                background: rgba(0,0,0,.8);
+                z-index: 999;
+                opacity: 1;
+                transition: all 0.5s;
+            }
         </style>
         {% endblock %}
     </head>
@@ -122,6 +161,9 @@
         {% endfor %}
 		{% block body %}{% endblock %}
 		</div>
+        <div class="cont d-flex justify-content-center align-items-center">
+            <div id="loader" class="lds-dual-ring hidden overlay"></div>
+        </div>
 		{% block javascripts %}
             <script src="{{ asset('build/app.js') }}"></script>
             <script src="{{ asset('build/jquery.min.js') }}"></script>

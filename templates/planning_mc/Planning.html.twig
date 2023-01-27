@@ -1,0 +1,357 @@
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('build/bootstrap-toggle.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('build/vis.css') }}">
+    <style type="text/css">
+        table {
+             width: 100%;
+             font-size: 2vmin;
+        }
+        th {
+            background-color: transparent;
+        }
+        input {
+            border: 2px solid blue;
+            border-radius: 4px;
+            background-color: #f1f1f1;
+            font-size: 2.0vh;
+            font-size: 2vmin;
+          }
+        select {
+            width: 100%;
+            border: 2px solid blue;
+            border-radius: 4px;
+            background-color: #f1f1f1;
+            font-size-adjust:unset;
+        }
+        .btn.btn-info.btn-block {
+            -webkit-text-fill-color: aliceblue;
+            background-color: blue;
+        }
+        .button {
+            border: 2px solid blue;
+            border-radius: 40px;
+            background-color: #2b21b8;
+            -webkit-text-fill-color: aliceblue;
+        }
+        .sweetalert-lg {
+            width: 600px;
+        }
+        .gris{
+            background: rgb(0, 50, 95);
+            border-color: rgb(230, 0, 50);
+        }
+        .vis-time-axis .vis-text {
+            color: white;
+        }
+        .vis-time-axis .vis-grid.vis-h5 {
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h6{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h7{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h8{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h9{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h10{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h11{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h12{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h13{
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h14{
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h15{
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h16{
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h17{
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h18 {
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h19 {
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h20 {
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h21 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h22 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h23 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h0 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h1 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h2 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h3 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h4 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-text.vis-saturday,
+        .vis-time-axis .vis-text.vis-sunday {
+        color: black;
+        }
+        .progress-wrapper {
+            background: white;
+            width: 100%;
+            height: 18px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 50%;
+            width: 90%;
+            position: absolute;
+            left: 0px;
+            top: 5px;
+            background: #63ed63;
+        }
+
+        .progress-label {
+            position: absolute;
+            z-index: 1;
+        }
+
+        .modal-body { 
+            background: rgb(0, 50, 95);
+            color:  white;
+        }
+        .button{
+            display:    block;
+            width:  100%;
+        }
+        .button_menu{
+            display: flex;
+            flex-flow: row wrap;
+        }
+        .button_menu .btn_valid{
+            border-radius:  10px;
+            position:   absolute;
+            text-align: center;
+            right:  0px;
+            vertical-align: middle;
+            background-image:radial-gradient( blue,green);
+            color:  white;
+            text-decoration:    none;  
+            width:  100px;
+            min-width:  7%;
+            height: 30px;
+        }
+        .vis-item.vis-range{
+            min-height: 0.5em;
+            border-top-left-radius:     1em;
+            border-top-right-radius:    1em;
+            top:    0px;
+        }
+        .vis-item .vis-item-overflow {
+            overflow: visible;
+        }
+        #icone{
+            height: 1em;
+            width: 1em;
+        }
+        .vis-timeline{
+            max-height: 100%;
+        }
+	</style>
+{% endblock %}
+{% block body %}
+<h1>Prévisualisation du Planning ✅</h1>
+ 	<div id="VisuPlanning"></div>		
+{% endblock %}
+{% block javascripts %}
+<script src="{{ asset('build/vis.js') }}"></script>
+<script src="{{ asset('build/handlebars.min.js') }}"></script>
+<script src="{{ asset('build/prototype.js') }}"></script>
+<script src="{{ asset('build/sweetalert.min.js') }}"></script>
+<script id="item-template" type="text/x-handlebars-template">
+    <table class="table-condensed">
+        <tr>
+            <td colspan="3" class="programmes" style="font-size: 0.7em"><strong>{% verbatim %}{{programmes}}{% endverbatim %}</strong></td>
+            <th><img id="icone" src="{{asset('build/images/{{statut}}.png')}}"  alt="{% verbatim %}{{icone}}{% endverbatim %}"></th>
+            <td colspan="3" class="statut" style="font-size: 0.7em">{% verbatim %}{{statut}}{% endverbatim %}</td>
+        </tr>
+    </table>
+</script>
+<script id="item-popup" type="text/x-handlebars-template">
+    <table class="infos" style="height: 20px;">
+        <tr>
+            <td colspan="3" class="programmes">{% verbatim %}{{programmes}}{% endverbatim %}</td>
+            <td colspan="3" class="statut">{% verbatim %}{{statut}}{% endverbatim %}</td>
+        </tr>
+    </table>
+</script>
+<script type="text/javascript">
+        // create a handlebars template
+        var source = document.getElementById('item-template').innerHTML;
+        var template = Handlebars.compile(source);
+        console.log(template)
+var conteneur = document.getElementById ('VisuPlanning');
+
+ var groups = new vis.DataSet();
+      
+        //groups.add(Moy);
+        //groups.add(ssMoy);
+        groups.add([{id:1, content: 'Laser1', nestedGroups: [11]},{id:2, content: 'Laser2', nestedGroups: [12]},{id:4, content: 'Laser4', nestedGroups: [14]}]);
+        groups.add([{id:11, content: 'Réalisé'},{id:12, content: 'Réalisé'},{id:14, content: 'Réalisé'}]);
+
+        //var items = new vis.DataSet (Task);
+        var groupIds = groups.getIds();
+        var randomGroupId = groupIds[Math.floor(Math.random() * groupIds.length)];
+        var items = new vis.DataSet ([
+            {id: 1, programmes: 'OT98765', statut: 'PLANNIFIE', start: '2022-12-23 22:00:00', end: '2022-12-24 02:00:00', group: 2,style: 'background-color: green', title: 'Prendre les outillages en salle de démoulage'},
+            {id: 2, programmes: 'OT123456', statut: 'CONFORME', start: '2022-12-23 23:00:00', end: '2022-12-24 05:15:00', group: 1, style: 'background-color: green', title:'Faire éprouvette'},
+            {id: 3, programmes: 'OT095425', statut: 'LANCER', start: '2022-12-21 06:00:00', end: '2022-12-21 18:10:00', group: 1, style: 'background-color: green'},
+            {id: 4, programmes: 'OT081235', statut: 'TERMINE', start: '2022-12-21 22:00:00', end: '2022-12-22 08:50:00', group: 4, style: 'background-color: green'},
+            {id: 5, programmes: 'OT089654', statut: 'RETARD', start: '2022-12-22 04:00:00', end: '2022-12-22 09:30:00', group: 2, style: 'background-color: green'},
+            {id: 6, programmes: 'OT093452', statut: 'ANNULER', start: '2022-12-22 22:00:00', end: '2022-12-23 02:00:00', group: 1, style: 'background-color: green'} //#ed12dd
+        ]);
+
+        var options = {
+            locale: 'fr',
+            zoomMin: 23000000,
+            zoomMax: 20160000000,
+            template:template ,
+            stack: true,
+            start: new Date(),
+            end: new Date(1000*60*60*24*3 + (new Date()).valueOf()),
+			zoomKey: "ctrlKey",
+            orientation: 'top',
+            groupOrder: 'content',
+            /* visibleFrameTemplate: function(item) {
+                if (item.visibleFrameTemplate) {
+                    return item.visibleFrameTemplate;
+                }
+                var percentage = item.value * 100 + '%';
+                return '<div class="progress-wrapper"><div class="progress" style="width:' + percentage + '" background="red"></div><label class="progress-label">' + percentage + '<label></div>';
+            }, */
+            editable : { 
+                add : true , // ajoute de nouveaux éléments en double tapant  
+                updateTime : true , // déplace les éléments horizontalement  
+                updateGroup : true , // déplace les éléments d'un groupe à un autre  
+                remove : true , // supprime un élément en appuyant sur le bouton de suppression en haut à droite  
+                overrideItems : false  // autorise ces options à remplacer item.editable
+            },
+            onUpdate: function (item, callback) { 
+                //prettyPromptItemUpdate('Données de polymérisation', 'Edition', item, groups, timeline, callback); 
+                item.content = prompt('Edit items text:', item.content);
+            }
+        };
+var timeline = new vis.Timeline (conteneur, items, groups, options);
+//console.log(options.end);
+
+function calculfin (dureCycle,heureDeb,i)
+{
+    var i=i;
+    //Conversion de la durée du cycle en heures minutes pour ajout à la date de départ
+    var dureCycle="1970-01-01T"+dureCycle;
+    var durCycle = new Date(dureCycle);
+//Idem conversion durée pour date et heure de départ
+    console.log(heureDeb);
+    var heureDeb = new Date(heureDeb);
+//Ajout du temps de cycle à la date de départ pour calcul date de fin
+    var newFin=heureDeb.getTime()+durCycle.getTime()+7200000;
+    newFin= new Date(newFin);
+//Reconstitution du format de la date
+    var dateFin = newFin.toISOString().slice(0,10);
+    //dateFin=dateFin.replace( /\-/g,"/");
+    var heurefin= newFin.toISOString().slice(11,16);
+    var newdatefin=dateFin+"T"+heurefin;
+    alert('La nouvelle fin sera à  ' + newdatefin);
+//Renvoie de la date de fin dans l'input du heureFin
+console.log("HeureFin"+i);
+    var HF = document.getElementById("HeureFin"+i);
+    HF.value=newdatefin; 
+};
+//Validation de la ligne après submit (statut à oui et couleur verte)
+function validation(x,StatPlan){
+    
+    console.log(document.getElementsByTagName("i"));
+//Attribution de la couleur vert pour validation de la ligne(demande)
+    var couleur = document.createAttribute("bgcolor"); 
+    couleur.nodeValue = "green"; 
+    document.getElementsByTagName("tr")[2].setAttributeNode(couleur)
+//Validation de la demande avec passage du statut plannifié à "OUI"
+    var statut = document.getElementById("Statut"+x);
+    statut.value="OUI";
+//Renvoie des valeurs dans les cellules masquées pour récupération dans controller
+    //Si modification statut à 1 sinon 0
+    if(StatPlan==1){
+        document.querySelector('[name=Statut'+x+']').value = "0";
+        document.querySelector('[name=Moyen'+x+']').value = null;
+    }
+    else{
+        //alert(document.getElementById("Choixmoyen"+x).options[document.getElementById('Choixmoyen'+x).selectedIndex].text);
+        document.querySelector('[name=Statut'+x+']').value = "1";
+        document.querySelector('[name=Moyen'+x+']').value = document.getElementById("Choixmoyen"+x).options[document.getElementById('Choixmoyen'+x).selectedIndex].text;
+    }    
+    //Reformatage de la date sans le T
+    var DateHDeb=document.getElementById("HeureDebut"+x).value;
+    var DateDeb=DateHDeb.slice(0,10);
+    var HeureDeb=DateHDeb.slice(11,16);
+    var newdDateHDeb=DateDeb+" "+HeureDeb;
+    var DateHFin=document.getElementById("HeureFin"+x).value;
+    var DateFin=DateHFin.slice(0,10);
+    var HeureFin=DateHFin.slice(11,16);
+    var newdDateHFin=DateFin+" "+HeureFin;
+    document.querySelector('[name=Hfin'+x+']').value = newdDateHFin;
+    document.querySelector('[name=Hdeb'+x+']').value = newdDateHDeb;
+};
+
+</script>
+{% endblock %}
+

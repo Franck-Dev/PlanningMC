@@ -4,6 +4,13 @@
 
 {% block title %}Demandes de créneaux de polymérisations{% endblock %}
 
+{% block stylesheet %}
+<style type="text/css">
+	
+</style>
+
+{% endblock %}
+
 {% block body %}
 	<h1>Demandes de créneaux de polymérisations ✅</h1>
 	<div class="row d-flex align-items-top justify-content-center m-2">
@@ -36,7 +43,9 @@
 				<!-- Card Body -->
 				<div class="card-body">
 					<div class="pt-4 pb-2">
-						<div id="myDatasCTO"></div>
+						<div id="myDatasCTO">
+							{% include "planning_mc/form/_form_tbDatasCharg.html.twig" %}
+						</div>
 					</div>
 					
 				</div>
@@ -65,7 +74,8 @@
 					<h6 class="m-0 font-weight-bold text-primary">Organisation de Moulage :</h6>
 					<div class="dropdown no-arrow">
 						<a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-							data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+							data-toggle="dropdown" 
+							aria-haspopup="true" aria-expanded="false">
 							<i class="fa fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
 						</a>
 						<div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
@@ -81,7 +91,9 @@
 				<!-- Card Body -->
 				<div class="card-body">
 					<div class="pt-4 pb-2">
-						<div id="myDatasCTOMoul"></div>
+						<div id="myDatasCTOMoul">
+							{% include "planning_mc/Planning.html.twig" %}
+						</div>
 					</div>
 					
 				</div>
@@ -101,6 +113,7 @@
 			</div>
 		</div>
 	</div>
+
 {% endblock %}
 
 {% block mesJavascripts %}
@@ -126,6 +139,9 @@ $cycle.change(function() {
     url : $form.attr('action'),
     type: $form.attr('method'),
     data : data,
+	beforeSend: function() {
+        $('#loader').removeClass('hidden')
+    },
     complete: function(html) {
       // Replace current position field ...
       $('#demandes_ListOF').replaceWith(
@@ -140,6 +156,7 @@ $cycle.change(function() {
 		rebindDatasCTO($('#demandes_ListCTO'));
 	  });
       // Position field now displays the appropriate positions.
+	  $('#loader').addClass('hidden');
     }
   });
   
@@ -147,7 +164,7 @@ $cycle.change(function() {
 
 // Function qui renvoie les données du CTO avec les OF associés trouvés dans la charge du jour + qqs jours autour
 function rebindDatasCTO($CTO){
-
+	console.log($CTO.val());
 	$.ajax({
     url : 'http://localhost/PlanningMC/Public/Demandes/Charge_Fige/'+$CTO.val()+'/OF',
     method: 'POST',
@@ -158,6 +175,8 @@ function rebindDatasCTO($CTO){
         // ... with the returned one from the AJAX response.
         $(html.responseText)
       );
+	  console.log(html.responseText);
+	  $('#Num_CTO').text($('#demandes_ListCTO option:selected').text());
     }
   });
 };
