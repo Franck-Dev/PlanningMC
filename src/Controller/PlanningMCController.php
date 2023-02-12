@@ -45,6 +45,7 @@ use App\Repository\OutillagesRepository;
 use App\Repository\ProgMoyensRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
+use Knp\Component\Pager\PaginatorInterface;
 use App\Repository\DefaultRepositoryFactory;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Mailer\MailerInterface;
@@ -64,8 +65,8 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
-use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -1424,7 +1425,10 @@ class PlanningMCController extends AbstractController
      * @Route("/LOGISTIQUE/Ordonnancement", name="Ordo")
      * @IsGranted("ROLE_PLANIF")
      */
-    public function Ordo(FunctChargPlan $charge, ManagerRegistry $manaReg)
+    public function Ordo(FunctChargPlan $charge,
+     ManagerRegistry $manaReg,
+     PaginatorInterface $paginator,
+     Request $request)
         {   
         //Titres pour le menu
         $repo=$manaReg->getRepository(ConfSmenu::class);
@@ -1433,6 +1437,9 @@ class PlanningMCController extends AbstractController
         // Création de la charge totale SAP
         $repo=$manaReg->getRepository(Charge::class);
         $ChargTot=$repo -> findAll();
+
+        // Mise en place de la pagination
+        $ChargTot=$paginator->paginate($ChargTot, $request->query->getInt('page',1),250);
         
         // Création de la table de répartition des programmes suivant OF SAP lancés sur 1 mois
         // Date à aujourd'hui
