@@ -93,7 +93,7 @@ class CallApiService
                 ]]
             );
         } else {
-            dump($tabBody);
+            //dump($tabBody);
             $response = $this->client->request(
                 $method,
                 $path.$url,
@@ -104,6 +104,7 @@ class CallApiService
                     'json' => $tabBody
                 ]
             );}
+            //dd($response);
         return $response->toArray();
     }
     

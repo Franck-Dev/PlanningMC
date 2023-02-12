@@ -48,6 +48,11 @@ class Services
      */
     private $NbUser;
 
+    public function __toString(): string
+    {
+        return (string) $this->getNom();
+    }
+
     public function __construct()
     {
         $this->users = new ArrayCollection();

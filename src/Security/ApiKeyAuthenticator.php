@@ -60,7 +60,7 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
     {
         //$apiToken = $request->headers->get('X-AUTH-TOKEN');
         $_username=$request->get('_username');
-        dump($request->get('modif_md_p'));
+            //dump($request->get('modif_md_p'));
         // Si le username est un nom, on récupère le matricule
         if (strstr($_username, '.', true)!==false && strstr($_username, '@', true)!==false) {
             $username = strstr($_username, '@', true);
@@ -115,6 +115,7 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
+        $token->setAttributes($token->getUser()->getProgrammeAvion());
         return new RedirectResponse($this->router->generate('home'),301);
     }
 
@@ -128,23 +129,5 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
             // $this->translator->trans($exception->getMessageKey(), $exception->getMessageData())
         ];
         return new JsonResponse($data, Response::HTTP_UNAUTHORIZED);
-    }
-    
-    /**
-     * getUserIdentifierByToken Donne l'utilisateur suivant son token au travers de l'API Usine
-     *
-     * @param  string $apiToken
-     * @return array
-     */
-    private function getUserIdentifierByToken($apiToken)
-    {
-        $users=$this->CallApi->getDatasUsers($apiToken);
-        dump($users);
-        foreach ($users as $user) {
-            if ($user['apiToken'] == $apiToken)
-            {
-                return new User($user);
-            }
-        }
     }
 }
