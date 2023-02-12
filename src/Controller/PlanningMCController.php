@@ -231,19 +231,18 @@ class PlanningMCController extends AbstractController
             return $this->redirectToRoute('Planning');
     } 
      /**
-     * @Route("/PlanningMC/Creation/", name="CreaDemPolymf", condition="request.isXmlHttpRequest()")
+     * @Route("/PlanningMC/public/Creation/PolymDirect")
      * @IsGranted("ROLE_CE_POLYM")
      */
-    public function CreaDemPolymf(Request $request,RequestStack $requestStack, userInterface $user=null, ManagerRegistry $manaReg)
+    public function CreaDemPolymf(Request $request, userInterface $user=null, ManagerRegistry $manaReg)
     {
-        
-        if($requestStack->getParentRequest()){
-            $request=$requestStack->getParentRequest();
+        if($request->get('form')){
             if ($request->isMethod('POST')) {
                 $demande = new Demandes();
                 //$demande->setDatePropose($request->get('DatePropose'));
-                $TabDem=$request->request->get('form');
+                $TabDem=$request->get('form');
                 //On gère si c'est une création ou une modif
+                
                 if (count($TabDem)===9){
                     //Récupération de l'objet cycle
                     $Cyc = $manaReg
@@ -280,9 +279,9 @@ class PlanningMCController extends AbstractController
                     $demande->setRecurValide($TabDem["Reccurance"]);
                     $demande->setUserCrea($user->getUsername());
                     
-                        $manager = $manaReg->getManager();
-                        $manager->persist($demande);
-                        $manager->flush();
+                    $manager = $manaReg->getManager();
+                    $manager->persist($demande);
+                    $manager->flush();
 
                     //Récupération de l'ID de la demande pour plannifier la polym en suivant
                     $DemVal = $demande->getId();
@@ -365,7 +364,7 @@ class PlanningMCController extends AbstractController
                 }            
             }
         }
-        return new JsonResponse(['Message'=>"Modification de l'item n° effectuée avec succès",'Code'=>200]);
+        return $this->redirectToRoute('Planning');
     }
 
      /**
@@ -516,7 +515,7 @@ class PlanningMCController extends AbstractController
     }
 
     /**
-     * @Route("/PlanningMC/", name="Polym_Edit", condition="request.isXmlHttpRequest()")
+     * @Route("/PlanningMC/", name="Polym_Edit")
      * @IsGranted("ROLE_PLANIF")
      */
     public function editpolym(Request $request, ManagerRegistry $manaReg)
@@ -564,9 +563,10 @@ class PlanningMCController extends AbstractController
                             'NON' => false,
                             'OUI' => true]])
                       ->add('save', SubmitType::class, ['label' => 'Valider'])
+                      ->setAction($this->generateUrl('CreaDemPolymf'))
                       ->getForm();
         $form->handleRequest($request);
-        //dump($form);
+
         //Pas de menu pour la fenêtre modale, juste le retour à l'accueil
         $Titres=[];
         return $this->render('planning_mc/editpolym.html.twig',[
@@ -631,6 +631,7 @@ class PlanningMCController extends AbstractController
                     'REMPLACER' => 'REMPLACER',
                 ]])
             ->add('save', SubmitType::class, ['label' => 'Modifier'])
+            ->setAction($this->generateUrl('CreaDemPolymf'))
             ->getForm();
             $form->handleRequest($request);
             //dump($form);
@@ -644,16 +645,14 @@ class PlanningMCController extends AbstractController
     }
 
     /**
-     * @Route("/PlanningMC/ModificationPolym", name="CreaDemPolym")
+     * @Route("/PlanningMC/ModificationPolym")
      * @IsGranted("ROLE_REGLEUR")
      */
     public function CreaDemPolym(Request $request,RequestStack $requestStack, userInterface $user=null, ManagerRegistry $manaReg)
     {
         //Modification du statut de la polym
-        if($requestStack->getParentRequest()){
-            
-            $request=$requestStack->getParentRequest();
-            if ($request->isMethod('POST') and $request->request->get('form')) {
+        if($request->get('form')){    
+            if ($request->isMethod('POST')) {
                 $demande= new Demandes();
                 $planning = new Planning();
                 //$demande->setDatePropose($request->get('DatePropose'));
@@ -673,11 +672,11 @@ class PlanningMCController extends AbstractController
                 $manager = $manaReg->getManager();
                 $manager->persist($planning);
                 $manager->flush();
-                    $request->getSession()->getFlashbag()->add('success', 'Création de la polym n°' . $planning->getId() . ' réalisée');
+                
+                $request->getSession()->getFlashbag()->add('success', 'Création de la polym n°' . $planning->getId() . ' réalisée');
             }
-        }
-        
-        return new JsonResponse(['Message'=>"Vous n'avez pas les droits pour créer une polym",'Code'=>404]);
+        }    
+        return $this->redirectToRoute('Planning');
     }
     
      /**
@@ -841,6 +840,7 @@ class PlanningMCController extends AbstractController
         } else {
             return $this->render('planning_mc/ModificationDemandes.html.twig',[
                 'Titres' => $Titres,
+                'Datas' => $datas,
                 'formDemande' => $form->createView()
              ]);
         } 
@@ -959,13 +959,14 @@ class PlanningMCController extends AbstractController
     ManagerRegistry $manaReg,
     ComService $com)
     {
+        $idDemande=$demande->getId();
         $manager = $manaReg->getManager();
-            $manager->remove($demande);
-            $manager->flush();
+        $manager->remove($demande);
+        $manager->flush();
 
-            $com->sendNotif('La demande n° '. $demande->getId() . ' a bien été supprimée.');
-            $message="<p>Supression de la demande n° ". $demande->getId()." du ".$demande->getDatePropose(). " ". $demande->getHeurePropose()."</p>";
-            $com->sendEmail($user->getMail(),'f.dartois@daher.com', 'La demande n° '. $demande->getId() . ' a bien été supprimée.', $message );
+        $com->sendNotif('La demande n° '. $idDemande . ' a bien été supprimée.');
+        $message="<p>Supression de la demande n° ". $idDemande ." du ".$demande->getDatePropose()->format('Y-m-d'). " ". $demande->getHeurePropose()->format('H:i:s')."</p>";
+        //$com->sendEmail($user->getMail(),'f.dartois@daher.com', 'La demande n° '. $demande->getId() . ' a bien été supprimée.', $message );
 
         return $this->redirectToRoute('Demandes');
     }
@@ -989,7 +990,7 @@ class PlanningMCController extends AbstractController
         $subject='Demande de deprogrammation cycle : '.$demande->getCycle()->getNom();
         //TODO : Faire la recherche du mail du chef d'équipe des moyens chauds et responsables
         $CEPolym="f.dartois@daher.com";
-        $com->sendEmail($user->getMail(),$CEPolym,$subject,$message);
+        //$com->sendEmail($user->getMail(),$CEPolym,$subject,$message);
 
         //Envoie notification flash
         $com->sendNotif('Votre message concernant l\'annulation de la demande n°'.$demande->getId(). ' a été transmis, nous vous répondrons dans les meilleurs délais.',['browser']);

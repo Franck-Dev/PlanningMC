@@ -92,6 +92,7 @@ class DemandesType extends AbstractType
                 'multiple' => true,
                 'expanded' => false,
                 'by_reference' => false,
+                'required' => false,
                 'label' => 'Liste des OF encours: ('. count($listOFCycle) .' OF)'
             ]);
 
@@ -103,6 +104,7 @@ class DemandesType extends AbstractType
                 'expanded' => false,
                 'mapped' => false,
                 'by_reference' => false,
+                'required' => false,
                 'label' => 'Liste des CTO :'
             ]);
         };

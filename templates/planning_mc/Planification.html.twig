@@ -183,13 +183,13 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div id="Modale" class="modal-body">
-                {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolym',{'user': app.user}) )}}
+            <div id="Content" class="modal-body">
+                {# {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolym',{'user': app.user}) )}} #}
             </div>
         </div>
     </div>
 </div>
- {#<pre>{{dump(items)}}</pre>#}  
+ {# <pre>{{dump(tests)}}</pre>   #}
  {#<pre> {{ dump(app.request.attributes.get("demande")) }} </pre>#}    
     <div class="table-responsive">
         <table class="table">
@@ -215,7 +215,7 @@
                     <thead class="text-primary">
                             <tr> 
                                 <!-- Titre du tableau -->
-                                    <th> Id </th>
+                                    <th> Demande </th>
                                     <th> Cycle </th>
                                     <th> Date et Heure Début </th>
                                     <th> Heure Fin Théo </th>
@@ -245,10 +245,11 @@
                     {% set CycleId = ['CycleId',test.Id]|join %}<!-- Conception des noms des inputs cachés contenant le cycle de la demande à traiter' -->
 
                     <tbody>
-                        <tr id="{{ test.Id }}" {% if (test.plannifie == 1) %}
+                        <tr id="{{ test.Id }}"
+                            {% if (test.plannifie == 1) %}
                                 style="background-color:green"
                             {% else %}
-                            style="background-color:red"
+                                style="background-color:red"
                             {% endif %} 
                         >
                             <td>{{ test.Id }}</td>
@@ -510,7 +511,7 @@ var options = {
                         },
                         success: function(data){
                             console.log(data);                           
-                            $('#Modale').html(data); // affichage des résultats dans la modal
+                            $('#Content').html(data); // affichage des résultats dans la modal
                             $('#Modale').show();
                         }
                     });

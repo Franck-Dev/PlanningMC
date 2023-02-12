@@ -241,11 +241,11 @@
                         </div>
                         {% if is_granted('ROLE_CE_POLYM') %}
                             <div id="Content" class="modal-body">
-                                {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolymf',{'user': app.user}) )}}
+                                {# {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolymf',{'user': app.user}) )}} #}
                             </div>
                         {% elseif is_granted('ROLE_REGLEUR') %}
                             <div id="Content" class="modal-body">
-                                {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolym',{'user': app.user}) )}}
+                                {# {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolym',{'user': app.user}) )}} #}
                                 <button type="button" class="success" value="Modifier">
                                         <span aria-hidden="true"></span>
                                 </button>

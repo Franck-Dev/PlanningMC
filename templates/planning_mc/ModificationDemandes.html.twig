@@ -3,25 +3,27 @@
 {% block form %}
 		{{ form_start(formDemande) }}
 		<div class="form-row">
-			<div class="form-group col-md-4">
-				{{form_row(formDemande.cycle, {'attr' : {'placeholder' : "Nom de la polymérisation", 'readonly' : true }}) }}
+			<div class="form-group col-md-6">
+				{{form_row(formDemande.cycle, {'attr' : {'placeholder' : "Nom de la polymérisation" }}) }}
 			</div>
-			<div class="form-group col-md-8">
+			<div class="form-group col-md-6">
+				{{form_row(formDemande.ListCTO, {'attr' : {'placeholder' : "Sélectionner le CTO" }}) }}
+			</div>
+		</div>
+		<div class="form-row">
+			<div class="form-group col-md-12">
 				{{form_row(formDemande.ListOF, {'attr' : {'placeholder' : "Sélectionner les OF" }}) }}
 			</div>
 		</div>
 		<div class="form-row align-items-center">
-			{{form_row(formDemande.ListCTO, {'attr' : {'placeholder' : "Sélectionner les CTO" }}) }}
-		</div>
-		<div class="form-row align-items-center">
 			<div class="form-group col-md-4">
-				{{form_row(formDemande.date_propose, {'attr' : {'placeholder' : "Proposer une date", 'readonly' : true }}) }}
+				{{form_row(formDemande.date_propose, {'attr' : {'placeholder' : "Proposer une date" }}) }}
 			</div>
 			<div class="form-group col-md-3">
-				{{form_row(formDemande.heure_propose, {'attr' : {'placeholder' : "Proposer un horraire", 'readonly' : true }}) }}
+				{{form_row(formDemande.heure_propose, {'attr' : {'placeholder' : "Proposer une horaire" }}) }}
 			</div>
 			<div class="form-group col-md-5">
-				{{form_row(formDemande.Reccurance, {'attr' : {'placeholder' : "True ou False", 'readonly' : true }}) }}
+				{{form_row(formDemande.Reccurance, {'attr' : {'placeholder' : "True ou False" }}) }}
 			</div>
 		</div>
 		<div class="form-group">
@@ -31,10 +33,9 @@
 			{{form_row(formDemande.outillages, {'attr' : {'placeholder' : "Entrez les outillages si besoin" }})}}
 		</div>
 		<div class="form-group">
-				<button type="submit" class="btn btn-warning">
-					Modifier la Demande
-				</button>
+			<button type="submit" class="btn btn-warning">
+				Modifier la Demande
+			</button>
 		</div>
 		{{ form_end(formDemande) }}
-	</div>
 {% endblock %}
