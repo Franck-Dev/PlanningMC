@@ -80,7 +80,7 @@ class SecurityController extends AbstractController
             $com->sendNotif('Bonjour '. $user->getUsername(). ' , merci de vous être inscrit sur l\'APAMC. 
             Votre compte doit être vérifier et valider par votre supérieur hiérarchique si vous n\'êtes pas opérateur.');
             //Notification de l'admin pour vérification et validation du compte
-            $com->sendNotif('Un nouvel utilisateur: '. $user->getUsername(). ' est inscrit.',['admin']);
+            $com->sendNotif('Un nouvel utilisateur: '. $user->getUsername(). ' est inscrit.',['browser']);
             return $this->redirectToRoute('security_login');
         }
 

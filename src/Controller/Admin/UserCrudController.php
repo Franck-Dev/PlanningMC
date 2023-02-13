@@ -39,7 +39,7 @@ class UserCrudController extends AbstractCrudController
             $response->andWhere('entity.mail = :mail')->setParameter('mail', $this->getUser()->getMail());
         }
     } else {
-        dd($this->getUser()->getMail());
+        //dd($this->getUser()->getMail());
         $response->andWhere('entity.mail = :mail')->setParameter('mail', $this->getUser()->getMail());
     }
       return $response;
