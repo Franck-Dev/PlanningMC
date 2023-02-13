@@ -1357,14 +1357,21 @@ class PlanningMCController extends AbstractController
 	/**
      * @Route("/Tracabilite", name="Tracabilite")
      */
-    public function Tracabilite(ManagerRegistry $manaReg)
+    public function Tracabilite(
+        ManagerRegistry $manaReg,
+        PaginatorInterface $paginator,
+        Request $request)
     {
         $repo=$manaReg->getRepository(ConfSmenu::class);
 
         $Titres=$repo -> findAll();
+        $ChargTot=$manaReg->getRepository(Charge::class)->findAll();
+          // Mise en place de la pagination
+        $ChargTot=$paginator->paginate($ChargTot, $request->query->getInt('page',1),250);
 
         return $this->render('planning_mc/Tracabilite.html.twig',[
             'Titres' => $Titres,
+            'ChargeTot' => $ChargTot,
         ]);
     }
     /**
@@ -1502,7 +1509,7 @@ class PlanningMCController extends AbstractController
         //Récupération de la charge SAP sur 1 mois
         $ChargeTot=$repo -> findReparChargeW($jour,$jourVisu);
         $i=0;
-        dump($ChargeTot);
+        //dump($ChargeTot);
         //Attribution des CTO possible pour chacun des créneaux de polymérisation(Creation listCTO)
         $TbPcSsOT=[];
         $TbRepartChargeTot=[];
@@ -1521,7 +1528,7 @@ class PlanningMCController extends AbstractController
             }
         $i = $i + 1;
         }
-        dump($TbRepartChargeTot);
+        //dump($TbRepartChargeTot);
 
         return $this->render('planning_mc/PreviPlannif.html.twig', [
             'controller_name' => 'PlannificationSAP',
