@@ -632,7 +632,7 @@ class PlanningMCController extends AbstractController
                     'REMPLACER' => 'REMPLACER',
                 ]])
             ->add('save', SubmitType::class, ['label' => 'Modifier'])
-            ->setAction($this->generateUrl('CreaDemPolymf'))
+            ->setAction($this->generateUrl('CreaDemPolym'))
             ->getForm();
             $form->handleRequest($request);
             //dump($form);
@@ -657,7 +657,7 @@ class PlanningMCController extends AbstractController
                 $demande= new Demandes();
                 $planning = new Planning();
                 //$demande->setDatePropose($request->get('DatePropose'));
-                $TabDem=$request->request->get('form');
+                $TabDem=$request->get('form');
                 //dump($TabDem);
                 //Récupération de l'objet cycle
                 $PolymPla = $manaReg

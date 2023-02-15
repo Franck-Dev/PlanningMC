@@ -9,6 +9,7 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\ColorType;
 
 class CreationProgType extends AbstractType
@@ -28,6 +29,12 @@ class CreationProgType extends AbstractType
             ->add('Thermocouples')
             ->add('SPC')
             ->add('couleur', colortype::class)
+            ->add('codeAvion',ChoiceType::class, [
+                'label'    => 'Programme Avion',
+                'multiple' => true,
+                'choices'  => [
+                    'MLGD G500' => "MLGD G500",
+                    'MLGD G600' => "MLGD G600"]])
         ;
     }
 

@@ -95,9 +95,9 @@ class ProgMoyens
     private $chargFiges;
 
     /**
-     * @ORM\Column(type="string", length=100)
+     * @ORM\Column(type="array", nullable=true)
      */
-    private $codeAvion;
+    private $codeAvion= [];
 
     public function __toString(): string
     {
@@ -350,12 +350,12 @@ class ProgMoyens
         return $this;
     }
 
-    public function getCodeAvion(): ?string
+    public function getCodeAvion(): ?array
     {
         return $this->codeAvion;
     }
 
-    public function setCodeAvion(string $codeAvion): self
+    public function setCodeAvion(?array $codeAvion): self
     {
         $this->codeAvion = $codeAvion;
 

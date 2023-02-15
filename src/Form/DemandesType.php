@@ -60,20 +60,33 @@ class DemandesType extends AbstractType
         //Liste des avions en charge du user
         $progAvions=$user->getProgrammeAvion();
         //Création du tableau de recherche
-        foreach ($progAvions as $key=>$avion) {
-            $listAvions[$key]=$avion['designation'];
+        if ($progAvions) {
+            foreach ($progAvions as $key=>$avion) {
+                $listAvions[$key]=$avion['designation'];
+            }
+        } else {
+            $listAvions=[];
         }
-        $builder -> add('cycle', EntityType::class, [
-            'class' => ProgMoyens::class,
-            'query_builder' => function (ProgMoyensRepository $er)  use ($listAvions){
-              return $er->createQueryBuilder('u')
-                  ->where('u.codeAvion IN  (:avions)')
-                  ->setParameter('avions', $listAvions)
-                  ->orderBy('u.Nom', 'DESC');
-            },
-            'choice_label' => 'nom',
-            'placeholder' => 'Sélectionner votre cycle'
-        ]);
+        
+        if (!$listAvions) {
+            $builder -> add('cycle', EntityType::class, [
+                'class' => ProgMoyens::class,
+                'choice_label' => 'nom',
+                'placeholder' => 'Sélectionner votre cycle'
+            ]);
+        } else {
+            $builder -> add('cycle', EntityType::class, [
+                'class' => ProgMoyens::class,
+                'query_builder' => function (ProgMoyensRepository $er)  use ($listAvions){
+                  return $er->createQueryBuilder('u')
+                      ->where('u.codeAvion IN  (:avions)')
+                      ->setParameter('avions', $listAvions)
+                      ->orderBy('u.Nom', 'DESC');
+                },
+                'choice_label' => 'nom',
+                'placeholder' => 'Sélectionner votre cycle'
+            ]);
+        }
 
         $formModifier = function (FormInterface $form, ProgMoyens $cycle = null, $chargeRepository, $chargFigeRepository, $options) {
             $listOFCycle =  null === $cycle ? $chargeRepository->findBy(['Statut' => 'OUV'],['DateDeb' => 'ASC']) : $chargeRepository->findBy(['NumProg' => $cycle->getNom(),'Statut' => 'OUV'],
