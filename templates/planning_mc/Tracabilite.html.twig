@@ -10,22 +10,25 @@
             <div class="card shadow filterable">
 				<div class="card-header">
 					<h4>Liste OF charge SAP</h4>
-					<button class="btn btn-primary btn-filter"><span class="glyphicon glyphicon-th-list"></span>Filter</button>
+					{{ knp_pagination_filter(ChargeTot, {'a.NomPolym': 'Num Polym','c.OrdreFab': 'OF','c.Conf': 'Confirmation'}) }}
+					{# <button class="btn btn-primary btn-filter"><span class="glyphicon glyphicon-th-list"></span>Filter</button> #}
 				</div>
 				<div class="card-block">
 					<div class="table-responsive">
 						<table class="table table-sm table-hover">
 							<thead class="thead-dark">
 								<tr class="filters">
-									<th><input type="text" class="form-control" placeholder="OF"></th>
-									<th><input type="text" class="form-control" placeholder="PosteW"></th>
-									<th><input type="text" class="form-control" placeholder="Ref"></th>
-									<th><input type="text" class="form-control" placeholder="Désignation"></th>
-									<th><input type="text" class="form-control" placeholder="Prog"></th>
-									<th><input type="text" class="form-control" placeholder="Num Polym"></th>
-									<th><input type="text" class="form-control" placeholder="Tack Life"></th>
-									<th><input type="text" class="form-control" placeholder="Work Life"></th>
-									<th><input type="text" class="form-control" placeholder="Statut"></th>
+									<th>{{ knp_pagination_sortable(ChargeTot, 'OF', 'c.OrdreFab') }}</th>
+									<th>{{ knp_pagination_sortable(ChargeTot, 'PosteW', 'c.PosteW') }}</th>
+									<th>{{ knp_pagination_sortable(ChargeTot, 'Conf', 'c.Conf') }}</th>
+									<th>{{ knp_pagination_sortable(ChargeTot, 'Ref', 'c.ReferencePcs') }}</th>
+									<th>{{ knp_pagination_sortable(ChargeTot, 'Désignation', 'c.DesignationPcs') }}</th>
+									<th>{{ knp_pagination_sortable(ChargeTot, 'Prog', 'c.NumProg') }}</th>
+									<th>{{ knp_pagination_sortable(ChargeTot, 'NumPolym', 'a.NomPolym') }}</th>
+									<th>{{ knp_pagination_sortable(ChargeTot, 'Chargement', 'a.NomPolym') }}</th>
+									<th>{{ knp_pagination_sortable(ChargeTot, 'Tack Life', 'c.tackLife') }}</th>
+									<th>{{ knp_pagination_sortable(ChargeTot, 'Work Life', 'c.workLife') }}</th>
+									<th>{{ knp_pagination_sortable(ChargeTot, 'Statut', 'c.Statut') }}</th>
 								</tr>
 							</thead>
 							<tbody id="myTable">
@@ -33,10 +36,12 @@
 									<tr>
 										<td>{{chargeT.OrdreFab}}</td>
 										<td>{{chargeT.PosteW}}</td>
+										<td>{{chargeT.Conf}}</td>
 										<td>{{chargeT.ReferencePcs}}</td>
 										<td>{{chargeT.DesignationPcs}}</td>
 										<td>{{chargeT.NumProg}}</td>
 										<td>{{chargeT.Polym}}</td>
+										<td>{{chargeT.Chargement}}</td>
 										<td>{{chargeT.tackLife|date('Y-m-d')}}</td>
 										<td>{{chargeT.workLife|date('Y-m-d')}}</td>
 										<td>{{chargeT.Statut}}</td>

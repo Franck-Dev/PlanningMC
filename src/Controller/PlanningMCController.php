@@ -1358,17 +1358,19 @@ class PlanningMCController extends AbstractController
      * @Route("/Tracabilite", name="Tracabilite")
      */
     public function Tracabilite(
+        EntityManagerInterface $em,
         ManagerRegistry $manaReg,
         PaginatorInterface $paginator,
         Request $request)
     {
         $repo=$manaReg->getRepository(ConfSmenu::class);
-
         $Titres=$repo -> findAll();
-        $ChargTot=$manaReg->getRepository(Charge::class)->findAll();
+        //$ChargTot=$manaReg->getRepository(Charge::class)->findAll();
+        $dql   = "SELECT c FROM App\Entity\Charge c JOIN App\Entity\PolymReal a WITH a.id = c.Polym";
+        $query = $em->createQuery($dql);
           // Mise en place de la pagination
-        $ChargTot=$paginator->paginate($ChargTot, $request->query->getInt('page',1),250);
-
+        $ChargTot=$paginator->paginate($query, $request->query->getInt('page',1),250);
+        
         return $this->render('planning_mc/Tracabilite.html.twig',[
             'Titres' => $Titres,
             'ChargeTot' => $ChargTot,
