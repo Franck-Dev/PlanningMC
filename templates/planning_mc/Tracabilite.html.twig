@@ -26,8 +26,10 @@
 									<th>{{ knp_pagination_sortable(ChargeTot, 'Prog', 'c.NumProg') }}</th>
 									<th>{{ knp_pagination_sortable(ChargeTot, 'NumPolym', 'a.NomPolym') }}</th>
 									<th>{{ knp_pagination_sortable(ChargeTot, 'Chargement', 'a.NomPolym') }}</th>
+									<th>{{ knp_pagination_sortable(ChargeTot, 'Moulage', 'c.moulageId') }}</th>
 									<th>{{ knp_pagination_sortable(ChargeTot, 'Tack Life', 'c.tackLife') }}</th>
 									<th>{{ knp_pagination_sortable(ChargeTot, 'Work Life', 'c.workLife') }}</th>
+									<th>{{ knp_pagination_sortable(ChargeTot, 'Date Polym', 'a.DebPolym') }}</th>
 									<th>{{ knp_pagination_sortable(ChargeTot, 'Statut', 'c.Statut') }}</th>
 								</tr>
 							</thead>
@@ -42,8 +44,10 @@
 										<td>{{chargeT.NumProg}}</td>
 										<td>{{chargeT.Polym}}</td>
 										<td>{{chargeT.Chargement}}</td>
+										<td>{{chargeT.moulageId}}</td>
 										<td>{{chargeT.tackLife|date('Y-m-d')}}</td>
 										<td>{{chargeT.workLife|date('Y-m-d')}}</td>
+										<td>{{chargeT.Polym.DebPolym|date('Y-m-d')}}</td>
 										<td>{{chargeT.Statut}}</td>
 									</tr>
 								{% endfor %}

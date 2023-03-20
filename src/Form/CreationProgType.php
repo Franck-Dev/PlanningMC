@@ -2,14 +2,14 @@
 
 namespace App\Form;
 
+use App\Entity\ProgAvions;
 use App\Entity\ProgMoyens;
 use App\Entity\CategoryMoyens;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
-use Symfony\Bridge\Doctrine\Form\Type\EntityType;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\ColorType;
 
 class CreationProgType extends AbstractType
@@ -29,12 +29,12 @@ class CreationProgType extends AbstractType
             ->add('Thermocouples')
             ->add('SPC')
             ->add('couleur', colortype::class)
-            ->add('codeAvion',ChoiceType::class, [
-                'label'    => 'Programme Avion',
+            ->add('avion', EntityType::class, array(
+                'class' =>ProgAvions::class,
+                'mapped' => true,
+                'choice_label' => 'libelle',
                 'multiple' => true,
-                'choices'  => [
-                    'MLGD G500' => "MLGD G500",
-                    'MLGD G600' => "MLGD G600"]])
+                'expanded' => true))
         ;
     }
 

@@ -99,6 +99,11 @@ class ProgMoyens
      */
     private $codeAvion= [];
 
+    /**
+     * @ORM\ManyToMany(targetEntity=ProgAvions::class, inversedBy="progMoyens")
+     */
+    private $avion;
+
     public function __toString(): string
     {
         return (string) $this->getNom();
@@ -109,6 +114,7 @@ class ProgMoyens
         $this->demandes = new ArrayCollection();
         $this->outillages = new ArrayCollection();
         $this->chargFiges = new ArrayCollection();
+        $this->avion = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -358,6 +364,30 @@ class ProgMoyens
     public function setCodeAvion(?array $codeAvion): self
     {
         $this->codeAvion = $codeAvion;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|ProgAvions>
+     */
+    public function getAvion(): Collection
+    {
+        return $this->avion;
+    }
+
+    public function addAvion(ProgAvions $avion): self
+    {
+        if (!$this->avion->contains($avion)) {
+            $this->avion[] = $avion;
+        }
+
+        return $this;
+    }
+
+    public function removeAvion(ProgAvions $avion): self
+    {
+        $this->avion->removeElement($avion);
 
         return $this;
     }

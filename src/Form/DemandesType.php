@@ -79,9 +79,10 @@ class DemandesType extends AbstractType
                 'class' => ProgMoyens::class,
                 'query_builder' => function (ProgMoyensRepository $er)  use ($listAvions){
                   return $er->createQueryBuilder('u')
-                      ->where('u.codeAvion IN  (:avions)')
-                      ->setParameter('avions', $listAvions)
-                      ->orderBy('u.Nom', 'DESC');
+                    ->leftjoin("u.avion", "t")
+                    ->where('t.libelle IN (:avions)')
+                    ->setParameter('avions', $listAvions)
+                    ->orderBy('u.Nom', 'DESC');
                 },
                 'choice_label' => 'nom',
                 'placeholder' => 'Sélectionner votre cycle'

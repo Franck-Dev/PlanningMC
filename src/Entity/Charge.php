@@ -116,6 +116,11 @@ class Charge
      */
     private $workLife;
 
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     */
+    private $moulageId;
+
     public function __toString(): string
     {
         return (string) $this->getDateDeb()->format('Y-m-d')." | ".
@@ -365,5 +370,17 @@ class Charge
             return $date->format('Y-m-d');
         }
         
+    }
+
+    public function getMoulageId(): ?int
+    {
+        return $this->moulageId;
+    }
+
+    public function setMoulageId(?int $moulageId): self
+    {
+        $this->moulageId = $moulageId;
+
+        return $this;
     }
 }

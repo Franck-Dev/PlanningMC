@@ -23,6 +23,7 @@ use App\Form\PolymFormType;
 use App\Services\ComService;
 use App\Services\FunctIndic;
 use App\Entity\CategoryMoyens;
+use App\Entity\ProgAvions;
 use App\Entity\TypeRecurrance;
 use App\Form\CreationProgType;
 use App\Entity\RecurrancePolym;
@@ -1370,7 +1371,7 @@ class PlanningMCController extends AbstractController
         $query = $em->createQuery($dql);
           // Mise en place de la pagination
         $ChargTot=$paginator->paginate($query, $request->query->getInt('page',1),250);
-        
+
         return $this->render('planning_mc/Tracabilite.html.twig',[
             'Titres' => $Titres,
             'ChargeTot' => $ChargTot,
@@ -1777,16 +1778,37 @@ class PlanningMCController extends AbstractController
      * @Route("/METHODES/PROGRAMMATION/Creation_PRP", name="Creation PRP")
      * @Route("/METHODES/PROGRAMMATION/Modification_PRP/{id}", name="Modification_PRP")
      */
-    public function Creation_PRP(Request $Requet,EntityManagerInterface $manager,ProgMoyens $Prog=null, ManagerRegistry $manaReg)
+    public function Creation_PRP(Request $Requet,
+    EntityManagerInterface $manager,
+    ProgMoyens $Prog=null, 
+    ManagerRegistry $manaReg,
+    CallApiService $api)
     {
-//Si pas de programmes connus, c'est une création sinon une modif
+    //Mise à jour de la table progAvions svt api-Usine
+        //Recupération de la liste des programmes avions
+        $progAvions=$api->getDatasAPI('/api/programme_avions/','Usine',[],'GET');
+        $repo=$manaReg->getRepository(ProgAvions::class);
+        //Création du tableau de recherche
+        foreach ($progAvions as $avionApi) {
+            $avion=$repo -> findoneBy(['idApi' => $avionApi['id']]);
+            if (!$avion) {
+                $avion = new ProgAvions();
+            } else {
+                $avion->setidApi($avionApi['id']);
+            }            
+            $avion->setLibelle($avionApi['designation']);
+            $avion->setIri('/api/programme_avions/'.$avionApi['id']);
+            $manager->persist($avion);
+            $manager->flush();
+        }
+    //Si pas de programmes connus, c'est une création sinon une modif
         if(!$Prog){
             $Prog=new ProgMoyens();
         }
         $form = $this->createForm(CreationProgType::class, $Prog);
         
         $form->handleRequest($Requet);
-        //dump($form);
+        
         if($form->isSubmitted() && $form->isValid()){
             if(!$Prog->getId()){
                 $Prog->setDateCreation(new \datetime());
@@ -1801,7 +1823,7 @@ class PlanningMCController extends AbstractController
             $manager->flush();
             
 
-            return $this->redirectToRoute('Consultation');
+            return $this->redirectToRoute('Consultation PRP');
         }
 
         $repo=$manaReg->getRepository(ConfSsmenu::class);
