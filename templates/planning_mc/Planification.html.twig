@@ -228,7 +228,7 @@
                     
                             </tr>
                     </thead>
-                    {% for test in tests if test.datePropose|date('d/m/Y') == myDate|date('d/m/Y') %}<!-- Boucle sur toutes les demandes effectuées -->	
+                    {% for test in tests|filter(test => test.datePropose|date('d/m/Y') == myDate|date('d/m/Y'))  %}<!-- Boucle sur toutes les demandes effectuées -->	
                     {% set durecycle = test.cycle.duree | date('H:i') %}<!-- Mise au format des durée de polymérisation -->
                     {% set dureecycle = [durecycle|date('H'),'hours',' ',durecycle|date('i'),'minutes']|join %}	
                     {% set nominputHF = ['HeureFin',test.Id]|join %}<!-- Conception des noms des inputs contenant la date de fin après calculfin -->

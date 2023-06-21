@@ -159,7 +159,7 @@
 				
 							</tr>
 				</thead>
-				{% for cycle in Cycles if cycle.datePropose|date('d/m/Y') == myDate|date('d/m/Y') %}					
+				{% for cycle in Cycles|filter(cycle => cycle.datePropose|date('d/m/Y') == myDate|date('d/m/Y')) %}					
 					<tbody class="text-primary">
 					<tr>
 						<td>
