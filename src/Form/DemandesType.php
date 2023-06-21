@@ -138,7 +138,6 @@ class DemandesType extends AbstractType
                 $cycle = $event->getForm()->getData();
                 // since we've added the listener to the child, we'll have to pass on
                 // the parent to the callback function!
-                //dump($event->getForm()->getParent());
                 $formModifier($event->getForm()->getParent(), $cycle, $this->chargeRepository, $this->chargFigeRepository, $options);
             }
         );

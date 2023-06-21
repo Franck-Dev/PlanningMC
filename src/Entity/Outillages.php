@@ -108,6 +108,11 @@ class Outillages
      */
     private $DateDispo;
 
+    /**
+     * @ORM\Column(type="smallint", nullable=true)
+     */
+    private $nbPolymssTrait;
+
     public function __construct()
     {
         $this->Programme = new ArrayCollection();
@@ -379,6 +384,18 @@ class Outillages
     public function setDateDispo(?\DateTimeInterface $DateDispo): self
     {
         $this->DateDispo = $DateDispo;
+
+        return $this;
+    }
+
+    public function getNbPolymssTrait(): ?int
+    {
+        return $this->nbPolymssTrait;
+    }
+
+    public function setNbPolymssTrait(?int $nbPolymssTrait): self
+    {
+        $this->nbPolymssTrait = $nbPolymssTrait;
 
         return $this;
     }

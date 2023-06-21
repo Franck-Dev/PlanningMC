@@ -74,7 +74,8 @@ class CreationOType extends AbstractType
             ->add('Dispo', ChoiceType::class, array(
                 'choices' => array('OK' => '1', 'HS'  => '2', 'MAINTENANCE' => '3', 'TRAITEMENT' => '4'),
                 'empty_data' => '1',
-                'preferred_choices' => 'OK',
+                //'preferred_choices' => array('OK' => '1'),
+                'data' => '1',
                 'required' => true,
                 'expanded' => true,
                 'multiple' => false

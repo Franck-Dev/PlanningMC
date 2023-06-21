@@ -831,12 +831,14 @@ class PlanningMCController extends AbstractController
                 return $this->redirectToRoute('Demandes');
         }
         $datas['Liste OT vide'] = 'Pas d\'outillage'; 
+        $datasOT=[];
         $Titres=[];
             
         if (!$demande->getId()){
             return $this->render('planning_mc/CreationDemandes.html.twig',[
                 'Titres' => $Titres,
                 'Datas' => $datas,
+                'datasOT' => $datasOT,
                 'formDemande' => $form->createView()
              ]);
         } else {
@@ -1129,9 +1131,15 @@ class PlanningMCController extends AbstractController
         //Récupération de la liste des outillages de ce CTO
         $test=$chargeFige->checkOTCTO($listCTO, $repo, $Out, $Art, $creno);
 
+        //Récupération des nombres de polym par OT pour B15
+        foreach ($test[0]['Contenu'] as $key => $OT) {
+            $listOTDatas[$key]=$Out->findOneBy(['Ref' => $key]);
+        }
+
         return $this->render('planning_mc/form/_form_tbDatasCharg.html.twig', [
             'Datas' => $test[0]['Contenu'],
-            'CTO' => $test
+            'CTO' => $test,
+            'datasOT' => $listOTDatas
         ]);
     }
 
@@ -1148,7 +1156,12 @@ class PlanningMCController extends AbstractController
      * @Route("/Demandes/Charge_Fige/Modification/OFOT", name="modif_OF_OT", methods={"GET"})
      * @IsGranted("ROLE_CE_MOULAGE")
      */
-    Public function modifOFOT(Request $request, FunctChargPlan $chargeFige, ChargFigeRepository $cata, ChargeRepository $repo, OutillagesRepository $Out, ArticlesRepository $Art)
+    Public function modifOFOT(Request $request, 
+    FunctChargPlan $chargeFige, 
+    ChargFigeRepository $cata, 
+    ChargeRepository $repo, 
+    OutillagesRepository $Out, 
+    ArticlesRepository $Art)
     {
         $listOF= $repo->findBy(['ReferencePcs' => $request->get('Ref'), 'Statut' => 'OUV']);
 
@@ -1163,6 +1176,15 @@ class PlanningMCController extends AbstractController
             'art' => $request->get('Ref'),
             'listHorizon' => $listHorizon
         ]);
+    }
+
+    /**
+     * @Route("/Demandes/Charge_Fige/Validation/OT", name="val_OT", methods={"GET"})
+     * @IsGranted("ROLE_CE_MOULAGE")
+     */
+    Public function valOT(Request $request, FunctChargPlan $chargeFige, ChargFigeRepository $cata, ChargeRepository $repo, OutillagesRepository $Out, ArticlesRepository $Art)
+    {
+        dd($request);
     }
 
     /**
@@ -1871,7 +1893,7 @@ class PlanningMCController extends AbstractController
 
             dump($moyen->getId());
         }
-
+        dump($cycles);
         //$category = $cycles->getCateMoyen();}
         //dump($category);
         $moyen=new CategoryMoyens();
@@ -1892,8 +1914,8 @@ class PlanningMCController extends AbstractController
     }
     
      /**
-     * @Route("/OUTILLAGE/Article/Creation", name="CreationO")
-     * @Route("/OUTILLAGE/Article/Modification/{id}", name="ModificationO")
+     * @Route("/METHODES/OUTILLAGE/Creation", name="Creation OUT")
+     * @Route("/METHODES/OUTILLAGE/Modification/{id}", name="ModificationO")
      */
     public function CreationO(Request $Requet,EntityManagerInterface $manager,Outillages $OT=null, ManagerRegistry $manaReg)
         {
@@ -1935,8 +1957,8 @@ class PlanningMCController extends AbstractController
     }
 
     /**
-     * @Route("/OUTILLAGE/Article/Consultation", name="ConsultationO")
-     * @Route("/OUTILLAGE/Article/Consultation/{id}", name="ConsulO")
+     * @Route("/METHODES/OUTILLAGE/Consultation", name="Consultation OUT")
+     * @Route("/METHODES/OUTILLAGE/Consultation/{id}", name="ConsulO")
      */
     public function ConsultationO(Outillages $OT=null, ManagerRegistry $manaReg)
     {
@@ -1954,7 +1976,7 @@ class PlanningMCController extends AbstractController
     }
 
     /**
-     * @Route("/OUTILLAGE/Article/Demandes", name="DemandesO")
+     * @Route("/METHODES/OUTILLAGE/Article/Demandes", name="DemandesO")
      */
     public function DemandesO(Request $requette, EntityManagerInterface $manager)
     {

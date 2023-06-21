@@ -43,9 +43,7 @@
 				<!-- Card Body -->
 				<div class="card-body">
 					<div class="pt-4 pb-2">
-						<div id="myDatasCTO">
-							{% include "planning_mc/form/_form_tbDatasCharg.html.twig" %}
-						</div>
+						{% include "planning_mc/form/_form_tbDatasCharg.html.twig" %}
 					</div>
 					
 				</div>
@@ -175,6 +173,7 @@ function rebindDatasCTO($CTO){
         // ... with the returned one from the AJAX response.
         $(html.responseText)
       );
+	  console.log($('#myDatasCTO').html);
 	  console.log(html.responseText);
 	  $('#Num_CTO').text($('#demandes_ListCTO option:selected').text());
     }
