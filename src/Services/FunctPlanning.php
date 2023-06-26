@@ -64,9 +64,9 @@ class FunctPlanning
         return $result=[$data];
     }
 
-    public function moyens(MoyensRepository $repos) {
+    public function moyens(MoyensRepository $repos, int $idServ) {
         //Recherche des moyens à afficher sur planning
-        $moyens=$repos -> findAllMoyensSvtService ( intval('8'), intval('1') );
+        $moyens=$repos -> findAllMoyensSvtService ( $idServ, intval('1') );
         $item=$moyens;   
         $data = [];
         $TbEtat=[];

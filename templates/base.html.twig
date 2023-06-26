@@ -89,28 +89,28 @@
                             <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id={{ menu.Nom }}>{{menu.Nom}}<span class="caret"></span></a>
                                 <div class="dropdown-menu" aria-labelledby={{menu.Nom}}>
-                                    <a class="dropdown-item" href="{{path(menu.IdSmenu1)}}">{{menu.IdSmenu1}} </a>
-                                    <a class="dropdown-item" href="{{path(menu.IdSmenu2)}}">{{menu.IdSmenu2}}</a>
+                                    <a class="dropdown-item" href="{{path(menu.IdSmenu1, {'service':menu.Nom})}}">{{menu.IdSmenu1}} </a>
+                                    <a class="dropdown-item" href="{{path(menu.IdSmenu2, {'service':menu.Nom})}}">{{menu.IdSmenu2}}</a>
                                     <div class="dropdown-divider"></div>
                                     {% if menu.IdSmenu3 is empty %}
                                     {% else %}
-                                        <a class="dropdown-item" href="{{path(menu.IdSmenu3)}}">{{menu.IdSmenu3}}</a>
+                                        <a class="dropdown-item" href="{{path(menu.IdSmenu3, {'service':menu.Nom})}}">{{menu.IdSmenu3}}</a>
                                     {% endif %}
                                     {% if menu.IdSmenu4 is empty %}
                                     {% else %}
-                                        <a class="dropdown-item" href="{{path(menu.IdSmenu4)}}">{{menu.IdSmenu4}}</a>
+                                        <a class="dropdown-item" href="{{path(menu.IdSmenu4, {'service':menu.Nom})}}">{{menu.IdSmenu4}}</a>
                                     {% endif %}
                                     {% if menu.IdSmenu5 is empty %}
                                     {% else %}
-                                        <a class="dropdown-item" href="{{path(menu.IdSmenu5)}}">{{menu.IdSmenu5}}</a>
+                                        <a class="dropdown-item" href="{{path(menu.IdSmenu5, {'service':menu.Nom})}}">{{menu.IdSmenu5}}</a>
                                     {% endif %}
                                     {% if menu.IdSmenu6 is empty %}
                                     {% else %}
-                                        <a class="dropdown-item" href="{{path(menu.IdSmenu6)}}">{{menu.IdSmenu6}}</a>
+                                        <a class="dropdown-item" href="{{path(menu.IdSmenu6, {'service':menu.Nom})}}">{{menu.IdSmenu6}}</a>
                                     {% endif %}
                                     {% if menu.IdSmenu7 is empty %}
                                     {%else%}
-                                        <a class="dropdown-item" href="{{path(menu.IdSmenu7)}}">{{menu.IdSmenu7}}</a>
+                                        <a class="dropdown-item" href="{{path(menu.IdSmenu7, {'service':menu.Nom})}}">{{menu.IdSmenu7}}</a>
                                     {% endif %}
                                 </div>
                             </li>

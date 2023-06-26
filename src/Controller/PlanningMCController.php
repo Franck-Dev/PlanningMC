@@ -8,12 +8,14 @@ use App\Entity\Moyens;
 use App\Entity\Articles;
 use App\Entity\Demandes;
 use App\Entity\Planning;
+use App\Entity\Services;
 use App\Entity\ChargFige;
 use App\Entity\ConfSmenu;
 use App\Entity\PolymReal;
 use App\Entity\Chargement;
 use App\Entity\ConfSsmenu;
 use App\Entity\Outillages;
+use App\Entity\ProgAvions;
 use App\Entity\ProgMoyens;
 use App\Form\ComOutilType;
 use App\Form\DatePlanning;
@@ -23,7 +25,6 @@ use App\Form\PolymFormType;
 use App\Services\ComService;
 use App\Services\FunctIndic;
 use App\Entity\CategoryMoyens;
-use App\Entity\ProgAvions;
 use App\Entity\TypeRecurrance;
 use App\Form\CreationProgType;
 use App\Entity\RecurrancePolym;
@@ -65,8 +66,8 @@ use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
-use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
@@ -87,7 +88,7 @@ class PlanningMCController extends AbstractController
     public function planningEdit(Request $request, FunctPlanning $plan, ManagerRegistry $manaReg)
     {
         $repos=$manaReg->getRepository(Moyens::class);
-        $moyens=$plan->moyens($repos);
+        $moyens=$plan->moyens($repos, 8);
         $statut=$request->request->get('state');
         $repo=$manaReg->getRepository(Planning::class);
         $repi=$manaReg->getRepository(PolymReal::class);
@@ -96,9 +97,9 @@ class PlanningMCController extends AbstractController
         return new JsonResponse(['Taches'=> $task[0], 'moyen'=> $moyens[1], 'Ssmoyen'=> $moyens[0]]);
     }    
     /**
-     * @Route("/Planning", name="Planning")
+     * @Route("{service}/Planning", name="Planning")
      */
-    public function index(FunctPlanning $plan, ManagerRegistry $manaReg)
+    public function index(FunctPlanning $plan, ManagerRegistry $manaReg, $service)
     {
     //Gestion menu
         $repo=$manaReg->getRepository(ConfSmenu::class);
@@ -115,9 +116,11 @@ class PlanningMCController extends AbstractController
             $this->addFlash('warning', $polymA->getId().'/'.$polymA->getIdentification().'/'.$polymA->getDebutDate()->format('d-m-Y G:i'));
         }
         
-    //Recherche des moyens à afficher sur planning
+    //Recherche des moyens à afficher sur planning suivant service
+        $repi=$manaReg->getRepository(Services::class);
+        $teams=$repi->findOneBy(['Nom' => $service]);
         $repos=$manaReg->getRepository(Moyens::class);
-        $moyens=$plan->moyens($repos);
+        $moyens=$plan->moyens($repos,$teams->getId());
         $Ssmoyen= new JsonResponse($moyens[0]);
         $moyen= new JsonResponse($moyens[1]);
         $item= $moyens[2];
@@ -133,7 +136,8 @@ class PlanningMCController extends AbstractController
             'Taches' => $taches->getcontent(),
             'Moyens' => $moyen->getcontent(),
             'Ssmoyen' => $Ssmoyen->getcontent(),
-            'Items' => $item
+            'Items' => $item,
+            'service' => $service
         ]);
     }
      /**
@@ -714,12 +718,10 @@ class PlanningMCController extends AbstractController
                 $Demande->setRecurValide(0);
                 $Demande->setPlannifie(0);
                 $Demande->setMoyenUtilise(Null);
-                dump($planning);
 
                 $manager = $manaReg->getManager();
                     $manager->persist($Demande);
                     $manager->flush();
-                    dump($planning);
             }
         }
         return new JsonResponse(['Message'=>"Vous n'avez pas les droits pour créer une polym",'Code'=>404]);
@@ -839,12 +841,14 @@ class PlanningMCController extends AbstractController
                 'Titres' => $Titres,
                 'Datas' => $datas,
                 'datasOT' => $datasOT,
+                'service' => 'MOULAGE',
                 'formDemande' => $form->createView()
              ]);
         } else {
             return $this->render('planning_mc/ModificationDemandes.html.twig',[
                 'Titres' => $Titres,
                 'Datas' => $datas,
+                'service' => 'MOULAGE',
                 'formDemande' => $form->createView()
              ]);
         } 
@@ -2075,6 +2079,46 @@ class PlanningMCController extends AbstractController
             'Titres' => $Titres,
             'formMoy' => $form->createView(),
         ]);
+    }
+
+    /**
+     * @Route("/{service}/superviseur", name="superviseur")
+     */
+    public function superviseur($service, FunctPlanning $plan, ManagerRegistry $manaReg)
+    {
+        //Affichage de la charge plannifiée par étiquette kanban suivant catégories de W
+        //Gestion des dates de la semaine concernée
+        $currentMonthDateTime = new \DateTime();
+        $firstDateTime = $currentMonthDateTime->modify('first day of this week');
+        $currentMonthDateTime = new \DateTime();
+        $lastDateTime = $currentMonthDateTime->modify('last day of this week');
+    //Recherche si demande d'annulation de polym
+        $repo=$manaReg->getRepository(Planning::class);
+        $polyAnnul=$repo->findBy(['Statut'=>'ANNULATION']);
+        foreach ($polyAnnul as $polymA) {
+            $this->addFlash('warning', $polymA->getId().'/'.$polymA->getIdentification().'/'.$polymA->getDebutDate()->format('d-m-Y G:i'));
+        }
+        
+    //Recherche des moyens à afficher sur planning suivant service
+        $repi=$manaReg->getRepository(Services::class);
+        $teams=$repi->findOneBy(['Nom' => $service]);
+        $repos=$manaReg->getRepository(Moyens::class);
+        $moyens=$plan->moyens($repos,$teams->getId());
+        $Ssmoyen= new JsonResponse($moyens[0]);
+        $moyen= new JsonResponse($moyens[1]);
+        $item= $moyens[2];
+
+    //Chargement d'une variable pour les tâches déjà plannifiées
+        $repi=$manaReg->getRepository(PolymReal::class);
+        $task=$plan->planning($repo, $repos, $repi);
+        $taches = new JsonResponse($task[0]);
+
+        return $this->render('superviseur/ChargeJour.html.twig',[
+            'service' => $service,
+            'taches'=> $taches->getcontent(),
+            'moyen'=> $item
+        ]);
+        //return new JsonResponse(['Taches'=> '$task[0]', 'moyen'=> '$moyens[1]', 'Ssmoyen'=> '$moyens[0]'],200);
     }
     
     /**
