@@ -1,7 +1,7 @@
 {% extends 'base.html.twig' %}
 
 {% block title %}Planning {{ service }}!{% endblock %}
-{% block head %}<META HTTP-EQUIV="Refresh" CONTENT="TRUE">{% endblock %}
+{% block head %}<META HTTP-EQUIV="Refresh" CONTENT="600">{% endblock %}
 {% block stylesheets %}
     {# <link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet"> #}
     <link rel="stylesheet" href="{{ asset('build/bootstrap-toggle.min.css') }}">
@@ -263,7 +263,7 @@
   </div>
   <div class="tab-pane fade in" id="p2" role="tabpanel" aria-labelledby="p2">
     <div class="conteiner-fluid">
-            {{ render(controller('App\\Controller\\PlanningMCController::Superviseur',{ 'user': app.user , 'service' : service})) }}
+            {{ render(controller('App\\Controller\\SuperviseurController::Superviseur',{ 'user': app.user , 'service' : service})) }}
     </div>
   </div>
 </div>  

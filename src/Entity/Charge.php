@@ -117,9 +117,9 @@ class Charge
     private $workLife;
 
     /**
-     * @ORM\Column(type="integer", nullable=true)
+     * @ORM\ManyToOne(targetEntity=Moulage::class, inversedBy="of")
      */
-    private $moulageId;
+    private $moulage;
 
     public function __toString(): string
     {
@@ -372,14 +372,14 @@ class Charge
         
     }
 
-    public function getMoulageId(): ?int
+    public function getMoulage(): ?Moulage
     {
-        return $this->moulageId;
+        return $this->moulage;
     }
 
-    public function setMoulageId(?int $moulageId): self
+    public function setMoulage(?Moulage $moulage): self
     {
-        $this->moulageId = $moulageId;
+        $this->moulage = $moulage;
 
         return $this;
     }

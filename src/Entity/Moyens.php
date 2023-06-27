@@ -69,6 +69,11 @@ class Moyens
      */
     private $chargFiges;
 
+    /**
+     * @ORM\ManyToMany(targetEntity=Moulage::class, mappedBy="Moyen")
+     */
+    private $moulages;
+
     public function __toString(): string
     {
         return (string) $this->getLibelle();
@@ -78,6 +83,7 @@ class Moyens
     {
         $this->demandes = new ArrayCollection();
         $this->chargFiges = new ArrayCollection();
+        $this->moulages = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -239,6 +245,33 @@ class Moyens
             if ($chargFige->getMoyen() === $this) {
                 $chargFige->setMoyen(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Moulage>
+     */
+    public function getMoulages(): Collection
+    {
+        return $this->moulages;
+    }
+
+    public function addMoulage(Moulage $moulage): self
+    {
+        if (!$this->moulages->contains($moulage)) {
+            $this->moulages[] = $moulage;
+            $moulage->addMoyen($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMoulage(Moulage $moulage): self
+    {
+        if ($this->moulages->removeElement($moulage)) {
+            $moulage->removeMoyen($this);
         }
 
         return $this;

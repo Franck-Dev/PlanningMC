@@ -7,7 +7,16 @@ use App\Repository\PlanningRepository;
 use App\Repository\PolymRealRepository;
 
 class FunctPlanning
-{
+{    
+    /**
+     * Function permettant de récupérer les datas en forme pour le planning Vue.js
+     *
+     * @param  mixed $repo RepositoryPlanning
+     * @param  mixed $repos RepositoryMoyens
+     * @param  mixed $repi RepositoryPolymReal
+     * @param  mixed $params Filtre sur statut des polyms plannifiées
+     * @return void Résultat sous forme html pour consommation par Vue.js
+     */
     public function planning(PlanningRepository $repo, MoyensRepository $repos, PolymRealRepository $repi, $params=null) {
         if ($params) {
             $Taches=$repo -> findBy(['Statut'=>$params]);

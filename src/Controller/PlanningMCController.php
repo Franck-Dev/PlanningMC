@@ -2080,46 +2080,6 @@ class PlanningMCController extends AbstractController
             'formMoy' => $form->createView(),
         ]);
     }
-
-    /**
-     * @Route("/{service}/superviseur", name="superviseur")
-     */
-    public function superviseur($service, FunctPlanning $plan, ManagerRegistry $manaReg)
-    {
-        //Affichage de la charge plannifiée par étiquette kanban suivant catégories de W
-        //Gestion des dates de la semaine concernée
-        $currentMonthDateTime = new \DateTime();
-        $firstDateTime = $currentMonthDateTime->modify('first day of this week');
-        $currentMonthDateTime = new \DateTime();
-        $lastDateTime = $currentMonthDateTime->modify('last day of this week');
-    //Recherche si demande d'annulation de polym
-        $repo=$manaReg->getRepository(Planning::class);
-        $polyAnnul=$repo->findBy(['Statut'=>'ANNULATION']);
-        foreach ($polyAnnul as $polymA) {
-            $this->addFlash('warning', $polymA->getId().'/'.$polymA->getIdentification().'/'.$polymA->getDebutDate()->format('d-m-Y G:i'));
-        }
-        
-    //Recherche des moyens à afficher sur planning suivant service
-        $repi=$manaReg->getRepository(Services::class);
-        $teams=$repi->findOneBy(['Nom' => $service]);
-        $repos=$manaReg->getRepository(Moyens::class);
-        $moyens=$plan->moyens($repos,$teams->getId());
-        $Ssmoyen= new JsonResponse($moyens[0]);
-        $moyen= new JsonResponse($moyens[1]);
-        $item= $moyens[2];
-
-    //Chargement d'une variable pour les tâches déjà plannifiées
-        $repi=$manaReg->getRepository(PolymReal::class);
-        $task=$plan->planning($repo, $repos, $repi);
-        $taches = new JsonResponse($task[0]);
-
-        return $this->render('superviseur/ChargeJour.html.twig',[
-            'service' => $service,
-            'taches'=> $taches->getcontent(),
-            'moyen'=> $item
-        ]);
-        //return new JsonResponse(['Taches'=> '$task[0]', 'moyen'=> '$moyens[1]', 'Ssmoyen'=> '$moyens[0]'],200);
-    }
     
     /**
      * @Route("/AccessDenied", name="noAccess")
