@@ -95,7 +95,7 @@ class Demandes
     private $RecurValide;
 
     /**
-     * @ORM\OneToMany(targetEntity=Charge::class, mappedBy="demandes")
+     * @ORM\OneToMany(targetEntity=Charge::class, mappedBy="demandes", fetch="EAGER")
      */
     private $ListOF;
 

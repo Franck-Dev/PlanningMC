@@ -20,7 +20,7 @@ class Moulage
     private $id;
 
     /**
-     * @ORM\OneToOne(targetEntity=outillages::class, cascade={"persist", "remove"})
+     * @ORM\OneToOne(targetEntity=Outillages::class, cascade={"persist", "remove"})
      */
     private $outillage;
 

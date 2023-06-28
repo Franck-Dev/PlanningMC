@@ -809,7 +809,6 @@ class PlanningMCController extends AbstractController
         $form->handleRequest($requette);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            //dd($demande->getListOF());
             if(!$demande->getId()){
                 $demande->setDateCreation(new \datetime());
                 $demande->setPlannifie(0);
@@ -848,6 +847,7 @@ class PlanningMCController extends AbstractController
             return $this->render('planning_mc/ModificationDemandes.html.twig',[
                 'Titres' => $Titres,
                 'Datas' => $datas,
+                'datasOT' => $datasOT,
                 'service' => 'MOULAGE',
                 'formDemande' => $form->createView()
              ]);
@@ -1468,11 +1468,11 @@ class PlanningMCController extends AbstractController
         {   
         //Titres pour le menu
         $repo=$manaReg->getRepository(ConfSmenu::class);
-        $Titres=$repo -> findAll();
+        $Titres=$repo->findAll();
 
         // Création de la charge totale SAP
         $repo=$manaReg->getRepository(Charge::class);
-        $ChargTot=$repo -> findAll();
+        $ChargTot=$repo->findAll();
 
         // Mise en place de la pagination
         $ChargTot=$paginator->paginate($ChargTot, $request->query->getInt('page',1),250);

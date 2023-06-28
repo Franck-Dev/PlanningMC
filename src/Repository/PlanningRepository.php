@@ -106,7 +106,7 @@ class PlanningRepository extends ServiceEntityRepository
         $entityManager = $this -> getEntityManager ();
         $query = $entityManager -> createQuery (
             'SELECT p
-            FROM App\Entity\Planning p   
+            FROM App\Entity\Planning p LEFT OUTER JOIN  App\Entity\Demandes g WITH g.id = p.NumDemande
             WHERE p.DebutDate > :dateD AND p.FinDate < :dateF  AND p.Identification IN (:moyens) AND p.Statut = :statut
             ORDER BY p.DebutDate ASC');
         $query-> setParameter ( 'dateD' , $datedeb );

@@ -5,6 +5,7 @@ namespace App\Controller;
 use DateTime;
 use App\Entity\Moyens;
 use App\Entity\Moulage;
+use App\Entity\Demandes;
 use App\Entity\Planning;
 use App\Entity\Services;
 use App\Entity\PolymReal;
@@ -46,13 +47,24 @@ class SuperviseurController extends AbstractController
         } else{
 
         }
-
+        $test=$manaReg->getRepository(Demandes::class);
+        $tat=$test->findOneBy(['id'=>13027]);
+        
         //Chargement d'une variable par tâche plannifiée, encours, annulée et terminée
-        $taskPla=$repo->findChargeStatut($firstDateTime, $lastDateTime, $tbMoyens, 'PLANNIFIE');
+        $taskPla=$repo->findChargeStatut(new \DateTime(), $lastDateTime, $tbMoyens, 'PLANNIFIE');
         $taskEC=$repi->findChargeStatut($firstDateTime, $lastDateTime, $tbMoyens, 'LANCER');
         $taskANul=$repo->findChargeStatut($firstDateTime, $lastDateTime, $tbMoyens, 'ANNULE');
         $taskTER=$repi->findChargeStatut($firstDateTime, $lastDateTime, $tbMoyens, 'TERMINE');
 
+
+        //Traitement du cas des retard qui sont en statut PLANNIFIE
+        $taskRetard=$repo->findChargeStatut($firstDateTime, new \DateTime(), $tbMoyens, 'PLANNIFIE');
+        //Modification du statut juste pour échéancier
+        foreach ($taskRetard as $key => $item) {
+            $item->getStatut('RETARD');
+        }
+        //Fusion des tableaux Annulé et Retard pour n'avoir qu'une seule variable
+        $taskAnuRet=array_merge($taskRetard,$taskANul);
         //dump($taskEC);
 
         return $this->render('superviseur/ChargeJour.html.twig',[
@@ -61,6 +73,8 @@ class SuperviseurController extends AbstractController
             'tachesEC'=> $taskEC,
             'tachesANUL'=> $taskANul,
             'tachesTER'=> $taskTER,
+            'tachesRET'=> $taskRetard,
+            'tachesANULRET'=> $taskAnuRet,
             'moyens'=> $moyens
         ]);
         //return new JsonResponse(['Taches'=> '$task[0]', 'moyen'=> '$moyens[1]', 'Ssmoyen'=> '$moyens[0]'],200);
