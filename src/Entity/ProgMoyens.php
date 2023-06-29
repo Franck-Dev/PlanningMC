@@ -100,7 +100,7 @@ class ProgMoyens
     private $codeAvion= [];
 
     /**
-     * @ORM\ManyToMany(targetEntity=ProgAvions::class, inversedBy="progMoyens")
+     * @ORM\ManyToMany(targetEntity=ProgAvions::class, inversedBy="progMoyens", fetch="EAGER")
      */
     private $avion;
 

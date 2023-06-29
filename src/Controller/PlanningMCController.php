@@ -855,7 +855,7 @@ class PlanningMCController extends AbstractController
     }
 
     /**
-     * @Route("/Demandes", name="Demandes")
+     * @Route("{service}/Demandes", name="Demandes")
      */
     public function Demandes(Request $requette,
     EntityManagerInterface $manager,
