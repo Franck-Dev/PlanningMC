@@ -65,16 +65,20 @@ class SuperviseurController extends AbstractController
         }
         //Fusion des tableaux Annulé et Retard pour n'avoir qu'une seule variable
         $taskAnuRet=array_merge($taskRetard,$taskANul);
-        //dump($taskEC);
+
+        //Calcul du nombre de pièces pour indicateur
+        $nbPoly['NbrRef']=count($taskRetard)+count($taskPla)+count($taskEC)+count($taskTER);
+        //Concatenantion de tous les tableaux en un seul par type de statut
+        $taskTotal['RETARD/ANNULE']=$taskAnuRet;
+        $taskTotal['A FAIRE']=$taskPla;
+        $taskTotal['EN COURS']=$taskEC;
+        $taskTotal['TERMINE']=$taskTER;
+        dump($taskTotal);
 
         return $this->render('superviseur/ChargeJour.html.twig',[
             'service' => $service,
-            'tachesPLA'=> $taskPla,
-            'tachesEC'=> $taskEC,
-            'tachesANUL'=> $taskANul,
-            'tachesTER'=> $taskTER,
-            'tachesRET'=> $taskRetard,
-            'tachesANULRET'=> $taskAnuRet,
+            'taches' => $taskTotal,
+            'ChargeMois' => $nbPoly,
             'moyens'=> $moyens
         ]);
         //return new JsonResponse(['Taches'=> '$task[0]', 'moyen'=> '$moyens[1]', 'Ssmoyen'=> '$moyens[0]'],200);

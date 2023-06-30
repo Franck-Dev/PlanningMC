@@ -5,9 +5,6 @@
 {% block title %}Demandes de créneaux de polymérisations{% endblock %}
 
 {% block stylesheet %}
-<style type="text/css">
-	
-</style>
 
 {% endblock %}
 
@@ -91,7 +88,7 @@
 					<div class="pt-4 pb-2">
 						<div id="myDatasCTOMoul">
 							{# {% include "planning_mc/Planning.html.twig" %} #}
-							{{ render(controller('App\\Controller\\PlanningMCController::Index',{ 'service' : service, 'planning' : false})) }}
+							{{ render(controller('App\\Controller\\PlanningMCController::Index',{ 'service' : service})) }}
 						</div>
 					</div>
 					
@@ -114,7 +111,9 @@
 	</div>
 
 {% endblock %}
+{% block javascripts %}
 
+{% endblock %}
 {% block mesJavascripts %}
 <script type="text/javascript">
 var $cycle = $('#demandes_cycle');

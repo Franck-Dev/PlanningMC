@@ -1623,7 +1623,7 @@ class PlanningMCController extends AbstractController
         
         $this->addFlash('success', "Enregistrement du chargement n° ".$chargt->getId()." effectué avec succès");
 
-        return $this->redirectToRoute('PreviPlannif');
+        return $this->redirectToRoute($request->get('route'));
     }
 
     /**

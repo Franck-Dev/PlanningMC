@@ -113,11 +113,17 @@ class Outillages
      */
     private $nbPolymssTrait;
 
+    /**
+     * @ORM\ManyToMany(targetEntity=Chargement::class, mappedBy="Outillages")
+     */
+    private $chargements;
+
     public function __construct()
     {
         $this->Programme = new ArrayCollection();
         $this->chargFiges = new ArrayCollection();
         $this->articles = new ArrayCollection();
+        $this->chargements = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -396,6 +402,33 @@ class Outillages
     public function setNbPolymssTrait(?int $nbPolymssTrait): self
     {
         $this->nbPolymssTrait = $nbPolymssTrait;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Chargement>
+     */
+    public function getChargements(): Collection
+    {
+        return $this->chargements;
+    }
+
+    public function addChargement(Chargement $chargement): self
+    {
+        if (!$this->chargements->contains($chargement)) {
+            $this->chargements[] = $chargement;
+            $chargement->addOutillage($this);
+        }
+
+        return $this;
+    }
+
+    public function removeChargement(Chargement $chargement): self
+    {
+        if ($this->chargements->removeElement($chargement)) {
+            $chargement->removeOutillage($this);
+        }
 
         return $this;
     }

@@ -199,7 +199,7 @@ function SelectCTO(ID,jour,prog,dossiers) {
 	$.ajax({
 		cache: false,
 		type: 'POST',
-        data: {nom: tbDatasChargt[0].innerText, remp: pourcRemp, jour: dateJour, cycle: prog, charge: dossiers},
+        data: {nom: tbDatasChargt[0].innerText, remp: pourcRemp, jour: dateJour, cycle: prog, charge: dossiers, route : 'PreviPlannif'},
 		url: "{{ path('Chargt_Crea') }}",
 		success: function(data) 
 		{

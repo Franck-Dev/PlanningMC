@@ -48,9 +48,15 @@ class Chargement
      */
     private $Programme;
 
+    /**
+     * @ORM\ManyToMany(targetEntity=Outillages::class, inversedBy="chargements")
+     */
+    private $Outillages;
+
     public function __construct()
     {
         $this->OF = new ArrayCollection();
+        $this->Outillages = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -145,6 +151,30 @@ class Chargement
     public function setProgramme(string $Programme): self
     {
         $this->Programme = $Programme;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Outillages>
+     */
+    public function getOutillages(): Collection
+    {
+        return $this->Outillages;
+    }
+
+    public function addOutillage(Outillages $outillage): self
+    {
+        if (!$this->Outillages->contains($outillage)) {
+            $this->Outillages[] = $outillage;
+        }
+
+        return $this;
+    }
+
+    public function removeOutillage(Outillages $outillage): self
+    {
+        $this->Outillages->removeElement($outillage);
 
         return $this;
     }

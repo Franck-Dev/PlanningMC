@@ -36,160 +36,69 @@
 <div class="container-fluid pt-3">
     <!-- Kpi Header -->
     <div class="row m-b-1">
-        {{ render(controller('App\\Controller\\IndicateursController::indic_Header',{ 'service' : service})) }}
+        {# {{ render(controller('App\\Controller\\IndicateursController::indic_Header',{ 'service' : service})) }} #}
+        {% include 'indicateurs/Frames/IndicHeader.html.twig' %}
     </div>
     <h1>Echéancier {{ service }} :</h3>
     <div class="small  text-light">Déplacer les étiquettes dans les zones appropriées</div>
     <div class="row flex-row flex-sm-nowrap py-3">
-        <div class="col-sm-6 col-md-4 col-xl-3">
-            <div class="card bg-light scroll">
-                <div class="card-body">
-                    <h6 class="card-title text-uppercase text-truncate py-2">Retard/Annulé</h6>
-                    <div class="items border border-light">
-                        {% for item in tachesANULRET %}
-                            {% set nomCard = ['cd',num]|join %}<!-- Conception des noms des cards contenant les données -->
-                            {% set titre = [item.action,'-',item.identification]|join %}<!-- Conception des titres -->
-                            {% set icone = ['build/images/',item.Statut,'.png']|join %}<!-- Conception du chemin de l'image correspondant au statut -->
-                            <!-- Détermination de la date limite de polymérisation-->
-                            {% set limitePoly = " Pas d'OF liés " %}
-                            {% if item.NumDemande.ListOF is iterable %}
-                                {% for OF in item.NumDemande.ListOF %}
-                                    {% set limitePoly = OF.WorkLife %}
-                                {% endfor %}                                   
-                            {% endif %}
-                            <div class="card draggable shadow-sm" id='{{nomCard}}' draggable="true" ondragstart="drag(event)">
-                                <div class="card-body p-2">
-                                    <div class="card-header bg-warning">
-                                        <img src="{{asset(icone)}}" id ="icone" class="rounded-circle float-right">
-                                        <a href="#" class="lead font-weight-light">{{titre}}</a>
-                                    </div>
-                                    <div class="card-body">
-                                        <p>
-                                            <br>Début : {{ item.DebutDate|date('d/m/y H:i') }} / Limite Polym : {{limitePoly}}</br>
-                                            <br>Commentaires : {{item.NumDemande.Commentaires}}</br>
-                                        </p>
-                                        <div class="progress m-1">
-                                            <div class="progress-bar" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">25%</div>
+        {% for key, tache in taches %}
+            <div class="col-sm-6 col-md-4 col-xl-3">
+                <div class="card bg-light scroll">
+                    <div class="card-body">
+                        <h6 class="card-title text-uppercase text-truncate py-2">{{key}}</h6>
+                        <div class="items border border-light">
+                            {% for item in tache %}
+                                {% set nomCard = ['cd',num]|join %}<!-- Conception des noms des cards contenant les données -->
+                                {% set titre = [item.action,'-',item.identification]|join %}<!-- Conception des titres -->
+                                {% set icone = ['build/images/',item.Statut,'.png']|join %}<!-- Conception du chemin de l'image correspondant au statut -->
+                                <!-- Recherche infos svt les OF liés à la demande-->
+                                {% set limitePoly = " Pas d'OF liés " %}
+                                {% set nbOFOK = 0 %}
+                                {% if item.NumDemande.ListOF is iterable %}
+                                    {% for OF in item.NumDemande.ListOF %}
+                                        <!-- Détermination de la date limite de polymérisation-->
+                                        {% set limitePoly = OF.WorkLife %}
+                                        <!-- Détermination du pourcentage d'avancement des OF au moulage(statut Moul ou Charg)-->
+                                        {% if OF.Statut == "CHARG" %}
+                                            {% set nbOFOK = nbOFOK + 1 %}
+                                        {% endif %}  
+                                    {% endfor %}
+                                    {% if nbOFOK != 0 %}
+                                        {% set pourc = (nbOFOK / item.NumDemande.ListOF|length)*100 %} 
+                                    {% else %}
+                                        {% set pourc = 5 %} 
+                                    {% endif %}  
+                                                                
+                                {% endif %}
+                                <div class="card draggable border-primary shadow-sm" id='{{nomCard}}' draggable="true" ondragstart="drag(event)">
+                                    <div class="card-body p-2">
+                                        <div class="card-header bg-warning">
+                                            <img src="{{asset(icone)}}" id ="icone" class="rounded-circle float-right" tooltip="{{item.Statut}}">
+                                            <a href="#" class="lead font-weight-bolder">{{titre}}</a>
+                                        </div>
+                                        <div class="card-body">
+                                            <p>
+                                                <br>Début : {{ item.DebutDate|date('d/m/y H:i') }} / Limite Polym : {{limitePoly}}</br>
+                                                <br>Commentaires : {{item.NumDemande.Commentaires}}</br>
+                                            </p>
+                                            <div class="progress m-1">
+                                                <div class="progress-bar" role="progressbar" style="{{ ['width: ',pourc,'%']|join }}" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">{{ [pourc,'%']|join }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <button class="btn btn-primary btn-sm">View</button>
                                         </div>
                                     </div>
-                                    <div class="card-footer">
-                                        <button class="btn btn-primary btn-sm">View</button>
-                                    </div>
                                 </div>
-                            </div>
-                            {% set num = num + 1 %}
-                        {% endfor %}
-                        <div class="dropzone rounded" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="clearDrop(event)"> &nbsp; </div>
+                                {% set num = num + 1 %}
+                            {% endfor %}
+                            <div class="dropzone rounded" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="clearDrop(event)"> &nbsp; </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="col-sm-6 col-md-4 col-xl-3">
-            <div class="card bg-light">
-                <div class="card-body">
-                    <h6 class="card-title text-uppercase text-truncate py-2">A faire</h6>
-                    <div class="items border border-light">
-                        {% for item in tachesPLA %}
-                            {% set nomCard = ['cd',num]|join %}<!-- Conception des noms des cards contenant les données -->
-                            {% set titre = [item.action,'-',item.identification]|join %}<!-- Conception des titres -->
-                            {% set icone = ['build/images/',item.Statut,'.png']|join %}<!-- Conception du chemin de l'image correspondant au statut -->
-                            <div class="card draggable shadow-sm" id='{{nomCard}}' draggable="true" ondragstart="drag(event)">
-                                <div class="card-body p-2">
-                                    <div class="card-header">
-                                        <img src="{{asset(icone)}}" id ="icone" class="rounded-circle float-right">
-                                        <a href="#" class="lead font-weight-light">{{titre}}</a>
-                                    </div>
-                                    <div class="card-body">
-                                        <p>
-                                            <br>Début : {{ item.DebutDate|date('d/m/y H:i') }}</br>
-                                            <br>Commentaires : {{item.NumDemande.Commentaires}}</br>
-                                        </p>
-                                        <div class="progress m-1">
-                                            <div class="progress-bar" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">25%</div>
-                                        </div>
-                                    </div>
-                                    <div class="card-footer">
-                                        <button class="btn btn-primary btn-sm">View</button>
-                                    </div>
-                                </div>
-                            </div>
-                            {% set num = num + 1 %}
-                        {% endfor %}
-                    <div class="dropzone rounded" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="clearDrop(event)"> &nbsp; </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-md-4 col-xl-3">
-            <div class="card bg-light">
-                <div class="card-body">
-                    <h6 class="card-title text-uppercase text-truncate py-2">En cours</h6>
-                    <div class="items border border-light">
-                        {% for item in tachesEC %}
-                            {% set nomCard = ['cd',num]|join %}<!-- Conception des noms des cards contenant les données -->
-                            {% set titre = [item.action,'-',item.identification]|join %}<!-- Conception des titres -->
-                            {% set icone = ['build/images/',item.Statut,'.png']|join %}<!-- Conception du chemin de l'image correspondant au statut -->
-                            <div class="card draggable shadow-sm" id='{{nomCard}}' draggable="true" ondragstart="drag(event)">
-                                <div class="card-body p-2">
-                                    <div class="card-title">
-                                        <img src="{{asset(icone)}}" id ="icone" class="rounded-circle float-right">
-                                        <a href="#" class="lead font-weight-light">{{titre}}</a>
-                                    </div>
-                                    <div class="card-body">
-                                        <p>
-                                            {{item.NumDemande.Commentaires}}
-                                        </p>
-                                        <div class="progress m-1">
-                                            <div class="progress-bar" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">25%</div>
-                                        </div>
-                                    </div>
-                                    <div class="card-foot">
-                                        <button class="btn btn-primary btn-sm">View</button>
-                                    </div>
-                                </div>
-                            </div>
-                            {% set num = num + 1 %}
-                        {% endfor %}
-                    <div class="dropzone rounded" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="clearDrop(event)"> &nbsp; </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-md-4 col-xl-3">
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="card-title text-uppercase text-truncate py-2">Terminé</h6>
-                    <div class="items border border-light">
-                        {% for item in tachesTER %}
-                            {% set nomCard = ['cd',num]|join %}<!-- Conception des noms des cards contenant les données -->
-                            {% set titre = [item.action,'-',item.identification]|join %}<!-- Conception des titres -->
-                            {% set icone = ['build/images/',item.Statut,'.png']|join %}<!-- Conception du chemin de l'image correspondant au statut -->
-                            <div class="card draggable shadow-sm" id='{{nomCard}}' draggable="true" ondragstart="drag(event)">
-                                <div class="card-body p-2">
-                                    <div class="card-title">
-                                        <img src="{{asset(icone)}}" id ="icone" class="rounded-circle float-right">
-                                        <a href="#" class="lead font-weight-light">{{titre}}</a>
-                                    </div>
-                                    <div class="card-body">
-                                        <p>
-                                            {{item.NumDemande.Commentaires}}
-                                        </p>
-                                        <div class="progress m-1">
-                                            <div class="progress-bar" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">25%</div>
-                                        </div>
-                                    </div>
-                                    <div class="card-foot">
-                                        <button class="btn btn-primary btn-sm">View</button>
-                                    </div>
-                                </div>
-                            </div>
-                            {% set num = num + 1 %}
-                        {% endfor %}
-                    <div class="dropzone rounded" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="clearDrop(event)"> &nbsp; </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}

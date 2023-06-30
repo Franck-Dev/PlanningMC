@@ -99,6 +99,11 @@ class Demandes
      */
     private $ListOF;
 
+    /**
+     * @ORM\OneToOne(targetEntity=Chargement::class, cascade={"persist", "remove"})
+     */
+    private $Chargement;
+
     public function __construct()
     {
         $this->ListOF = new ArrayCollection();
@@ -322,6 +327,18 @@ class Demandes
                 $listOF->setDemandes(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getChargement(): ?Chargement
+    {
+        return $this->Chargement;
+    }
+
+    public function setChargement(?Chargement $Chargement): self
+    {
+        $this->Chargement = $Chargement;
 
         return $this;
     }
