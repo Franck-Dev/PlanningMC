@@ -91,7 +91,7 @@
 					<div class="pt-4 pb-2">
 						<div id="myDatasCTOMoul">
 							{# {% include "planning_mc/Planning.html.twig" %} #}
-							{{ render(controller('App\\Controller\\PlanningMCController::Index',{ 'service' : service})) }}
+							{{ render(controller('App\\Controller\\PlanningMCController::Index',{ 'service' : service, 'planning' : false})) }}
 						</div>
 					</div>
 					

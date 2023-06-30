@@ -636,4 +636,31 @@ class IndicateursController extends AbstractController
             'datefin' => $jourFinRetard,
         ]);
     }
+
+     /**
+     * @Route("{service}/indicateur/kpiHeader", name="indic_Header")
+     * 
+     */
+    public function indic_Header(Request $request,
+    FunctIndic $indic, 
+    ManagerRegistry $manaReg, 
+    $service)
+    {
+        // Date à aujourd'hui
+        $jour= new \datetime;
+        
+        // Date à 1 mois
+        $jourVisu = date("Y-m-d", strtotime('+ 31 days'.date('Y') ));
+        $jourVisu=new \datetime($jourVisu);
+
+        $repo=$manaReg->getRepository(Charge::class);
+        $ChargeMois=$repo->myFindPcsTotMois($jour,$jourVisu);
+
+        return $this->render('indicateurs/Frames/IndicHeader.html.twig', [
+            'controller_name' => 'IndicateursController',
+            'datedeb' => $jourVisu,
+            'ChargeMois' => $ChargeMois[0],
+            'service' => $service
+        ]);
+    }
 }

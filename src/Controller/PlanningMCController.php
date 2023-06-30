@@ -1487,20 +1487,20 @@ class PlanningMCController extends AbstractController
         $debPeriode->format('mm YY');
         $finPeriode=$dateF->modify('Last day of december this year');
         $finPeriode->format('mm YY');
+
         // Date à 1 mois
         $jourVisu = date("Y-m-d", strtotime('+ 31 days'.date('Y') ));
         $jourVisu=new \datetime($jourVisu);
-        $ChargeMois=$repo->myFindPcsTotMois($jour,$jourVisu);
        
         return $this->render('planning_mc/Ordo.html.twig', [
             'controller_name' => 'PlanningOrdo',
             'ChargeTot' => $ChargTot,
-            'ChargeMois' => $ChargeMois[0],
             'Titres' => $Titres,
             'datedeb' => $jour,
             'datefin' => $jourVisu,
             'debPeriode' => $debPeriode,
             'finPeriode' => $finPeriode,
+            'service' => 'LOGISTIQUE'
         ]);
     }
 

@@ -31,12 +31,14 @@
     </style>
 {% endblock %}    
 {% block body %}
-<pre>
-    {{ dump(tachesANULRET) }}
-</pre>
+
 {% set num = 1 %}
 <div class="container-fluid pt-3">
-    <h3 class="font-weight-light text-white">ECHEANCIER {{ service }} :</h3>
+    <!-- Kpi Header -->
+    <div class="row m-b-1">
+        {{ render(controller('App\\Controller\\IndicateursController::indic_Header',{ 'service' : service})) }}
+    </div>
+    <h1>Echéancier {{ service }} :</h3>
     <div class="small  text-light">Déplacer les étiquettes dans les zones appropriées</div>
     <div class="row flex-row flex-sm-nowrap py-3">
         <div class="col-sm-6 col-md-4 col-xl-3">
