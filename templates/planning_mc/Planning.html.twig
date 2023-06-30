@@ -210,55 +210,114 @@
 	</style>
 {% endblock %}
 {% block body %}
-<h1>Prévisualisation du Planning ✅</h1>
- 	<div id="VisuPlanning"></div>		
+    <div class="conteiner-fluid">
+            <div class="button_menu">
+                <input type="button" id="jour" value="Aujourd'hui" class="col-xs-2">
+                <input type="button" id="encours" value="Encours" class="col-xs-2">
+                <input type="button" id="semaine-1" value="Semaine dernière" class="col-xs-2">
+                <input type="button" id="semaine" value="Semaine en cours" class="col-xs-2">
+                <input type="button" id="semaine+1" value="Semaine suivante" class="col-xs-2">
+                <input type="checkbox" id="toggle-visu" data-toggle="toggle" data-onstyle="danger" data-on="Tout Visualiser" data-offstyle="primary" data-off="Plannifié">
+                <!--<h2 class="col-lg-2">Planning de la semaine </h2>-->  
+                <a href="" class="btn btn-success" onclick=Planning()>Refresh</a>
+                {% if is_granted('ROLE_PLANIF') %}
+                    <a href="{{ path('CreaPolymRecur', {'user': app.user}) }}" class="btn btn-success">Plannification</a>
+                {% endif %}
+            </div>
+           <!-- Modal -->  
+            <div id="Modale" class="modal" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary">
+                            <span class="logo-lg">
+                                <img src="{{ asset('build/images/LOGO_DAHER.png') }}" width="117" height="46"/>
+                            </span>
+                            <button type="button" class="close bg-alert" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        {% if is_granted('ROLE_CE_POLYM') %}
+                            <div id="Content" class="modal-body">
+                                {# {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolymf',{'user': app.user}) )}} #}
+                            </div>
+                        {% elseif is_granted('ROLE_REGLEUR') %}
+                            <div id="Content" class="modal-body">
+                                {# {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolym',{'user': app.user}) )}} #}
+                                <button type="button" class="success" value="Modifier">
+                                        <span aria-hidden="true"></span>
+                                </button>
+                            </div>
+                        {% else %}
+                            <div id="Content" class="modal-body">
+
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        <div id="visualization" class="conteiner"></div>
+    </div>
 {% endblock %}
 {% block javascripts %}
-<script src="{{ asset('build/vis.js') }}"></script>
-<script src="{{ asset('build/handlebars.min.js') }}"></script>
-<script src="{{ asset('build/prototype.js') }}"></script>
-<script src="{{ asset('build/sweetalert.min.js') }}"></script>
-<script id="item-template" type="text/x-handlebars-template">
-    <table class="table-condensed">
-        <tr>
-            <td colspan="3" class="programmes" style="font-size: 0.7em"><strong>{% verbatim %}{{programmes}}{% endverbatim %}</strong></td>
-            <th><img id="icone" src="{{asset('build/images/{{statut}}.png')}}"  alt="{% verbatim %}{{icone}}{% endverbatim %}"></th>
-            <td colspan="3" class="statut" style="font-size: 0.7em">{% verbatim %}{{statut}}{% endverbatim %}</td>
-        </tr>
-    </table>
-</script>
-<script id="item-popup" type="text/x-handlebars-template">
-    <table class="infos" style="height: 20px;">
-        <tr>
-            <td colspan="3" class="programmes">{% verbatim %}{{programmes}}{% endverbatim %}</td>
-            <td colspan="3" class="statut">{% verbatim %}{{statut}}{% endverbatim %}</td>
-        </tr>
-    </table>
-</script>
-<script type="text/javascript">
+ <script src="{{ asset('build/popper.min.js') }}"></script>
+    <script src="{{ asset('build/vis.js') }}"></script>
+    <script src="{{ asset('build/handlebars.min.js') }}"></script>
+    <!-- <script src="{{ asset('build/prototype.js') }}"></script> perturbe le fonctionnement des navs de bootstrap -->
+    <script src="{{ asset('build/jquery.min.js') }}"></script>
+    <script src="{{ asset('build/bootstrap.min.js') }}"></script> 
+    <script src="{{ asset('build/sweetalert.min.js') }}"></script>
+    <script src="{{ asset('build/bootstrap-toggle.min.js') }}"></script>
+    <!-- <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script> -->
+    <script id="item-template" type="text/x-handlebars-template"> 
+            <table class="table-condensed">
+                <tr>
+                    <td colspan="3" class="programmes" style="font-size: 0.7em"><strong>{% verbatim %}{{programmes}}{% endverbatim %}</strong></td>
+                    <th><img id="icone" src="{{asset('build/images/{{statut}}.png')}}" alt="{% verbatim %}{{icone}}{% endverbatim %}"></th>
+                    <td colspan="3" class="statut" style="font-size: 0.7em">{% verbatim %}{{statut}}{% endverbatim %}</td>
+                </tr>
+            </table>
+    </script>
+    <script id="item-popup" type="text/x-handlebars-template">
+            <table class="infos" style="height: 20px;">
+                <tr>
+                    <td colspan="3" class="programmes">{% verbatim %}{{programmes}}{% endverbatim %}</td>
+                    <td colspan="3" class="statut">{% verbatim %}{{statut}}{% endverbatim %}</td>
+                </tr>
+            </table>
+    </script>
+    <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        visuPla({{Moyens|raw}}, {{Ssmoyen|raw}}, {{Taches|raw}});
+    });
+    function visuPla(Moy, ssMoy, Task){
+        const lang = navigator.language; // "fr_FR"; // "en_US"; // 
+        const locale = (lang && lang !== undefined) ? lang.match(/^\w{2}/)[0] : 
+        (lang === "de" || lang === "fr" || lang === "it" || lang === "nl") ? lang : "en"; // "en"; // "de"; //
         // create a handlebars template
         var source = document.getElementById('item-template').innerHTML;
         var template = Handlebars.compile(source);
-        console.log(template)
-var conteneur = document.getElementById ('VisuPlanning');
+        var conteneur = document.getElementById ('visualization');
+        if (conteneur.hasChildNodes()) {
+            var oldchild=conteneur.removeChild(conteneur.firstChild);
+        }
+        
+        //var groupsold = {{Moyens|raw}};
 
- var groups = new vis.DataSet();
+        var groups = new vis.DataSet();
       
-        //groups.add(Moy);
-        //groups.add(ssMoy);
-        groups.add([{id:1, content: 'Laser1', nestedGroups: [11]},{id:2, content: 'Laser2', nestedGroups: [12]},{id:4, content: 'Laser4', nestedGroups: [14]}]);
-        groups.add([{id:11, content: 'Réalisé'},{id:12, content: 'Réalisé'},{id:14, content: 'Réalisé'}]);
+        groups.add(Moy);
+        groups.add(ssMoy);
 
-        //var items = new vis.DataSet (Task);
+        var items = new vis.DataSet (Task);
         var groupIds = groups.getIds();
         var randomGroupId = groupIds[Math.floor(Math.random() * groupIds.length)];
-        var items = new vis.DataSet ([
-            {id: 1, programmes: 'OT98765', statut: 'PLANNIFIE', start: '2022-12-23 22:00:00', end: '2022-12-24 02:00:00', group: 2,style: 'background-color: green', title: 'Prendre les outillages en salle de démoulage'},
-            {id: 2, programmes: 'OT123456', statut: 'CONFORME', start: '2022-12-23 23:00:00', end: '2022-12-24 05:15:00', group: 1, style: 'background-color: green', title:'Faire éprouvette'},
-            {id: 3, programmes: 'OT095425', statut: 'LANCER', start: '2022-12-21 06:00:00', end: '2022-12-21 18:10:00', group: 1, style: 'background-color: green'},
-            {id: 4, programmes: 'OT081235', statut: 'TERMINE', start: '2022-12-21 22:00:00', end: '2022-12-22 08:50:00', group: 4, style: 'background-color: green'},
-            {id: 5, programmes: 'OT089654', statut: 'RETARD', start: '2022-12-22 04:00:00', end: '2022-12-22 09:30:00', group: 2, style: 'background-color: green'},
-            {id: 6, programmes: 'OT093452', statut: 'ANNULER', start: '2022-12-22 22:00:00', end: '2022-12-23 02:00:00', group: 1, style: 'background-color: green'} //#ed12dd
+        var itemsold = new vis.DataSet ([
+            {id: 1, programmes: 'PRP10001', statut: 'PLANNIFIE', start: '2019-02-19 22:00:00', end: '2019-02-20 02:00:00', group: 2, className: 'pink', title: 'Prendre les outillages en salle de moulage'},
+            {id: 2, programmes: 'PRP10002', statut: 'VALIDE', start: '2019-02-19 23:00:00', end: '2019-02-20 05:15:00', group: 1, style: 'background-color: red', satut: 'Plannifie', title: ['OT98765','OT123456']},
+            {id: 3, programmes: 'PRP10003', statut: 'ENCOURS', start: '2019-02-20 06:00:00', end: '2019-02-20 18:10:00', group: 1, style: 'background-color: green'},
+            {id: 4, programmes: 'PRP10004', statut: 'TERMINE', start: '2019-02-20 22:00:00', end: '2019-02-21 08:50:00', group: 4, style: 'background-color: yellow'},
+            {id: 5, programmes: 'PRP10005', statut: 'REMPLACE', start: '2019-02-20 04:00:00', end: '2019-02-20 09:30:00', group: 2, style: 'background-color: brown'},
+            {id: 6, programmes: 'PRP10006', statut: 'ANNULE', start: '2019-02-20 22:00:00', end: '2019-02-21 02:00:00', group: 1, style: 'background-color: #ed12dd'}
         ]);
 
         var options = {
@@ -272,86 +331,405 @@ var conteneur = document.getElementById ('VisuPlanning');
 			zoomKey: "ctrlKey",
             orientation: 'top',
             groupOrder: 'content',
-            /* visibleFrameTemplate: function(item) {
+            visibleFrameTemplate: function(item) {
                 if (item.visibleFrameTemplate) {
                     return item.visibleFrameTemplate;
                 }
                 var percentage = item.value * 100 + '%';
                 return '<div class="progress-wrapper"><div class="progress" style="width:' + percentage + '" background="red"></div><label class="progress-label">' + percentage + '<label></div>';
-            }, */
+            },
             editable : { 
                 add : true , // ajoute de nouveaux éléments en double tapant  
                 updateTime : true , // déplace les éléments horizontalement  
                 updateGroup : true , // déplace les éléments d'un groupe à un autre  
-                remove : true , // supprime un élément en appuyant sur le bouton de suppression en haut à droite  
+                remove : false , // supprime un élément en appuyant sur le bouton de suppression en haut à droite  
                 overrideItems : false  // autorise ces options à remplacer item.editable
             },
-            onUpdate: function (item, callback) { 
+            
+            onMove: function (item, callback) { 
+                //console.log(groups._data[groups._data[item.group].nestedInGroup].content);
                 //prettyPromptItemUpdate('Données de polymérisation', 'Edition', item, groups, timeline, callback); 
-                item.content = prompt('Edit items text:', item.content);
+                //item.content = prompt('Edit items text:', item.content);
+                $(document).ready(function () {
+                    //console.log(items._data[item.id]);
+                    //console.log(item.start);
+                    //Conversion de la date pour prise en compte dans controlleur
+                    var DateDeb = (item.start).toISOString().slice(0,24);
+                    var DateFin = (item.end).toISOString().slice(0,24);
+                    console.log(item);
+                    $.ajax({
+                        method: "POST",
+                        data: {id: item.id, olddatedeb: items._data[item.id].start, olddatefin: items._data[item.id].end, moyen: item.group, cycle: item.programmes, newdatedeb: DateDeb, newdatefin: DateFin},
+                        url: "{{ path('Modif_Polym_Pla') }}",
+                        success: function(dat){
+                        }
+                    });
+                });
+            }, 
+
+            onUpdate: function(item,callback){
+                $(document).ready(function () {
+                    $.ajax({
+                        method: "POST",
+                        data: {PolymId: item.id, Moyen: item.group},
+                        url: "{{ path('Polym_Modif') }}",
+                        beforeSend : function() { // traitements JS à faire AVANT l'envoi AJAX
+                         //Mettre à jour la date dans l'input pour l'url
+                        },
+                        success: function(data){                        
+                            // affichage des résultats dans la modal
+                            if(typeof data.Message == 'string') {
+                                console.log(data.Message);
+                                data=$('form').append(data.Message);
+                            }
+                            $('#Content').show().html(data);
+                            $("#Modale").modal('show');
+                        }
+                    });
+                });
+                /* var html = htmlForSweetAlert(item);
+                swal({ 
+                    title: "Modification des paramètres", 
+                    text: item.programmes, 
+                    icon: 'success',
+                    buttons: {
+                        cancel: {
+                            text: "ANNULER",
+                            value: null,
+                            visible: true,
+                            className: "",
+                            closeModal: true,
+                        },
+                        confirm: {
+                            text: "OK",
+                            value: true,
+                            visible: true,
+                            className: "",
+                            closeModal: true
+                        }
+}                   ,
+                    content: html
+                });
+                console.log(html.selectStatut);
+                item.statut=prompt('Statut',item.statut);
+                callback(item);
+                alert('PAUSE');
+                if (html.selectStatut[html.selectStatut.selectedIndex].text!="") {
+                    console.log(item.statut);
+                    item.statut=html.selectStatut[html.selectStatut.selectedIndex].text;
+                    callback(item); // send back adjusted item
+                    console.log(item.statut);
+                  }
+                  else {
+                    callback(null); // cancel updating the item
+                  }
+                console.log(swal.getState('content')); */
+            },
+
+            onAdd: function (item, callback) {
+                var DateDeb = (item.start).toISOString().slice(0,24);//On garde que la date, et pas l"heure
+                var HeureDeb="1970-01-01"+(item.start).toISOString().slice(10,24);
+                $(document).ready(function () {
+                    $.ajax({
+                        method: "POST",
+                        data: {DateDeb: DateDeb ,Hdeb: HeureDeb, Moyen: item.group},
+                        url: "{{ path('Polym_Edit') }}",
+                        beforeSend : function() { // traitements JS à faire AVANT l'envoi AJAX
+                        //Mettre à jour la date dans l'input pour l'url
+                        },
+                        success: function(data){                       
+                            $('#Content').html(data); // affichage des résultats dans la modal
+                            // $('#Modale').show();
+                            $("#Modale").modal('show');
+                        }
+                    });
+                });       
+            },
+
+            tooltip: {
+                followMouse: true
             }
         };
-var timeline = new vis.Timeline (conteneur, items, groups, options);
-//console.log(options.end);
 
-function calculfin (dureCycle,heureDeb,i)
-{
-    var i=i;
-    //Conversion de la durée du cycle en heures minutes pour ajout à la date de départ
-    var dureCycle="1970-01-01T"+dureCycle;
-    var durCycle = new Date(dureCycle);
-//Idem conversion durée pour date et heure de départ
-    console.log(heureDeb);
-    var heureDeb = new Date(heureDeb);
-//Ajout du temps de cycle à la date de départ pour calcul date de fin
-    var newFin=heureDeb.getTime()+durCycle.getTime()+7200000;
-    newFin= new Date(newFin);
-//Reconstitution du format de la date
-    var dateFin = newFin.toISOString().slice(0,10);
-    //dateFin=dateFin.replace( /\-/g,"/");
-    var heurefin= newFin.toISOString().slice(11,16);
-    var newdatefin=dateFin+"T"+heurefin;
-    alert('La nouvelle fin sera à  ' + newdatefin);
-//Renvoie de la date de fin dans l'input du heureFin
-console.log("HeureFin"+i);
-    var HF = document.getElementById("HeureFin"+i);
-    HF.value=newdatefin; 
-};
-//Validation de la ligne après submit (statut à oui et couleur verte)
-function validation(x,StatPlan){
-    
-    console.log(document.getElementsByTagName("i"));
-//Attribution de la couleur vert pour validation de la ligne(demande)
-    var couleur = document.createAttribute("bgcolor"); 
-    couleur.nodeValue = "green"; 
-    document.getElementsByTagName("tr")[2].setAttributeNode(couleur)
-//Validation de la demande avec passage du statut plannifié à "OUI"
-    var statut = document.getElementById("Statut"+x);
-    statut.value="OUI";
-//Renvoie des valeurs dans les cellules masquées pour récupération dans controller
-    //Si modification statut à 1 sinon 0
-    if(StatPlan==1){
-        document.querySelector('[name=Statut'+x+']').value = "0";
-        document.querySelector('[name=Moyen'+x+']').value = null;
+        var timeline = new vis.Timeline (conteneur, items, groups, options);
+        console.log(timeline);
+        document.getElementById('visualization').onclick = function (event) {
+            //var props = timeline.getEventProperties(event)
+            //console.log(props);
+            //console.log(event);
+            //var html = htmlForSweetAlert(event); 
+            //swal({ 
+                //title: title, 
+                //text: text, 
+                //content: html, 
+                //icon: "success"  
+            //});
+        }
+        document.getElementById('semaine').onclick = function() {
+        timeline.setWindow(new Date(), new Date(1000*60*60*24*7+(new Date(getMonday(new Date()).setHours(4))).valueOf()));
+        }
+        document.getElementById('jour').onclick = function() {
+        timeline.setWindow(new Date().setHours(4), new Date(1000*60*60*24 + (new Date().setHours(4)).valueOf()));
+        }
+        document.getElementById('semaine-1').onclick = function() {
+        timeline.setWindow(new Date( (new Date()).valueOf())-1000*60*60*24*7,new Date() );
+        }
+        document.getElementById('encours').onclick = function() {
+        timeline.setWindow(new Date().setHours(4), new Date(1000*60*60*24*3 + (new Date().setHours(4)).valueOf()));
+        }
+        document.getElementById('semaine+1').onclick = function() {
+        timeline.setWindow(getMonday(new Date()).setHours(4), new Date(1000*60*60*24*7 + (new Date(getMonday(new Date()).setHours(4))).valueOf()));
+        }
+        timeline.on('click', function (event, properties) {
+            //var olddatedeb=event.time;
+            //console.log(olddatedeb);
+            //logEvent(event, properties);
+        });
+        function getMonday(date) {
+            var day = date.getDay() || 7;  
+            if( day !== 1 ) 
+                date.setHours(24 * (day)); 
+            return date;
+        }
     }
-    else{
-        //alert(document.getElementById("Choixmoyen"+x).options[document.getElementById('Choixmoyen'+x).selectedIndex].text);
-        document.querySelector('[name=Statut'+x+']').value = "1";
-        document.querySelector('[name=Moyen'+x+']').value = document.getElementById("Choixmoyen"+x).options[document.getElementById('Choixmoyen'+x).selectedIndex].text;
-    }    
-    //Reformatage de la date sans le T
-    var DateHDeb=document.getElementById("HeureDebut"+x).value;
-    var DateDeb=DateHDeb.slice(0,10);
-    var HeureDeb=DateHDeb.slice(11,16);
-    var newdDateHDeb=DateDeb+" "+HeureDeb;
-    var DateHFin=document.getElementById("HeureFin"+x).value;
-    var DateFin=DateHFin.slice(0,10);
-    var HeureFin=DateHFin.slice(11,16);
-    var newdDateHFin=DateFin+" "+HeureFin;
-    document.querySelector('[name=Hfin'+x+']').value = newdDateHFin;
-    document.querySelector('[name=Hdeb'+x+']').value = newdDateHDeb;
-};
+        function logEvent(event, properties) {
+            var log = document.getElementById('log');
+            var msg = document.createElement('div');
+            msg.innerHTML = 'event=' + JSON.stringify(event) + ', ' +
+            'properties=' + JSON.stringify(properties);
+            log.firstChild ? log.insertBefore(msg, log.firstChild) : log.appendChild(msg);
+        }
 
-</script>
+        function prettyPromptItemUpdate(title, text, item, groups, timeline, callback) { 
+            var html = htmlForSweetAlert(item); 
+            swal({ 
+                title: title, 
+                text: text, 
+                content: html, 
+                icon: "success"  
+            });
+        } 
+
+        function htmlForSweetAlert(item) { 
+            //console.log(item);
+            var form = document.createElement('FORM'); 
+            form.setAttribute("role", "form"); 
+            form.setAttribute("class", "form-vertical"); 
+        
+            var divForm_row01 = document.createElement('DIV'); 
+            divForm_row01.setAttribute("class", "form-group"); 
+            var divTitle = document.createElement('DIV'); 
+            divTitle.setAttribute("class", "col-sm-8"); 
+            var labelTitle = document.createElement('LABEL'); 
+            labelTitle.innerHTML = translate(locale, "titre", "title"); 
+            labelTitle.setAttribute("for", "inputTitle"); 
+            labelTitle.setAttribute("class", "col-form-label") 
+            var inputTitle = document.createElement('INPUT'); 
+            inputTitle.id = "inputTitle"; 
+            inputTitle.setAttribute("class", "form-control"); 
+            inputTitle.setAttribute("type", "text"); 
+            inputTitle.setAttribute("value", item.programmes) 
+        
+            var divResources = document.createElement('DIV'); 
+            divResources.setAttribute("class", "col-sm-4"); 
+            var labelResources = document.createElement('LABEL'); 
+            labelResources.innerHTML = translate(locale, "ressources", "resources"); 
+            labelResources.setAttribute("for", "inputResources"); 
+            labelResources.setAttribute("class", "col-form-label") 
+            var inputResources = document.createElement('INPUT'); 
+            inputResources.id = "inputResources"; 
+            inputResources.setAttribute("class", "form-control"); 
+            inputResources.setAttribute("type", "text"); 
+            //inputResources.setAttribute("value", groups._data[groups._data[item.group].nestedInGroup].content) 
+            inputResources.setAttribute("value", item.group)
+
+            //var divStatut = document.createElement('DIV'); 
+            //divStatut.setAttribute("class", "col-sm-4"); 
+            //var labelStatut = document.createElement('LABEL'); 
+            //labelStatut.innerHTML = translate(locale, "statut", "State"); 
+            //labelStatut.setAttribute("for", "inputStatut"); 
+            //labelStatut.setAttribute("class", "col-form-label") 
+            //var inputStatut = document.createElement('INPUT'); 
+            //inputStatut.id = "inputStatut"; 
+            //inputStatut.setAttribute("class", "form-control"); 
+            //inputStatut.setAttribute("type", "text"); 
+
+            
+            var divStatut = document.createElement('DIV'); 
+             divStatut.setAttribute("class", "col-sm-4"); 
+             var labelStatut = document.createElement('LABEL'); 
+             labelStatut.innerHTML = "Statut"; 
+             labelStatut.setAttribute("for", "selectStatut"); 
+             labelStatut.setAttribute("class", "col-form-label") 
+             var selectStatut = document.createElement('SELECT'); 
+             selectStatut.id = "selectStatut"; 
+             selectStatut.setAttribute("class", "form-control"); 
+             var array = ["PLANNIFIE", "TERMINE", "RETARD", "ANNULER", "REMPLACER"]; 
+            for (var i = 0; i < array.length; i++) { 
+                var option = document.createElement("option"); 
+                option.value = array[i]; 
+                option.text = array[i]; 
+                selectStatut.appendChild(option); 
+            }; 
+             selectStatut.value = item.statut; 
+        
+            /* row 2 */ 
+            var divForm_row02 = document.createElement('DIV'); 
+            divForm_row02.setAttribute("class", "form-group");   
+        
+            var divDateDeb = document.createElement('DIV');
+            divDateDeb.setAttribute("class", "col-sm-6"); 
+            var labelDateDeb = document.createElement('LABEL'); 
+            labelDateDeb.innerHTML = translate(locale, "Date Début", "employees"); 
+            labelDateDeb.setAttribute("for", "inputDateDeb"); 
+            labelDateDeb.setAttribute("class", "col-form-label") 
+            var inputDateDeb = document.createElement('INPUT'); 
+            inputDateDeb.id = "inputDateDeb"; 
+            inputDateDeb.setAttribute("class", "form-control"); 
+            inputDateDeb.setAttribute("type", "text"); 
+            inputDateDeb.setAttribute("min", 0); 
+            inputDateDeb.setAttribute("value", item.start); 
+        
+            var divDateFin = document.createElement('DIV'); 
+            divDateFin.setAttribute("class", "col-sm-6"); 
+            var labelDateFin = document.createElement('LABEL'); 
+            labelDateFin.innerHTML = translate(locale, "Date Fin", "estimated"); 
+            labelDateFin.setAttribute("for", "inputDateFin"); 
+            labelDateFin.setAttribute("class", "col-form-label") 
+            var inputDateFin = document.createElement('INPUT'); 
+            inputDateFin.id = "inputPrevisionnel"; 
+            inputDateFin.setAttribute("class", "form-control"); 
+            inputDateFin.setAttribute("type", "text"); 
+            inputDateFin.setAttribute("min", 0); 
+            inputDateFin.setAttribute("value", item.end); 
+        
+            var divComment = document.createElement('DIV'); 
+            divComment.setAttribute("class", "col-sm-12"); 
+            var labelComment = document.createElement('LABEL'); 
+            labelComment.innerHTML = translate(locale, "Commentaires", "worked"); 
+            labelComment.setAttribute("for", "inputComment"); 
+            labelComment.setAttribute("class", "col-form-label") 
+            var inputComment = document.createElement('INPUT'); 
+            inputComment.id = "inputComment"; 
+            inputComment.setAttribute("class", "form-control"); 
+            inputComment.setAttribute("type", "text"); 
+            inputComment.setAttribute("value", item.title); 
+        
+            /* BUILD FORM */ 
+            /* ROW 01*/ 
+            divTitle.appendChild(inputTitle); 
+            inputTitle.parentNode.insertBefore(labelTitle, inputTitle); 
+        
+            divResources.appendChild(inputResources); 
+            inputResources.parentNode.insertBefore(labelResources, inputResources); 
+        
+            //divStatut.appendChild(inputStatut); 
+            //inputStatut.parentNode.insertBefore(labelStatut, inputStatut);
+        
+             divStatut.appendChild(selectStatut); 
+             selectStatut.parentNode.insertBefore(labelStatut, selectStatut); 
+        
+            divForm_row01.appendChild(divTitle); 
+            divForm_row01.appendChild(divResources); 
+            //divForm_row01.appendChild(divStatut);
+            divForm_row01.appendChild(divStatut); 
+        
+            /* ROW 02 */ 
+        
+            divDateDeb.appendChild(inputDateDeb); 
+            inputDateDeb.parentNode.insertBefore(labelDateDeb, inputDateDeb); 
+        
+            divDateFin.appendChild(inputDateFin); 
+            inputDateFin.parentNode.insertBefore(labelDateFin, inputDateFin); 
+        
+            divComment.appendChild(inputComment); 
+            inputComment.parentNode.insertBefore(labelComment, inputComment); 
+        
+            divForm_row02.appendChild(divDateDeb); 
+            divForm_row02.appendChild(divDateFin); 
+            divForm_row02.appendChild(divComment); 
+        
+            form.appendChild(divForm_row01); 
+            form.appendChild(divForm_row02); 
+
+            //form.addEventListener("submit", function (event) {
+            // Chaque fois que l'utilisateur tente d'envoyer les données
+            // on vérifie que le champ email est valide.
+            //if (!selectStatut.value) {
+ 
+                // Et on empêche l'envoi des données du formulaire
+                //event.preventDefault();
+            //}
+            return form;
+            //}, false);
+
+             
+        } 
+        // function translate(locale, fr, en) { 
+        //     return locale === "fr" ? fr : en; 
+        // } 
+
+        function Planning(statut){
+            $.ajax({
+                method: "POST",
+                data: {state: statut},
+                url: "{{ path('Planning_Edit') }}",
+                beforeSend : function() { // traitements JS à faire AVANT l'envoi AJAX
+                    //Mettre à jour la date dans l'input pour l'url
+                },
+                success: function(data){
+                    visuPla(data.moyen, data.Ssmoyen, data.Taches);
+                }
+            });
+            //$(document).reload(true); 
+        }
+        $(function() {
+            $('#toggle-visu').change(function() {
+                var test = $(this).prop('checked');
+                if (test == true) {
+                    Planning("PLANNIFIE");
+                } else {
+                    Planning();
+                }
+            })
+        })
+        function removeAlert(message) {
+            console.log(message);
+        }
+    </script>
+<div class="sweet-overlay" tabindex="-1" style="opacity: -0.02; display: none;"></div><div class="sweet-alert hideSweetAlert" data-custom-class="" data-has-cancel-button="true" data-has-confirm-button="true" data-allow-outside-click="false" data-has-done-function="true" data-animation="pop" data-timer="null" style="display: none; margin-top: -200px; opacity: -0.01;"><div class="sa-icon sa-error" style="display: none;">
+      <span class="sa-x-mark">
+        <span class="sa-line sa-left"></span>
+        <span class="sa-line sa-right"></span>
+      </span>
+    </div><div class="sa-icon sa-warning" style="display: block;">
+      <span class="sa-body"></span>
+      <span class="sa-dot"></span>
+    </div><div class="sa-icon sa-info" style="display: none;"></div><div class="sa-icon sa-success" style="display: none;">
+      <span class="sa-line sa-tip"></span>
+      <span class="sa-line sa-long"></span>
+
+      <div class="sa-placeholder"></div>
+      <div class="sa-fix"></div>
+    </div><div class="sa-icon sa-custom" style="display: none;"></div><h2>Move item</h2>
+    <p style="display: block;">Do you really want to move the item to<br>start: Tue Apr 23 2013 00:00:00 GMT+0200 (heure d’été d’Europe centrale)<br>end: undefined?</p>
+    <fieldset>
+      <input type="text" tabindex="3" placeholder="">
+      <div class="sa-input-error"></div>
+    </fieldset><div class="sa-error-container">
+      <div class="icon">!</div>
+      <p>Not valid!</p>
+    </div><div class="sa-button-container">
+      <button class="cancel" tabindex="2" style="display: inline-block;">Cancel</button>
+      <div class="sa-confirm-button-container">
+        <button class="confirm" tabindex="1" style="display: inline-block; background-color: rgb(221, 107, 85); box-shadow: rgba(221, 107, 85, 0.8) 0px 0px 2px, rgba(0, 0, 0, 0.05) 0px 0px 0px 1px inset;">OK</button><div class="la-ball-fall">
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+      </div>
+    </div></div>
 {% endblock %}
+{% block mesJavascripts %}
 
+{%endblock%}

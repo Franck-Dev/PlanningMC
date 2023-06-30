@@ -791,7 +791,7 @@ class PlanningMCController extends AbstractController
      * @IsGranted("ROLE_CE_MOULAGE")
      */
     public function DemandesCrea( Request $requette,
-    RequestStack $requestStack,
+    FunctPlanning $plan,
     EntityManagerInterface $manager,
     ManagerRegistry $manaReg,
     ComService $com,
@@ -831,9 +831,23 @@ class PlanningMCController extends AbstractController
                 
                 return $this->redirectToRoute('Demandes');
         }
+        //Initialisation des variables
         $datas['Liste OT vide'] = 'Pas d\'outillage'; 
         $datasOT=[];
         $Titres=[];
+        //Recherche des moyens à afficher sur planning suivant service
+        $repi=$manaReg->getRepository(Services::class);
+        $teams=$repi->findOneBy(['Nom' => 'MOULAGE']);
+        $repos=$manaReg->getRepository(Moyens::class);
+        $moyens=$plan->moyens($repos,$teams->getId());
+        $Ssmoyen= new JsonResponse($moyens[0]);
+        $moyen= new JsonResponse($moyens[1]);
+        $item= $moyens[2];
+        //Chargement d'une variable pour les tâches déjà plannifiées
+        $repi=$manaReg->getRepository(PolymReal::class);
+        $repo=$manaReg->getRepository(Planning::class);
+        $task=$plan->planning($repo, $repos, $repi);
+        $taches = new JsonResponse($task[0]);
             
         if (!$demande->getId()){
             return $this->render('planning_mc/CreationDemandes.html.twig',[
@@ -841,6 +855,12 @@ class PlanningMCController extends AbstractController
                 'Datas' => $datas,
                 'datasOT' => $datasOT,
                 'service' => 'MOULAGE',
+                'Taches' => $taches->getcontent(),
+                'Moyens' => $moyen->getcontent(),
+                'Ssmoyen' => $Ssmoyen->getcontent(),
+                'Moyens' => $moyen->getcontent(),
+                'Ssmoyen' => $Ssmoyen->getcontent(),
+                'Items' => $item,
                 'formDemande' => $form->createView()
              ]);
         } else {
@@ -849,6 +869,12 @@ class PlanningMCController extends AbstractController
                 'Datas' => $datas,
                 'datasOT' => $datasOT,
                 'service' => 'MOULAGE',
+                'Taches' => $taches->getcontent(),
+                'Moyens' => $moyen->getcontent(),
+                'Ssmoyen' => $Ssmoyen->getcontent(),
+                'Moyens' => $moyen->getcontent(),
+                'Ssmoyen' => $Ssmoyen->getcontent(),
+                'Items' => $item,
                 'formDemande' => $form->createView()
              ]);
         } 
