@@ -6,7 +6,9 @@ use App\Entity\Charge;
 use App\Entity\Demandes;
 use App\Entity\Planning;
 use App\Entity\ChargFige;
+use App\Entity\Outillages;
 use App\Entity\ProgMoyens;
+use App\Form\ChargementType;
 use App\Services\ComService;
 use App\Services\FunctChargPlan;
 use App\Repository\ChargeRepository;
@@ -18,9 +20,10 @@ use App\Repository\ChargementRepository;
 use App\Repository\OutillagesRepository;
 use App\Repository\ProgMoyensRepository;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\FormInterface;
-use Symfony\Component\HttpFoundation\Request;
 //use Symfony\Component\Security\Core\Security;
+use Symfony\Component\Form\FormInterface;
+use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -28,7 +31,7 @@ use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
-use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 
 class DemandesType extends AbstractType
 {
@@ -90,7 +93,7 @@ class DemandesType extends AbstractType
             ]);
         }
 
-        $formModifier = function (FormInterface $form, ProgMoyens $cycle = null, $chargeRepository, $chargFigeRepository, $options) {
+        $formModifier = function (FormInterface $form, ProgMoyens $cycle = null, $chargeRepository, $chargFigeRepository, $Out, $options) {
             $listOFCycle =  null === $cycle ? $chargeRepository->findBy(['Statut' => 'OUV'],['DateDeb' => 'ASC']) : $chargeRepository->findBy(['NumProg' => $cycle->getNom(),'Statut' => 'OUV'],
             ['DateDeb' => 'ASC']);
 
@@ -99,6 +102,9 @@ class DemandesType extends AbstractType
 
             $listCTOCycle = null === $cycle ?  $listCTOCycle : $this->checkRemplissage($listCTOCycle, $options['data']->getDatePropose());
             dump($listCTOCycle);
+
+            $listOTCycle =  null === $cycle ? $Out->findBy(['Dispo' => '1']) : $Out->myFindByCyc('1', $cycle->getId());
+            dump($listOTCycle);
 
             $form->add('ListOF', EntityType::class, [
                 'class' => Charge::class,
@@ -115,12 +121,24 @@ class DemandesType extends AbstractType
                 'class' => ChargFige::class,
                 'placeholder' => 'Sélectionner un chargement type',
                 'choices' => $listCTOCycle,
-                'multiple' => false,
+                'multiple' => true,
                 'expanded' => false,
-                'mapped' => false,
+                'mapped' => true,
                 'by_reference' => false,
                 'required' => false,
                 'label' => 'Liste des CTO :'
+            ]);
+
+            $form->add('ListOT', EntityType::class, [
+                'class' => Outillages::class,
+                'placeholder' => 'Sélectionner des outillages',
+                'choices' => $listOTCycle,
+                'multiple' => true,
+                'expanded' => false,
+                'mapped' => true,
+                'by_reference' => false,
+                'required' => false,
+                'label' => 'Liste des Outillages :'
             ]);
         };
 
@@ -128,7 +146,7 @@ class DemandesType extends AbstractType
             FormEvents::PRE_SET_DATA,
             function (FormEvent $event) use ($formModifier, $options) {
                 $data = $event->getData();
-                $formModifier($event->getForm(), $data->getCycle(), $this->chargeRepository, $this->chargFigeRepository, $options);
+                $formModifier($event->getForm(), $data->getCycle(), $this->chargeRepository, $this->chargFigeRepository, $this->Out, $options);
             }
         );
         $builder->get('cycle')->addEventListener(
@@ -139,7 +157,7 @@ class DemandesType extends AbstractType
                 $cycle = $event->getForm()->getData();
                 // since we've added the listener to the child, we'll have to pass on
                 // the parent to the callback function!
-                $formModifier($event->getForm()->getParent(), $cycle, $this->chargeRepository, $this->chargFigeRepository, $options);
+                $formModifier($event->getForm()->getParent(), $cycle, $this->chargeRepository, $this->chargFigeRepository, $this->Out, $options);
             }
         );
         $builder -> add('date_propose', DateType::class,[
@@ -154,6 +172,7 @@ class DemandesType extends AbstractType
         ]);
         $builder -> add('outillages',TextareaType::class, [
             'row_attr' => ['class' => 'text-editor', 'id' => 'Outillage'],
+            'label' => 'Autres Outillages',
             'required' => false]);
         $builder -> add('commentaires', TextareaType::class, [
             'row_attr' => ['class' => 'text-editor', 'id' => 'Commentaire'],

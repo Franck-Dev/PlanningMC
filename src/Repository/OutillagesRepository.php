@@ -70,4 +70,17 @@ class OutillagesRepository extends ServiceEntityRepository
         $results = $query->getResult();
         return $results;
     }
+
+    public function myFindByCyc($dispo, $cycleId){
+        $qb = $this->createQueryBuilder('outillages')
+           ->leftJoin ('outillages.Programme','t')
+           ->andwhere('t.id = :cycle')
+           ->andWhere('outillages.Dispo = :dispo')
+           ->setParameter('cycle', $cycleId)
+           ->setParameter('dispo', $dispo);
+         
+        $query = $qb->getQuery();
+        $results = $query->getResult();
+        return $results;
+    }
 }

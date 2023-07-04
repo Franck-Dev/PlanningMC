@@ -121,6 +121,7 @@ var $datW = $('#demandes_date_propose');
 var $heurW = $('#demandes_heure_propose');
 var $CTO = $('#demandes_ListCTO');
 var $listOF = $('#demandes_ListOF');
+var $listOT = $('#demandes_ListOT');
 
 // When sport gets selected ...
 $cycle.change(function() {
@@ -153,6 +154,10 @@ $cycle.change(function() {
 	  $('#demandes_ListCTO').on('change',$('#demandes_ListCTO'), function(event){
 		rebindDatasCTO($('#demandes_ListCTO'));
 	  });
+	  $('#demandes_ListOT').replaceWith(
+        // ... with the returned one from the AJAX response.
+        $(html.responseText).find('#demandes_ListOT')
+      );
       // Position field now displays the appropriate positions.
 	  $('#loader').addClass('hidden');
     }

@@ -118,12 +118,23 @@ class Outillages
      */
     private $chargements;
 
+    /**
+     * @ORM\ManyToMany(targetEntity=Demandes::class, mappedBy="ListOT")
+     */
+    private $demandes;
+
+    public function __toString(): string
+    {
+        return (string) $this->getRef()."-".$this->getDesignation();
+    }
+
     public function __construct()
     {
         $this->Programme = new ArrayCollection();
         $this->chargFiges = new ArrayCollection();
         $this->articles = new ArrayCollection();
         $this->chargements = new ArrayCollection();
+        $this->demandes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -428,6 +439,33 @@ class Outillages
     {
         if ($this->chargements->removeElement($chargement)) {
             $chargement->removeOutillage($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Demandes>
+     */
+    public function getDemandes(): Collection
+    {
+        return $this->demandes;
+    }
+
+    public function addDemande(Demandes $demande): self
+    {
+        if (!$this->demandes->contains($demande)) {
+            $this->demandes[] = $demande;
+            $demande->addListOT($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDemande(Demandes $demande): self
+    {
+        if ($this->demandes->removeElement($demande)) {
+            $demande->removeListOT($this);
         }
 
         return $this;

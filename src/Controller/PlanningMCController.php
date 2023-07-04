@@ -805,6 +805,7 @@ class PlanningMCController extends AbstractController
         } else {
             # code...
         }
+        dump($demande);
         $form = $this->createForm(DemandesType::class, $demande);
         $form->handleRequest($requette);
 
@@ -829,7 +830,7 @@ class PlanningMCController extends AbstractController
             $com->sendNotif('La demande n° '. $demande->getId() . ' a bien été enregistré.');
             //$requette->getSession()->getFlashbag()->add('success', 'La demande'. $demande->getId() . 'a bien été enregistré.');
                 
-                return $this->redirectToRoute('Demandes');
+                return $this->redirectToRoute('Demandes',['service' => 'MOULAGE']);
         }
         //Initialisation des variables
         $datas['Liste OT vide'] = 'Pas d\'outillage'; 

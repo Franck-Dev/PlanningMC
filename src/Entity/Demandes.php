@@ -104,9 +104,21 @@ class Demandes
      */
     private $Chargement;
 
+    /**
+     * @ORM\ManyToMany(targetEntity=ChargFige::class, inversedBy="demandes")
+     */
+    private $ListCTO;
+
+    /**
+     * @ORM\ManyToMany(targetEntity=Outillages::class, inversedBy="demandes")
+     */
+    private $ListOT;
+
     public function __construct()
     {
         $this->ListOF = new ArrayCollection();
+        $this->ListCTO = new ArrayCollection();
+        $this->ListOT = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -339,6 +351,54 @@ class Demandes
     public function setChargement(?Chargement $Chargement): self
     {
         $this->Chargement = $Chargement;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ChargFige>
+     */
+    public function getListCTO(): Collection
+    {
+        return $this->ListCTO;
+    }
+
+    public function addListCTO(ChargFige $listCTO): self
+    {
+        if (!$this->ListCTO->contains($listCTO)) {
+            $this->ListCTO[] = $listCTO;
+        }
+
+        return $this;
+    }
+
+    public function removeListCTO(ChargFige $listCTO): self
+    {
+        $this->ListCTO->removeElement($listCTO);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, outillages>
+     */
+    public function getListOT(): Collection
+    {
+        return $this->ListOT;
+    }
+
+    public function addListOT(outillages $listOT): self
+    {
+        if (!$this->ListOT->contains($listOT)) {
+            $this->ListOT[] = $listOT;
+        }
+
+        return $this;
+    }
+
+    public function removeListOT(outillages $listOT): self
+    {
+        $this->ListOT->removeElement($listOT);
 
         return $this;
     }
