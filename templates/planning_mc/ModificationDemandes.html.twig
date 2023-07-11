@@ -37,10 +37,34 @@
 		<div class="form-group">
 			{{form_row(formDemande.outillages, {'attr' : {'placeholder' : "Entrez les outillages si besoin" }})}}
 		</div>
-		<div class="form-group">
-			<button type="submit" class="btn btn-warning">
-				Modifier la Demande
-			</button>
+		<div class="form-row justify-content-between">
+			<div class="form-group col-md-4">
+				<button type="submit" class="btn btn-warning">
+					Modifier la Demande
+				</button>
+			</div>
+			<div class="form-group col-md-4">
+				
+				<div class="row align-items-center">
+					<div class="col ">
+						{{ form_label(formDemande.id) }}
+					</div>
+					<div class="col" id="some-custom-id">
+						{{ form_widget(formDemande.id) }}
+					</div>
+				</div>
+			</div>
+			<div class="form-group col-md-4">
+				
+				<div class="row align-items-center">
+					<div class="col ">
+						{{ form_label(formDemande.chargement) }}
+					</div>
+					<div class="col" id="some-custom-id">
+						{{ form_widget(formDemande.chargement) }}
+					</div>
+				</div>
+			</div>
 		</div>
 		{{ form_end(formDemande) }}
 {% endblock %}

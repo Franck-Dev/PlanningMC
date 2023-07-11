@@ -3,6 +3,7 @@
 namespace App\Form;
 
 use App\Entity\Charge;
+use App\Entity\Chargement;
 use App\Entity\Demandes;
 use App\Entity\Planning;
 use App\Entity\ChargFige;
@@ -30,6 +31,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 
@@ -94,17 +96,14 @@ class DemandesType extends AbstractType
         }
 
         $formModifier = function (FormInterface $form, ProgMoyens $cycle = null, $chargeRepository, $chargFigeRepository, $Out, $options) {
-            $listOFCycle =  null === $cycle ? $chargeRepository->findBy(['Statut' => 'OUV'],['DateDeb' => 'ASC']) : $chargeRepository->findBy(['NumProg' => $cycle->getNom(),'Statut' => 'OUV'],
+            $listOFCycle =  null === $cycle ? $chargeRepository->findBy(['Statut' => ['OUV','PREPLAN','PLANNIFIE']],['DateDeb' => 'ASC']) : $chargeRepository->findBy(['NumProg' => $cycle->getNom(),'Statut' => ['OUV','PREPLAN','PLANNIFIE']],
             ['DateDeb' => 'ASC']);
 
-            dump($cycle);
-            $listCTOCycle =  null === $cycle ? $chargFigeRepository->findBy(['Statut' => '2']) : $chargFigeRepository->findBy(['Programme' => $cycle->getId(),'Statut' => '2']);
+            $listCTOCycle =  null === $cycle ? $chargFigeRepository->findBy(['Statut' => 2]) : $chargFigeRepository->findBy(['Programme' => $cycle->getId(),'Statut' => 2]);
 
             $listCTOCycle = null === $cycle ?  $listCTOCycle : $this->checkRemplissage($listCTOCycle, $options['data']->getDatePropose());
-            dump($listCTOCycle);
 
             $listOTCycle =  null === $cycle ? $Out->findBy(['Dispo' => '1']) : $Out->myFindByCyc('1', $cycle->getId());
-            dump($listOTCycle);
 
             $form->add('ListOF', EntityType::class, [
                 'class' => Charge::class,
@@ -182,6 +181,18 @@ class DemandesType extends AbstractType
             'choices'  => [
                 'NON' => false,
                 'OUI' => true]]);
+        $builder -> add('id',NumberType::class,[
+            'disabled' => true,
+            'empty_data' => 0,
+            'label' => 'N° demande',
+            'required' => false
+        ]);
+        $builder -> add('chargement',EntityType::class,[
+            'class' => Chargement::class,
+            'disabled' => true,
+            'empty_data' => 0,
+            'required' => false
+        ]);
     }
 
     public function configureOptions(OptionsResolver $resolver)
@@ -192,7 +203,7 @@ class DemandesType extends AbstractType
     }
     
     /**
-     * checkRemplissage Fonction pour remonter les remplissages des CTO par Of de charge
+     * checkRemplissage Fonction pour remonter les remplissages des CTO par OF de charge
      *
      * @param  array $listCTO
      * @return array
@@ -202,11 +213,12 @@ class DemandesType extends AbstractType
         $creno['Jour'] = $dateJour;
         $creno['NbrPcs']=1;
         foreach ($listCTO as $key => $CTO) {
+            dump($CTO);
             $creno['Cycles'] = $CTO->getProgramme()->getNom();
             $listOneCTO[0]=$CTO;
-
+            //Recherche les OF les plus vieux pour remplir le CTO
             $tabTemp = $this->chargeFige->checkOTCTO($listOneCTO, $this->repo, $this->Out, $this->Art, $creno);
-
+            //Rajoute le % de remplissage lié au CTO
             $listCTO[$key] = $CTO->setRemplissage($tabTemp[0]['Remplissage'][0]);
         }
         return $listCTO;

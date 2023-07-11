@@ -42,9 +42,15 @@ class Articles
      */
     private $Serie;
 
+    /**
+     * @ORM\ManyToMany(targetEntity=ProgMoyens::class, inversedBy="articles", fetch="EAGER")
+     */
+    private $ProgPolym;
+
     public function __construct()
     {
         $this->OutMoulage = new ArrayCollection();
+        $this->ProgPolym = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -110,6 +116,30 @@ class Articles
     public function setSerie(bool $Serie): self
     {
         $this->Serie = $Serie;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ProgMoyens>
+     */
+    public function getProgPolym(): Collection
+    {
+        return $this->ProgPolym;
+    }
+
+    public function addProgPolym(ProgMoyens $progPolym): self
+    {
+        if (!$this->ProgPolym->contains($progPolym)) {
+            $this->ProgPolym[] = $progPolym;
+        }
+
+        return $this;
+    }
+
+    public function removeProgPolym(ProgMoyens $progPolym): self
+    {
+        $this->ProgPolym->removeElement($progPolym);
 
         return $this;
     }

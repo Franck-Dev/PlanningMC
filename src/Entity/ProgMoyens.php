@@ -104,6 +104,11 @@ class ProgMoyens
      */
     private $avion;
 
+    /**
+     * @ORM\ManyToMany(targetEntity=Articles::class, mappedBy="ProgPolym")
+     */
+    private $articles;
+
     public function __toString(): string
     {
         return (string) $this->getNom();
@@ -115,6 +120,7 @@ class ProgMoyens
         $this->outillages = new ArrayCollection();
         $this->chargFiges = new ArrayCollection();
         $this->avion = new ArrayCollection();
+        $this->articles = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -388,6 +394,33 @@ class ProgMoyens
     public function removeAvion(ProgAvions $avion): self
     {
         $this->avion->removeElement($avion);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Articles>
+     */
+    public function getArticles(): Collection
+    {
+        return $this->articles;
+    }
+
+    public function addArticle(Articles $article): self
+    {
+        if (!$this->articles->contains($article)) {
+            $this->articles[] = $article;
+            $article->addProgPolym($this);
+        }
+
+        return $this;
+    }
+
+    public function removeArticle(Articles $article): self
+    {
+        if ($this->articles->removeElement($article)) {
+            $article->removeProgPolym($this);
+        }
 
         return $this;
     }

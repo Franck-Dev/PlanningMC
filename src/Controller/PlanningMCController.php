@@ -39,6 +39,7 @@ use Doctrine\ORM\EntityRepository;
 use App\Repository\ChargeRepository;
 use Symfony\Component\Form\FormEvent;
 use App\Repository\ArticlesRepository;
+use App\Repository\DemandesRepository;
 use function PHPUnit\Framework\isNull;
 use Symfony\Component\Form\FormEvents;
 use App\Repository\ChargFigeRepository;
@@ -65,8 +66,8 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
-use Symfony\Component\Form\Extension\Core\Type\NumberType;
 
+use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
@@ -801,11 +802,12 @@ class PlanningMCController extends AbstractController
     {
         if (!$demande) {
             $demande= new Demandes();
-            $demande->setDatepropose(new \Datetime($requette->get('datejour')));
+            $datejour=new \Datetime($requette->get('datejour'));
+            $demande->setDatepropose($datejour);
         } else {
-            # code...
+            $datejour=$demande->getDatePropose();
         }
-        dump($demande);
+        
         $form = $this->createForm(DemandesType::class, $demande);
         $form->handleRequest($requette);
 
@@ -849,7 +851,16 @@ class PlanningMCController extends AbstractController
         $repo=$manaReg->getRepository(Planning::class);
         $task=$plan->planning($repo, $repos, $repi);
         $taches = new JsonResponse($task[0]);
-            
+
+        //Initialisation de variables pour le chargement
+        $CTO[0]['Nom']="";
+        //Si pas de chargement, j'initialise à 0
+        if (!$demande->getChargement()) {
+            $idChargement=10;
+        } else {
+            $idChargement=$demande->getChargement()->getId();
+        }
+        
         if (!$demande->getId()){
             return $this->render('planning_mc/CreationDemandes.html.twig',[
                 'Titres' => $Titres,
@@ -862,6 +873,10 @@ class PlanningMCController extends AbstractController
                 'Moyens' => $moyen->getcontent(),
                 'Ssmoyen' => $Ssmoyen->getcontent(),
                 'Items' => $item,
+                'idChargement' => $idChargement,
+                'idDemande' => $demande->getId(),
+                'DateJour' => $datejour,
+                'CTO' => $CTO,
                 'formDemande' => $form->createView()
              ]);
         } else {
@@ -876,6 +891,10 @@ class PlanningMCController extends AbstractController
                 'Moyens' => $moyen->getcontent(),
                 'Ssmoyen' => $Ssmoyen->getcontent(),
                 'Items' => $item,
+                'idChargement' => $idChargement,
+                'idDemande' => $demande->getId(),
+                'DateJour' => $datejour,
+                'CTO' => $CTO,
                 'formDemande' => $form->createView()
              ]);
         } 
@@ -989,13 +1008,32 @@ class PlanningMCController extends AbstractController
      * @Route("/Demandes/Supression/{id}", name="Sup_Demandes")
      */
     public function demandeSup(EntityManagerInterface $manager,
-    Demandes $demande=null,
-    userInterface $user=null,
-    ManagerRegistry $manaReg,
+    Demandes $demande=null,ChargementRepository $chargement,
+    userInterface $user=null,OutillagesRepository $out,
+    ManagerRegistry $manaReg,ChargeRepository $charge,
     ComService $com)
     {
         $idDemande=$demande->getId();
+        //Récupération des OF liés
+        $listOF=$charge->findBy(['demandes' => $idDemande]);
+        //Suppression des OF liés à la demande
+        foreach ($listOF as $key => $OF) {
+            $OF->setChargement(null);
+            $demande->removeListOF($OF);
+        }
+        //Récupération des OT liés
+        $listOT=$out->myFindByChargement([$demande->getChargement()->getId()]);
+        foreach ($listOT as $key => $OT) {
+            $demande->removeListOT($OT);
+        }
+        //Récupération du chargement
+        $chargeDem=$chargement->find($demande->getChargement()->getId());
+
         $manager = $manaReg->getManager();
+        $demande->setChargement(null);
+        //Suppression du chargement lié
+        $manager->remove($chargeDem);
+        //Suppression de la demande
         $manager->remove($demande);
         $manager->flush();
 
@@ -1003,7 +1041,7 @@ class PlanningMCController extends AbstractController
         $message="<p>Supression de la demande n° ". $idDemande ." du ".$demande->getDatePropose()->format('Y-m-d'). " ". $demande->getHeurePropose()->format('H:i:s')."</p>";
         //$com->sendEmail($user->getMail(),'f.dartois@daher.com', 'La demande n° '. $demande->getId() . ' a bien été supprimée.', $message );
 
-        return $this->redirectToRoute('Demandes');
+        return $this->redirectToRoute('Demandes',['service'=>'MOULAGE']);
     }
 
     /**
@@ -1170,6 +1208,9 @@ class PlanningMCController extends AbstractController
         return $this->render('planning_mc/form/_form_tbDatasCharg.html.twig', [
             'Datas' => $test[0]['Contenu'],
             'CTO' => $test,
+            'idChargement' => $request->request->get('idChargement'),
+            'idDemande' => $request->request->get('idDemande'),
+            'DateJour' => $request->get('DateJour'),
             'datasOT' => $listOTDatas
         ]);
     }
@@ -1210,12 +1251,90 @@ class PlanningMCController extends AbstractController
     }
 
     /**
-     * @Route("/Demandes/Charge_Fige/Validation/OT", name="val_OT", methods={"GET"})
+     * @Route("/Demandes/Charge_Fige/Validation/{OT}", name="val_OT")
      * @IsGranted("ROLE_CE_MOULAGE")
      */
-    Public function valOT(Request $request, FunctChargPlan $chargeFige, ChargFigeRepository $cata, ChargeRepository $repo, OutillagesRepository $Out, ArticlesRepository $Art)
+    Public function valOT(Request $request,ManagerRegistry $manaReg,
+     ChargeRepository $repo, ChargFigeRepository $chargFig,
+     OutillagesRepository $Out, DemandesRepository $Dem,
+     ChargementRepository $Chargemnt,userInterface $user=null,
+     $OT)
     {
-        dd($request);
+        $manager = $manaReg->getManager();
+        $outillage = new Outillages;
+        //On récupère l'Id de l'OT
+        $outillage=$Out->findOneBy(['Ref' => $OT]);
+        //Création du chargement ou modification d'un déjà créé
+        if ($request->query->get('idChargement')) {
+            //On ajoute l'outillage au chargement
+            $chargement=$Chargemnt->find($request->query->get('idChargement'));         
+        } else {
+            //On créé le chargement et on ajoute l'outillage
+            $chargement = new Chargement;
+            $chargement->setNomChargement($request->query->get('CTO'));
+            $chargement->setDatePlannif(new \DateTime());
+            $chargement->setRemplissage(0);
+            $chargement->setProgramme('CREATION');
+        }
+        $chargement->addOutillage($outillage);
+        $manager->persist($chargement);
+        $manager->flush();
+        //Récupération du nb d'outillages déjà dans chargement
+        $listOTCharge=$Out->myFindByChargement($chargement->getId());
+        //Récupération du nb d'outillage composants le chargement figé CTO
+        $listOTCTO=$chargFig->findOneBy(['Code' => $request->query->get('CTO')]);
+        //Comparaison des 2 listes pour vérifier les doublons ou manquants
+
+        //Déduire le taux de remplissage
+        $pourcRemp=count($listOTCharge)/count($listOTCTO->getOT());
+        $chargement->setRemplissage($pourcRemp*100);
+        $chargement->setProgramme($listOTCTO->getProgramme());
+        $manager->persist($chargement);
+        $manager->flush();
+
+         //Vérification si demande existante avant de renvoyer le form
+         if (!$request->query->get('idDemande')) {
+            //On créé la demande et on raccroche le chargement
+            $demande= new Demandes;
+            $demande->setCycle($listOTCTO->getProgramme());
+            $demande->setDatePropose(new \DateTime($request->query->get('DateJour')));
+            $demande->setPlannifie(0);
+            $demande->setDateCreation(new \DateTime());
+            $demande->setReccurance(false);
+            $demande->setUserCrea($user->getUserName());
+        } else {
+            //On recupère la demande
+            $demande=$Dem->find($request->query->get('idDemande'));
+        }
+        //On rajoute le chargement et l'outillage
+        $demande->addListOT($outillage);
+        $demande->setChargement($chargement);
+        $manager->persist($demande);
+        $manager->flush();
+
+        //Récupérer l'id du chargement pour rajouter dans les OF de Charge
+        $datasOF=$request->query;
+        foreach ($datasOF as $key => $OFs) {
+            $listOFs=[];
+            if ($key == 'Datas') {
+                foreach ($OFs as $key => $OF) {
+                    $charge=$repo->findOneBy(['OrdreFab'=>$OF['OF'], 'NumProg' => $listOTCTO->getProgramme()->getNom()]);
+                    $listOFs[$key]=$OF;
+                    $charge->setChargement($chargement);
+                    $charge->setDemandes($demande);
+                    $charge->setStatut('PLANNIFIE');
+                    $manager->persist($chargement);
+                }
+                $manager->flush();
+                //Mise en texte du tableau des OFs pour message Flash 
+            }    
+        }
+        //dd('stop');
+        //Retourner à la modification de la demande avec le numéro du chargement
+        $this->addFlash('success', "Enregistrement de l\'".$OT." avec les OF [".implode(',', $listOFs)."] dans chargement n° ".$chargement->getId()." effectué");
+
+        //return new Response($chargement->getId());
+        return $this->redirectToRoute('Modif_Demandes',['id' => $demande->getId()]);
     }
 
     /**

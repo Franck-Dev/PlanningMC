@@ -2,6 +2,17 @@
 
 {% block form %}
 		{{ form_start(formDemande) }}
+		<div class="form-row align-items-center">
+			<div class="form-group col-md-4">
+				{{form_row(formDemande.date_propose, {'attr' : {'placeholder' : "Proposer une date" }}) }}
+			</div>
+			<div class="form-group col-md-3">
+				{{form_row(formDemande.heure_propose, {'attr' : {'placeholder' : "Proposer une horaire" }}) }}
+			</div>
+			<div class="form-group col-md-5">
+				{{form_row(formDemande.Reccurance, {'attr' : {'placeholder' : "True ou False" }}) }}
+			</div>
+		</div>
 		<div class="form-row">
 			<div class="form-group col-md-6">
 				{{form_row(formDemande.cycle, {'attr' : {'placeholder' : "Nom de la polymérisation" }}) }}
@@ -20,27 +31,40 @@
 				{{form_row(formDemande.ListOF, {'attr' : {'placeholder' : "Sélectionner les OF" }}) }}
 			</div>
 		</div>
-		<div class="form-row align-items-center">
-			<div class="form-group col-md-4">
-				{{form_row(formDemande.date_propose, {'attr' : {'placeholder' : "Proposer une date" }}) }}
-			</div>
-			<div class="form-group col-md-3">
-				{{form_row(formDemande.heure_propose, {'attr' : {'placeholder' : "Proposer une horaire" }}) }}
-			</div>
-			<div class="form-group col-md-5">
-				{{form_row(formDemande.Reccurance, {'attr' : {'placeholder' : "True ou False" }}) }}
-			</div>
-		</div>
 		<div class="form-group">
 			{{form_row(formDemande.commentaires, {'attr' : {'placeholder' : "Entrez vos commentaires si besoin" }})}}
 		</div>
 		<div class="form-group">
 			{{form_row(formDemande.outillages, {'attr' : {'placeholder' : "Entrez les outillages si besoin" }})}}
 		</div>
-		<div class="form-group">
-			<button type="submit" class="btn btn-success">
-				Enregistrer la Demande
-			</button>
+		<div class="form-row justify-content-between">
+			<div class="form-group col-md-4">
+				<button type="submit" class="btn btn-success">
+					Enregistrer la Demande
+				</button>
+			</div>
+			<div class="form-group col-md-4">
+				
+				<div class="row align-items-center">
+					<div class="col ">
+						{{ form_label(formDemande.id) }}
+					</div>
+					<div class="col" id="some-custom-id">
+						{{ form_widget(formDemande.id) }}
+					</div>
+				</div>
+			</div>
+			<div class="form-group col-md-4">
+				
+				<div class="row align-items-center">
+					<div class="col ">
+						{{ form_label(formDemande.chargement) }}
+					</div>
+					<div class="col" id="some-custom-id">
+						{{ form_widget(formDemande.chargement) }}
+					</div>
+				</div>
+			</div>
 		</div>
 		{{ form_end(formDemande) }}
 {% endblock %}

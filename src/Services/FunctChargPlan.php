@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Entity\ChargFige;
 use App\Repository\ChargeRepository;
 use App\Repository\ArticlesRepository;
 use App\Repository\ChargementRepository;
@@ -123,6 +124,7 @@ class FunctChargPlan
         $q=0;         
         //On  va récupérer les OT composants chaque CTO
         foreach($ChargementsFiG as $ChargeFiG){
+            dump($ChargeFiG);
             //Pour chaque chargement figé on récupère sa composition en outillages
             $listeOT = $Out->myFindByCharFiG($ChargeFiG->getCode());
             if ($listeOT) {
@@ -173,7 +175,7 @@ class FunctChargPlan
             dump($ArtOFCTJ);
             if (sizeof($ArtOFCTJ)>1) {
                 dump('Attention multi empreintes à traiter');
-                $retourDatas=$this->checkOFChargMultiEmp($ArtOFCTJ, $Creno, $Horizon, $repo, $Art);
+                $retourDatas=$this->checkOFChargMultiEmp($ArtOFCTJ, $Creno, $Horizon, $repo, $Art, $OTCTO);
             } elseif (sizeof($ArtOFCTJ)==1) {
                 //Il y a une seule pièce sur l'outillage
                 $retourDatas[0]=$this->checkOFCharge($ArtOFCTJ[0], $Creno, $Horizon, $repo);
@@ -280,17 +282,20 @@ class FunctChargPlan
      * @param  mixed $repo
      * @return void
      */
-    private function checkOFChargMultiEmp($ArtOT, $Creno, $Horizon, $repo, $Art) {
+    private function checkOFChargMultiEmp($ArtOT, $Creno, $Horizon, $repo, $Art, $OT) {
         
         $r=0;
         $retourDatas=[];
         foreach ($ArtOT as $RefOT){
-            // Il faut vérifier si l'article correspond à la polym
-            $datasArtOT=$Art->findBy(['Reference'=>$RefOT->getReference()]);
-            // Si ok, recherche d'un OF dans la charge
-            $ChargEmp=$this->checkOFCharge($RefOT, $Creno, $Horizon, $repo);
+            // Il faut vérifier si l'article correspond à la polym et si série
+            if ($Art->myFindByArtProg($RefOT->getReference(), $Creno['Cycles'])) {
+                // Si ok, recherche d'un OF dans la charge
+                $ChargEmp=$this->checkOFCharge($RefOT, $Creno, $Horizon, $repo);
+            }
+            //Voir si controle du nombre d'empreintes outillages
             if (empty($ChargEmp)===false) {
                 $retourDatas[$r]=$ChargEmp;
+                $ChargEmp=[];
                 $r++;
             }
         }

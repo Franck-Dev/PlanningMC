@@ -114,12 +114,12 @@ class Outillages
     private $nbPolymssTrait;
 
     /**
-     * @ORM\ManyToMany(targetEntity=Chargement::class, mappedBy="Outillages")
+     * @ORM\ManyToMany(targetEntity=Chargement::class, mappedBy="Outillages", cascade={"all"})
      */
     private $chargements;
 
     /**
-     * @ORM\ManyToMany(targetEntity=Demandes::class, mappedBy="ListOT")
+     * @ORM\ManyToMany(targetEntity=Demandes::class, mappedBy="ListOT", cascade={"all"})
      */
     private $demandes;
 

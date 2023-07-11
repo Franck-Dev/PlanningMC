@@ -122,6 +122,8 @@ var $heurW = $('#demandes_heure_propose');
 var $CTO = $('#demandes_ListCTO');
 var $listOF = $('#demandes_ListOF');
 var $listOT = $('#demandes_ListOT');
+var $idChargement = $('#demandes_Chargement');
+var $idDemande = $('#demandes_id');
 
 // When sport gets selected ...
 $cycle.change(function() {
@@ -152,7 +154,7 @@ $cycle.change(function() {
         $(html.responseText).find('#demandes_ListCTO')
       );
 	  $('#demandes_ListCTO').on('change',$('#demandes_ListCTO'), function(event){
-		rebindDatasCTO($('#demandes_ListCTO'));
+		rebindDatasCTO($('#demandes_ListCTO'),$idChargement, $idDemande);
 	  });
 	  $('#demandes_ListOT').replaceWith(
         // ... with the returned one from the AJAX response.
@@ -166,30 +168,28 @@ $cycle.change(function() {
 });
 
 // Function qui renvoie les données du CTO avec les OF associés trouvés dans la charge du jour + qqs jours autour
-function rebindDatasCTO($CTO){
+function rebindDatasCTO($CTO, $idChargement, $idDemande){
 	console.log($CTO.val());
+	console.log($('#demandes_chargement option:selected').val());
 	$.ajax({
     url : 'http://localhost/PlanningMC/Public/Demandes/Charge_Fige/'+$CTO.val()+'/OF',
     method: 'POST',
-    data : {DateJour: $datW.val()},
+    data : {DateJour: $datW.val(), idChargement : $('#demandes_chargement option:selected').val(), idDemande : $idDemande.val()},
     complete: function(html) {
       // Replace current position field ...
       $('#myDatasCTO').replaceWith(
         // ... with the returned one from the AJAX response.
         $(html.responseText)
       );
-	  console.log($('#myDatasCTO').html);
-	  console.log(html.responseText);
 	  $('#Num_CTO').text($('#demandes_ListCTO option:selected').text());
     }
   });
 };
 
 $CTO.change(function() {
-	console.log('toto');
+	rebindDatasCTO($('#demandes_ListCTO'),$idChargement, $idDemande)
 	var $data={};
 	$data[$CTO.attr('name')] = $CTO.val();
-	alert($data[$CTO.attr('name')]);
 });
 
 $listOF.change(function() {
@@ -198,26 +198,42 @@ $listOF.change(function() {
 	$data[$listOF.attr('name')] = $listOF.val();
 	alert($data[$listOF.attr('name')]);
 });
+	//Permet de modifier l'OF présélectionné dans le select
+	function affichageSelectOF($art, $url){
 
-function affichageSelectOF($art, $url){
+		$.ajax({
+			url : $url,
+			method: 'GET',
+			data : {Ref: $art},
+			complete: function(html) {
+			//Création de la liste des OF pour le select
+				var Moy="<select class=\"select\" id=\""+$art+"\">";
+				for (let i = 0; i < html.length; i++) {
+					Moy+="\n<option value="+html[i].content+"></option>";  
+				}
+				Moy+="\n</select><br>";
+				$('#'+$art).replaceWith(
+					// ... with the returned one from the AJAX response.
+					$(html.responseText)
+				);
+			}
+		});
+	};
 
-	$.ajax({
-    url : $url,
-    method: 'GET',
-    data : {Ref: $art},
-    complete: function(html) {
-	  //Création de la liste des OF pour le select
-    var Moy="<select class=\"select\" id=\""+$art+"\">";
-    for (let i = 0; i < html.length; i++) {
-        Moy+="\n<option value="+html[i].content+"></option>";  
-    }
-    Moy+="\n</select><br>";
-    $('#'+$art).replaceWith(
-        // ... with the returned one from the AJAX response.
-        $(html.responseText)
-      );
-    }
-  });
-};
+	//Permet de valider l'outillage avec ses OF
+	function valideOFOT($OT, $url){
+
+		var $elements=$($OT).children();
+		// for loop sur OF
+		var $index=0;
+		var $OFs=[];
+        for (var i = 0; i < $OT.length; i++) {
+			$OFs.push($elements[$index].innerText);
+			$index+=5
+        }
+		console.log($OFs);
+		console.log($url);
+		return $OFs
+	};
 </script>
 {% endblock %}

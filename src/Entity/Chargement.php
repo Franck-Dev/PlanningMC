@@ -53,6 +53,11 @@ class Chargement
      */
     private $Outillages;
 
+    public function __toString(): string
+    {
+        return (string) $this->getId();
+    }
+
     public function __construct()
     {
         $this->OF = new ArrayCollection();

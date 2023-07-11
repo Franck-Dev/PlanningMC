@@ -10,7 +10,6 @@
                     <th>Action</th>
                 </tr>	
             </thead>
-            
             {% for key, OT in Datas %}
                 {# Récupération pour affichage du nb de polym sans traitement de l'outillage  #}
                 {% if datasOT is not empty %}
@@ -43,14 +42,14 @@
                                         color: Green;"><i class="fa fa-calendar" aria-hidden="true"></i></a>
                                         <a href="#" class="badge badge-danger" title="Nombre de polymérisation">{{nbPol}}</a>
                                     {% else %}
-                                        <a href="{{ path('val_OT', {'OT': key}) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="valider"><span class="m-1" style="font-size: 1em;
+                                        <a href="{{ path('val_OT', {'OT': key, 'Datas': OT, 'idChargement' : idChargement, 'CTO' : CTO.0.Nom, 'idDemande' : idDemande, 'DateJour' : DateJour }) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="valider"><span class="m-1" style="font-size: 1em;
                                         color: Green;"><i class="fa fa-check" aria-hidden="true"></i></a>
                                         <a href="#" class="badge badge-success" title="Nombre de polymérisation">{{nbPol}}</a> 
                                     {% endif %}
                                 </td>
                             </tr>
                                 {% for Data in OT %}
-                                    <tr>
+                                    <tr id="{{key}}">
                                         {# <td><a href="#">{{Data.OF}}</a></td> #}
                                         <td>
                                             <select class="select" name="OF" id="{{Data.Ref}}">

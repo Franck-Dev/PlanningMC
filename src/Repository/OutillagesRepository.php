@@ -83,4 +83,21 @@ class OutillagesRepository extends ServiceEntityRepository
         $results = $query->getResult();
         return $results;
     }
+    
+    /**
+     * myFindByChargement Recherche les outillages liés à un chargement
+     *
+     * @param  mixed $idCharge
+     * @return void
+     */
+    public function myFindByChargement($idCharge){
+        $qb = $this->createQueryBuilder('outillages')
+           ->innerJoin ('outillages.chargements','t')
+           ->where('t.id = :id')
+           ->setParameter('id', $idCharge);
+         
+        $query = $qb->getQuery();
+        $results = $query->getResult();
+        return $results;
+    }
 }
