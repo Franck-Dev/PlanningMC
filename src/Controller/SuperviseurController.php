@@ -8,20 +8,35 @@ use App\Entity\Moulage;
 use App\Entity\Demandes;
 use App\Entity\Planning;
 use App\Entity\Services;
+use App\Entity\ConfSmenu;
 use App\Entity\PolymReal;
+use App\Entity\Outillages;
 use App\Services\FunctPlanning;
+use App\Services\CallApiService;
 use Doctrine\Persistence\ManagerRegistry;
+use Knp\Component\Pager\PaginatorInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class SuperviseurController extends AbstractController
 {
      /**
-     * @Route("/{service}/superviseur", name="superviseur")
+     * @Route("/{service}/Agenda", name="Agenda")
      */
-    public function superviseur($service, FunctPlanning $plan, ManagerRegistry $manaReg)
+    public function agenda($service, ManagerRegistry $manaReg)
     {
+        //Vérification si on rend la page entière ou pas
+        if (strpos($_SERVER['REDIRECT_URL'],'Agenda') === false) {
+            $Titres=[];
+        } else {
+            //Titres pour le menu
+            $repo=$manaReg->getRepository(ConfSmenu::class);
+            $Titres=$repo->findAll();
+        }
+
         //Affichage de la charge plannifiée par étiquette kanban suivant catégories de W
         //Gestion des dates du jour concernée
         $currentMonthDateTime = new \DateTime();
@@ -73,15 +88,51 @@ class SuperviseurController extends AbstractController
         $taskTotal['A FAIRE']=$taskPla;
         $taskTotal['EN COURS']=$taskEC;
         $taskTotal['TERMINE']=$taskTER;
-        dump($taskTotal);
+        //dump($taskTotal);
 
         return $this->render('superviseur/ChargeJour.html.twig',[
             'service' => $service,
             'taches' => $taskTotal,
+            'Titres' => $Titres,
             'ChargeMois' => $nbPoly,
             'moyens'=> $moyens
         ]);
-        //return new JsonResponse(['Taches'=> '$task[0]', 'moyen'=> '$moyens[1]', 'Ssmoyen'=> '$moyens[0]'],200);
     }
 
+     /**
+     * @Route("/{service}/Superviseur", name="Superviseur")
+     * @IsGranted("ROLE_CE_MOULAGE")
+     */
+    public function Superviseur($service, CallApiService $api, 
+    PaginatorInterface $paginator, Request $request, ManagerRegistry $manaReg)
+    {
+        //Vérification si on rend la page entière ou pas
+        if (strpos($_SERVER['REDIRECT_URL'],'Superviseur') === false) {
+            $Titres=[];
+        } else {
+            //Titres pour le menu
+            $repo=$manaReg->getRepository(ConfSmenu::class);
+            $Titres=$repo->findAll();
+        }
+        
+        //Récupération des kits tissus découpés liés au programme avion de l'utilisateur
+        $Kits=$api->getDatasAPI('/api/datas_kits?status=false','tracakit',[],'GET',);
+        $listKits=$paginator->paginate($Kits, $request->query->getInt('page',1),10);
+
+        //Récupération des outillages liés au programme avion de l'utilisateur
+        $repo=$manaReg->getRepository(Outillages::class);
+        $OTs=$repo->findAll();
+        $listOTs=$paginator->paginate($repo->findAll(), $request->query->getInt('page',1),20);
+
+        //Créer une liste filtrer par nbPolym
+
+
+        return $this->render('superviseur/TableauBordActivites.html.twig',[
+            'service' => $service,
+            'Titres' => $Titres,
+            'listOTs' => $listOTs,
+            'ChargeMois' => ['NbrRef' => 0],
+            'listKits' => $listKits
+        ]);
+    }
 }

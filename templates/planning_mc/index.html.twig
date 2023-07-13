@@ -208,8 +208,11 @@
     <input type="hidden" id="JourPlannif" value="">
 </div>
 <nav class="nav nav-tabs" id="myTab" role="tablist">
-  <a class="nav-item nav-link active text-primary" href="#p1" data-toggle="tab" role="tab" aria-controls="tab-p1" aria-selected="true">Planning Moyens</a>
-  <a class="nav-item nav-link text-primary" href="#p2" data-toggle="tab" role="tab" aria-controls="tab-p2" aria-selected="false">Superviseur</a>
+    <a class="nav-item nav-link active text-primary" href="#p1" data-toggle="tab" role="tab" aria-controls="tab-p1" aria-selected="true">Planning Moyens</a>
+    <a class="nav-item nav-link text-primary" href="#p2" data-toggle="tab" role="tab" aria-controls="tab-p2" aria-selected="false">Agenda</a>
+    {% if is_granted('ROLE_CE_MOULAGE') %}    
+        <a class="nav-item nav-link text-primary" href="#p3" data-toggle="tab" role="tab" aria-controls="tab-p3" aria-selected="false">Superviseur</a>
+    {% endif %}
 </nav>
 <div class="tab-content">
   <div class="tab-pane fade show active" id="p1" role="tabpanel" aria-labelledby="p1">
@@ -217,7 +220,12 @@
   </div>
   <div class="tab-pane fade in" id="p2" role="tabpanel" aria-labelledby="p2">
     <div class="conteiner-fluid">
-            {{ render(controller('App\\Controller\\SuperviseurController::Superviseur',{ 'user': app.user , 'service' : service})) }}
+            {{ render(controller('App\\Controller\\SuperviseurController::Agenda',{ 'user': app.user , 'service' : service})) }}
+    </div>
+  </div>
+  <div class="tab-pane fade in" id="p3" role="tabpanel" aria-labelledby="p3">
+    <div class="conteiner-fluid">
+        {{ render(controller('App\\Controller\\SuperviseurController::Superviseur',{ 'user': app.user , 'service' : service})) }}
     </div>
   </div>
 </div>  
