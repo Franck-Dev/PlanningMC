@@ -3,6 +3,7 @@
 namespace App\Form;
 
 use App\Entity\Outillages;
+use App\Entity\ProgAvions;
 use App\Entity\ProgMoyens;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -10,8 +11,8 @@ use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
-use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 
 class CreationOType extends AbstractType
 {
@@ -84,6 +85,11 @@ class CreationOType extends AbstractType
                 'class' => ProgMoyens::class,
                 'choice_label' => 'Nom',
                 'multiple' => true,
+            ))
+            ->add('Projet', EntityType::class, array(
+                'class' => ProgAvions::class,
+                'choice_label' => 'Libelle',
+                'multiple' => false,
             ))
             ->add('NbMaxPolym', NumberType::class, array(
                 'attr' => array('maxlength' => 2, 'placeholder' => 'Renseigner le nb de polym que l\'outillage peut voir avant de réaliseer un traitement de démoulage'),

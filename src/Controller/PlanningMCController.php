@@ -2094,10 +2094,9 @@ class PlanningMCController extends AbstractController
             $entityManager = $manaReg->getManager();
             $entityManager->persist($OT);
             $entityManager->flush();
-            dump($OT);
                         
 
-            //return $this->redirectToRoute('ConsultationO');
+            return $this->redirectToRoute('Consultation OUT');
         }
 
         return $this->render('planning_mc/CreationOutillages.html.twig',[

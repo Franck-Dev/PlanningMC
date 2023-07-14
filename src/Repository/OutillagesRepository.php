@@ -100,4 +100,22 @@ class OutillagesRepository extends ServiceEntityRepository
         $results = $query->getResult();
         return $results;
     }
+    
+    /**
+     * myFindByAvion Permet de récupérer tous les outillages d'une liste de programme 
+     *
+     * @param  array $listAvions
+     * @param  string $tri (ASC ou DESC)
+     * @return void
+     */
+    public function myFindByAvion($listAvions){
+        $qb=$this->createQueryBuilder('u')
+            ->leftjoin("u.Projet", "t")
+            ->where('t.libelle IN (:avions)')
+            ->setParameter('avions', $listAvions)
+            ->orderBy('u.nbPolymssTrait', 'DESC');
+        $query = $qb->getQuery();
+        $results = $query->getResult();
+        return $results;
+    }
 }

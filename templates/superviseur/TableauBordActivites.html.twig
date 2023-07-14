@@ -105,7 +105,7 @@
 </hr>
 <hr>
 <div class="row my-4">
-    <div class="col-lg-3 col-md-4">
+    <div class="col-lg-4 col-md-5">
         <div class="card mb-3">
             <div class="card-header">
                 OUTILLAGES
@@ -117,21 +117,29 @@
                     <table class="table table-sm table-hover">
                         <thead class="thead-inverse">
                             <tr class="filters">
+                                <th>{{ knp_pagination_sortable(listOTs, '%AvTrait', 'pourAvTrait') }}</th>
                                 <th>{{ knp_pagination_sortable(listOTs, 'Ref', 'ref') }}</th>
                                 <th>{{ knp_pagination_sortable(listOTs, 'Designation', 'Designation') }}</th>
                                 <th>{{ knp_pagination_sortable(listOTs, 'Dispo', 'Dispo') }}</th>
                                 <th>{{ knp_pagination_sortable(listOTs, 'Nb Cycle Polym', 'NbPolymssTrait') }}</th>
-                                <th>{{ knp_pagination_sortable(listOTs, '%AvTrait', 'pourAvTrait') }}</th>
                             </tr>
                         </thead>
                         <tbody id="myTable">
-                            {% for listOT in listOTs %}
+                            {% for listOT in suiviOT %}
                                 <tr>
+                                    <td>
+                                        {% if listOT.pourAvTrait < 50 %}
+                                            <img id="icone" src="{{asset('build/images/CONFORME.png')}}" alt="{% verbatim %}{{icone}}{% endverbatim %}">
+                                        {% elseif listOT.pourAvTrait > 75 %}
+                                            <img id="icone" src="{{asset('build/images/ANNULATION.png')}}" alt="{% verbatim %}{{icone}}{% endverbatim %}">
+                                        {% else %}
+                                            <img id="icone" src="{{asset('build/images/RETARD.png')}}" alt="{% verbatim %}{{icone}}{% endverbatim %}">
+                                        {% endif %}
+                                    </td>
                                     <td>{{listOT.Ref}}</td>
                                     <td>{{listOT.Designation}}</td>
                                     <td>{{listOT.Dispo}}</td>
                                     <td>{{listOT.NbPolymssTrait}}</td>
-                                    <td>{{[listOT.pourAvTrait,'%']|join}}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -171,7 +179,7 @@
             </div>
         </div>
     </div>
-    <div class="col-lg-9 col-md-8">
+    <div class="col-lg-8 col-md-7">
         <div class="table-responsive">
             <!-- Tableau suivi traitement outillage -->
             <div class="d-flex justify-content-start">

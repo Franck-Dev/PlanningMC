@@ -106,7 +106,7 @@ class SuperviseurController extends AbstractController
      * @Route("/{service}/Superviseur", name="Superviseur")
      * @IsGranted("ROLE_CE_MOULAGE")
      */
-    public function Superviseur($service, CallApiService $api, 
+    public function Superviseur($service, CallApiService $api, $user=null,
     PaginatorInterface $paginator, Request $request, ManagerRegistry $manaReg)
     {
         //Vérification si on rend la page entière ou pas
@@ -128,7 +128,17 @@ class SuperviseurController extends AbstractController
         $listOTs=$paginator->paginate($OTs, $request->query->getInt('page',1),20);
 
         //Créer une liste filtrer par nbPolym
-
+        //Création du tableau de recherche
+        if ($user->getProgrammeAvion()) {
+            foreach ($user->getProgrammeAvion() as $key=>$avion) {
+                $listAvions[$key]=$avion['designation'];
+            }
+        } else {
+            $listAvions=[];
+        }
+        $OTparNbPolym=$repo->myFindByAvion($listAvions);
+        dump($listAvions);
+        dump($repo->myFindByAvion($listAvions));
         //Récupération des moyens du service
         $repi=$manaReg->getRepository(Services::class);
         $teams=$repi->findOneBy(['Nom' => $service]);
@@ -140,6 +150,7 @@ class SuperviseurController extends AbstractController
             'service' => $service,
             'Titres' => $Titres,
             'listOTs' => $listOTs,
+            'suiviOT' => $OTparNbPolym,
             'moyens' => $listMoyens,
             'ChargeMois' => ['NbrRef' => 0],
             'listKits' => $listKits

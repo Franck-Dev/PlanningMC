@@ -39,9 +39,15 @@ class ProgAvions
      */
     private $progMoyens;
 
+    /**
+     * @ORM\OneToMany(targetEntity=Outillages::class, mappedBy="Projet")
+     */
+    private $outillages;
+
     public function __construct()
     {
         $this->progMoyens = new ArrayCollection();
+        $this->outillages = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -107,6 +113,36 @@ class ProgAvions
     {
         if ($this->progMoyens->removeElement($progMoyen)) {
             $progMoyen->removeAvion($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Outillages>
+     */
+    public function getOutillages(): Collection
+    {
+        return $this->outillages;
+    }
+
+    public function addOutillage(Outillages $outillage): self
+    {
+        if (!$this->outillages->contains($outillage)) {
+            $this->outillages[] = $outillage;
+            $outillage->setProjet($this);
+        }
+
+        return $this;
+    }
+
+    public function removeOutillage(Outillages $outillage): self
+    {
+        if ($this->outillages->removeElement($outillage)) {
+            // set the owning side to null (unless already changed)
+            if ($outillage->getProjet() === $this) {
+                $outillage->setProjet(null);
+            }
         }
 
         return $this;

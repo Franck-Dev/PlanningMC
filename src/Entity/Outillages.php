@@ -130,6 +130,11 @@ class Outillages
 
     private $pourAvTrait;
 
+    /**
+     * @ORM\ManyToOne(targetEntity=ProgAvions::class, inversedBy="outillages")
+     */
+    private $Projet;
+
     public function __toString(): string
     {
         return (string) $this->getRef()."-".$this->getDesignation();
@@ -494,5 +499,17 @@ class Outillages
     {
         $Pourc = (!$this->nbMaxPolym) ? 0 : ($this->nbPolymssTrait/$this->nbMaxPolym)*100 ;
         return $Pourc;
+    }
+
+    public function getProjet(): ?ProgAvions
+    {
+        return $this->Projet;
+    }
+
+    public function setProjet(?ProgAvions $Projet): self
+    {
+        $this->Projet = $Projet;
+
+        return $this;
     }
 }
