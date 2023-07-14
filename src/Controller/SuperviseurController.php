@@ -9,6 +9,7 @@ use App\Entity\Demandes;
 use App\Entity\Planning;
 use App\Entity\Services;
 use App\Entity\ConfSmenu;
+use App\Entity\IndicHeader;
 use App\Entity\PolymReal;
 use App\Entity\Outillages;
 use App\Services\FunctPlanning;
@@ -62,9 +63,7 @@ class SuperviseurController extends AbstractController
         } else{
 
         }
-        $test=$manaReg->getRepository(Demandes::class);
-        $tat=$test->findOneBy(['id'=>13027]);
-        
+                
         //Chargement d'une variable par tâche plannifiée, encours, annulée et terminée
         $taskPla=$repo->findChargeStatut(new \DateTime(), $lastDateTime, $tbMoyens, 'PLANNIFIE');
         $taskEC=$repi->findChargeStatut($firstDateTime, $lastDateTime, $tbMoyens, 'LANCER');
@@ -81,8 +80,11 @@ class SuperviseurController extends AbstractController
         //Fusion des tableaux Annulé et Retard pour n'avoir qu'une seule variable
         $taskAnuRet=array_merge($taskRetard,$taskANul);
 
-        //Calcul du nombre de pièces pour indicateur
+        //Calcul du nombre de pièces pour indicateurHeader
         $nbPoly['NbrRef']=count($taskRetard)+count($taskPla)+count($taskEC)+count($taskTER);
+        $indic2['Nom']='test';
+        $indic2['Valeur']=70;
+
         //Concatenantion de tous les tableaux en un seul par type de statut
         $taskTotal['RETARD/ANNULE']=$taskAnuRet;
         $taskTotal['A FAIRE']=$taskPla;
@@ -95,6 +97,7 @@ class SuperviseurController extends AbstractController
             'taches' => $taskTotal,
             'Titres' => $Titres,
             'ChargeMois' => $nbPoly,
+            'indic2' => $indic2,
             'moyens'=> $moyens
         ]);
     }
@@ -122,15 +125,22 @@ class SuperviseurController extends AbstractController
         //Récupération des outillages liés au programme avion de l'utilisateur
         $repo=$manaReg->getRepository(Outillages::class);
         $OTs=$repo->findAll();
-        $listOTs=$paginator->paginate($repo->findAll(), $request->query->getInt('page',1),20);
+        $listOTs=$paginator->paginate($OTs, $request->query->getInt('page',1),20);
 
         //Créer une liste filtrer par nbPolym
 
+        //Récupération des moyens du service
+        $repi=$manaReg->getRepository(Services::class);
+        $teams=$repi->findOneBy(['Nom' => $service]);
+        $repo=$manaReg->getRepository(Moyens::class);
+        $moyens=$repo->findBy(['Id_Service' => $teams->getId()]);
+        $listMoyens=$paginator->paginate($moyens, $request->query->getInt('page',1),20);
 
         return $this->render('superviseur/TableauBordActivites.html.twig',[
             'service' => $service,
             'Titres' => $Titres,
             'listOTs' => $listOTs,
+            'moyens' => $listMoyens,
             'ChargeMois' => ['NbrRef' => 0],
             'listKits' => $listKits
         ]);

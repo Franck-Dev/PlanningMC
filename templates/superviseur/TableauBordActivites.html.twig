@@ -121,6 +121,7 @@
                                 <th>{{ knp_pagination_sortable(listOTs, 'Designation', 'Designation') }}</th>
                                 <th>{{ knp_pagination_sortable(listOTs, 'Dispo', 'Dispo') }}</th>
                                 <th>{{ knp_pagination_sortable(listOTs, 'Nb Cycle Polym', 'NbPolymssTrait') }}</th>
+                                <th>{{ knp_pagination_sortable(listOTs, '%AvTrait', 'pourAvTrait') }}</th>
                             </tr>
                         </thead>
                         <tbody id="myTable">
@@ -130,6 +131,7 @@
                                     <td>{{listOT.Designation}}</td>
                                     <td>{{listOT.Dispo}}</td>
                                     <td>{{listOT.NbPolymssTrait}}</td>
+                                    <td>{{[listOT.pourAvTrait,'%']|join}}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -144,6 +146,27 @@
             </div>
             <div class="card-body">
                 <h4 class="card-title">Disponibilité</h4>
+                <!-- Tableau suivi traitement outillage -->
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="thead-inverse">
+                            <tr class="filters">
+                                <th>{{ knp_pagination_sortable(moyens, 'Nom', 'Libelle') }}</th>
+                                <th>{{ knp_pagination_sortable(moyens, 'Dispo', 'Operationnel') }}</th>
+                                <th>{{ knp_pagination_sortable(moyens, 'Maintenance', 'DateMaintenance') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="myTable">
+                            {% for Moyen in moyens %}
+                                <tr>
+                                    <td>{{Moyen.Libelle}}</td>
+                                    <td>{{Moyen.Operationnel}}</td>
+                                    <td>{{Moyen.DateMaintenance|date('Y-m-d H:i')}}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
                 <a href="#" class="btn btn-primary">Button</a>
             </div>
         </div>
@@ -167,6 +190,7 @@
                             <th>{{ knp_pagination_sortable(listOTs, 'Nb TCC', 'NbThermocouples') }}</th>
                             <th>{{ knp_pagination_sortable(listOTs, 'Nb Indus', 'NbIndus') }}</th>
                             <th>{{ knp_pagination_sortable(listOTs, 'Date Dispo', 'DateDispo') }}</th>
+                            <th>{{ knp_pagination_sortable(listOTs, 'nbMaxPolym', 'nbMaxPolym') }}</th>
                         </tr>
                     </thead>
                     <tbody id="myTable">
@@ -181,6 +205,7 @@
                                 <td>{{listOT.NbThermocouples}}</td>
                                 <td>{{listOT.NbIndus}}</td>
                                 <td>{{listOT.DateDispo|date('Y-m-d H:i')}}</td>
+                                <td>{{listOT.nbMaxPolym}}</td>
                             </tr>
                         {% endfor %}
                     </tbody>

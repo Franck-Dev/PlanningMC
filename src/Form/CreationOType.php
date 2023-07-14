@@ -26,7 +26,7 @@ class CreationOType extends AbstractType
             ))
             ->add('Designation', TextType::class, array(
                 'attr' => array('maxlength' => 30, 'placeholder' => 'Renseigner la désignation de la pièce et la version de l\'OT. Ex: OT Moulage Pan 213 Z02'),
-                'help' => 'Mettre le numéro d\'OT de SAP',
+                'help' => 'Renseigner la désignation de la pièce et la version de l\'OT. Ex: OT Moulage Pan 213 Z02',
                 'required' => true,
                 'empty_data' => null
             ))
@@ -84,6 +84,11 @@ class CreationOType extends AbstractType
                 'class' => ProgMoyens::class,
                 'choice_label' => 'Nom',
                 'multiple' => true,
+            ))
+            ->add('NbMaxPolym', NumberType::class, array(
+                'attr' => array('maxlength' => 2, 'placeholder' => 'Renseigner le nb de polym que l\'outillage peut voir avant de réaliseer un traitement de démoulage'),
+                'required' => true,
+                'empty_data' => null
             ))
         ;
     }

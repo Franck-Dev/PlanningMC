@@ -7,12 +7,65 @@
 {% block body %}
 	<h1>Création des Outillages des Pièces Composites  ! ✅</h1>
 
-    {{form_start(formProg)}}
+    {# {{form_start(formProg)}}
 
     {{form_widget(formProg)}}
 
     <button type="submit" class="btn btn-success">Ajouter l'Outillage</button>
 
-    {{form_end(formProg)}}
-{#<pre>{{dump(formProg)}}</pre>#}  
+    {{form_end(formProg)}} #}
+		{{ form_start(formProg) }}
+		<div class="form-row align-items-center">
+			<div class="form-group col-md-4">
+				{{form_row(formProg.Ref, {'attr' : {'placeholder' : "OTXXXXX" }}) }}
+			</div>
+			<div class="form-group col-md-8">
+				{{form_row(formProg.Designation, {'attr' : {'placeholder' : "Nom de la pièce moulée" }}) }}
+			</div>
+		</div>
+        <div class="form-row justify-content-around">
+			<div class="form-group col-md-4">
+				{{form_row(formProg.Programme, {'attr' : {'placeholder' : "Liste des cycles" }}) }}
+			</div>
+            <div class="form-group col-md-4">
+				{{form_row(formProg.Dispo, {'attr' : {'placeholder' : "Etat outillage" }}) }}
+			</div>
+		</div>
+		<div class="form-row">
+            <div class="form-group col-md-3">
+				{{form_row(formProg.NbIndus, {'attr' : {'placeholder' : "Si plusieurs outillage pour réaliser la même pièce" }}) }}
+			</div>
+			<div class="form-group col-md-3">
+				{{form_row(formProg.NbEmpreinte, {'attr' : {'placeholder' : "Si plusieurs articles sur le même outillage" }}) }}
+			</div>
+			<div class="form-group col-md-3">
+				{{form_row(formProg.NbThermocouples, {'attr' : {'placeholder' : "Nombre de TC" }}) }}
+			</div>
+            <div class="form-group col-md-3">
+				{{form_row(formProg.NbMaxPolym, {'attr' : {'placeholder' : "Nombre de polym avant traitement" }}) }}
+			</div>
+		</div>
+		<div class="form-row">
+			<div class="form-group col-md-2">
+				{{form_row(formProg.Hauteur, {'attr' : {'placeholder' : "En ml" }}) }}
+			</div>
+            <div class="form-group col-md-2">
+				{{form_row(formProg.Longueur, {'attr' : {'placeholder' : "En ml" }}) }}
+			</div>
+            <div class="form-group col-md-2">
+				{{form_row(formProg.Largeur, {'attr' : {'placeholder' : "En ml" }}) }}
+			</div>
+            <div class="form-group col-md-2">
+				{{form_row(formProg.Volume, {'attr' : {'placeholder' : "En m3" }}) }}
+			</div>
+            <div class="form-group col-md-3">
+				{{form_row(formProg.CoefAero, {'attr' : {'placeholder' : "Permet le chargement dynamique" }}) }}
+			</div>
+		</div>
+		<div class="form-row justify-content-center">
+				<button type="submit" class="btn btn-success">
+					Ajouter l'Outillage
+				</button>
+		</div>
+		{{ form_end(formProg) }}
 {% endblock %}

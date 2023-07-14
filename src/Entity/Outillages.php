@@ -123,6 +123,13 @@ class Outillages
      */
     private $demandes;
 
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     */
+    private $nbMaxPolym;
+
+    private $pourAvTrait;
+
     public function __toString(): string
     {
         return (string) $this->getRef()."-".$this->getDesignation();
@@ -469,5 +476,23 @@ class Outillages
         }
 
         return $this;
+    }
+
+    public function getNbMaxPolym(): ?int
+    {
+        return $this->nbMaxPolym;
+    }
+
+    public function setNbMaxPolym(?int $nbMaxPolym): self
+    {
+        $this->nbMaxPolym = $nbMaxPolym;
+
+        return $this;
+    }
+
+    public function getPourAvtrait(): ?int
+    {
+        $Pourc = (!$this->nbMaxPolym) ? 0 : ($this->nbPolymssTrait/$this->nbMaxPolym)*100 ;
+        return $Pourc;
     }
 }
