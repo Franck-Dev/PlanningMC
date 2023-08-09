@@ -105,56 +105,62 @@ class SuperviseurController extends AbstractController
 
      /**
      * @Route("/{service}/Superviseur", name="Superviseur")
-     * @IsGranted("ROLE_CE_MOULAGE")
      */
     public function Superviseur($service, CallApiService $api, UserInterface $user=null,
     PaginatorInterface $paginator, Request $request, ManagerRegistry $manaReg)
     {
-        //Vérification si on rend la page entière ou pas
-        if (strpos($_SERVER['REDIRECT_URL'],'Superviseur') === false) {
-            $Titres=[];
-        } else {
-            //Titres pour le menu
-            $repo=$manaReg->getRepository(ConfSmenu::class);
-            $Titres=$repo->findAll();
-        }
-        
-        //Récupération des kits tissus découpés liés au programme avion de l'utilisateur
-        $Kits=$api->getDatasAPI('/api/datas_kits?status=false','tracakit',[],'GET',);
-        $listKits=$paginator->paginate($Kits, $request->query->getInt('page',1),10);
-
-        //Récupération des outillages liés au programme avion de l'utilisateur
-        $repo=$manaReg->getRepository(Outillages::class);
-        $OTs=$repo->findAll();
-        $listOTs=$paginator->paginate($OTs, $request->query->getInt('page',1),20);
-
-        //Créer une liste filtrer par nbPolym
-        //Création du tableau de recherche
-        if ($user->getProgrammeAvion()) {
-            foreach ($user->getProgrammeAvion() as $key=>$avion) {
-                $listAvions[$key]=$avion['designation'];
+        if ($user) {
+            //Vérification si on rend la page entière ou pas
+            if (strpos($_SERVER['REDIRECT_URL'],'Superviseur') === false) {
+                $Titres=[];
+            } else {
+                //Titres pour le menu
+                $repo=$manaReg->getRepository(ConfSmenu::class);
+                $Titres=$repo->findAll();
             }
-        } else {
-            $listAvions=[];
-        }
-        $OTparNbPolym=$repo->myFindByAvion($listAvions);
-        dump($listAvions);
-        dump($repo->myFindByAvion($listAvions));
-        //Récupération des moyens du service
-        $repi=$manaReg->getRepository(Services::class);
-        $teams=$repi->findOneBy(['Nom' => $service]);
-        $repo=$manaReg->getRepository(Moyens::class);
-        $moyens=$repo->findBy(['Id_Service' => $teams->getId()]);
-        $listMoyens=$paginator->paginate($moyens, $request->query->getInt('page',1),20);
+            
+            //Récupération des kits tissus découpés liés au programme avion de l'utilisateur
+            $Kits=$api->getDatasAPI('/api/datas_kits?status=false','tracakit',[],'GET',);
+            $listKits=$paginator->paginate($Kits, $request->query->getInt('page',1),10);
 
-        return $this->render('superviseur/TableauBordActivites.html.twig',[
-            'service' => $service,
-            'Titres' => $Titres,
-            'listOTs' => $listOTs,
-            'suiviOT' => $OTparNbPolym,
-            'moyens' => $listMoyens,
-            'ChargeMois' => ['NbrRef' => 0],
-            'listKits' => $listKits
-        ]);
+            //Récupération des outillages liés au programme avion de l'utilisateur
+            $repo=$manaReg->getRepository(Outillages::class);
+            $OTs=$repo->findAll();
+            $listOTs=$paginator->paginate($OTs, $request->query->getInt('page',1),20);
+
+            //Créer une liste filtrer par nbPolym
+            //Création du tableau de recherche
+            if ($user->getProgrammeAvion()) {
+                foreach ($user->getProgrammeAvion() as $key=>$avion) {
+                    $listAvions[$key]=$avion['designation'];
+                }
+            } else {
+                $listAvions=[];
+            }
+            $OTparNbPolym=$repo->myFindByAvion($listAvions);
+
+            //Récupération des moyens du service
+            $repi=$manaReg->getRepository(Services::class);
+            $teams=$repi->findOneBy(['Nom' => $service]);
+            $repo=$manaReg->getRepository(Moyens::class);
+            $moyens=$repo->findBy(['Id_Service' => $teams->getId()]);
+            $listMoyens=$paginator->paginate($moyens, $request->query->getInt('page',1),20);
+        }else{
+            //Initialisation des variables pour user non connecté
+            $Titres=[];
+            $listOTs=$paginator->paginate([], $request->query->getInt('page',1),10);
+            $OTparNbPolym=[];
+            $listMoyens=$paginator->paginate([], $request->query->getInt('page',1),10);
+            $listKits=$paginator->paginate([], $request->query->getInt('page',1),10);
+        }
+            return $this->render('superviseur/TableauBordActivites.html.twig',[
+                'service' => $service,
+                'Titres' => $Titres,
+                'listOTs' => $listOTs,
+                'suiviOT' => $OTparNbPolym,
+                'moyens' => $listMoyens,
+                'ChargeMois' => ['NbrRef' => 0],
+                'listKits' => $listKits
+            ]);
     }
 }

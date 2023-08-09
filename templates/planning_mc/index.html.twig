@@ -210,7 +210,7 @@
 <nav class="nav nav-tabs" id="myTab" role="tablist">
     <a class="nav-item nav-link active text-primary" href="#p1" data-toggle="tab" role="tab" aria-controls="tab-p1" aria-selected="true">Planning Moyens</a>
     <a class="nav-item nav-link text-primary" href="#p2" data-toggle="tab" role="tab" aria-controls="tab-p2" aria-selected="false">Agenda</a>
-    {% if is_granted('ROLE_CE_MOULAGE') %}    
+    {% if is_granted('ROLE_REGLEUR') %}    
         <a class="nav-item nav-link text-primary" href="#p3" data-toggle="tab" role="tab" aria-controls="tab-p3" aria-selected="false">Superviseur</a>
     {% endif %}
 </nav>
