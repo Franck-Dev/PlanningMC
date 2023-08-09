@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Moyens;
+use Doctrine\ORM\Query;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bridge\Doctrine\RegistryInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -86,5 +87,19 @@ public function findMoyens ( $IdService,$IdCate ) : array
     $query-> setParameter ('Cate' , $IdCate);
     // returns an array of Product objects
     return $query -> execute ();
+}
+
+public function myFindAllMoyensDetails() 
+{
+    $entityManager = $this -> getEntityManager ();
+
+    $query = $entityManager -> createQuery (
+        'SELECT DISTINCT p, count(p.Activitees) as SousTitres
+        FROM App\Entity\Moyens p LEFT OUTER JOIN  App\Entity\CategoryMoyens g WITH g.id = p.categoryMoyens
+        GROUP BY p.Libelle');            
+    // returns an array of Product objects
+    return $query -> execute ();
+
+    //return $query -> getResult(Query::HYDRATE_OBJECT);
 }
 }

@@ -9,9 +9,9 @@ use App\Entity\Demandes;
 use App\Entity\Planning;
 use App\Entity\Services;
 use App\Entity\ConfSmenu;
-use App\Entity\IndicHeader;
 use App\Entity\PolymReal;
 use App\Entity\Outillages;
+use App\Entity\IndicHeader;
 use App\Services\FunctPlanning;
 use App\Services\CallApiService;
 use Doctrine\Persistence\ManagerRegistry;
@@ -19,6 +19,7 @@ use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
@@ -106,7 +107,7 @@ class SuperviseurController extends AbstractController
      * @Route("/{service}/Superviseur", name="Superviseur")
      * @IsGranted("ROLE_CE_MOULAGE")
      */
-    public function Superviseur($service, CallApiService $api, $user=null,
+    public function Superviseur($service, CallApiService $api, UserInterface $user=null,
     PaginatorInterface $paginator, Request $request, ManagerRegistry $manaReg)
     {
         //Vérification si on rend la page entière ou pas

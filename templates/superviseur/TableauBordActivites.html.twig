@@ -11,6 +11,10 @@
         #tableKits,#tableOT{
             color : white;
         }
+        #icone{
+            height: 1em;
+            width: 1em;
+        }
     </style>
 {% endblock %}
 
@@ -117,11 +121,12 @@
                     <table class="table table-sm table-hover">
                         <thead class="thead-inverse">
                             <tr class="filters">
-                                <th>{{ knp_pagination_sortable(listOTs, '%AvTrait', 'pourAvTrait') }}</th>
-                                <th>{{ knp_pagination_sortable(listOTs, 'Ref', 'ref') }}</th>
+                                <th>{{ knp_pagination_sortable(listOTs, 'Statut', 'pourAvTrait') }}</th>
+                                <th>{{ knp_pagination_sortable(listOTs, 'Ref OT', 'ref') }}</th>
                                 <th>{{ knp_pagination_sortable(listOTs, 'Designation', 'Designation') }}</th>
                                 <th>{{ knp_pagination_sortable(listOTs, 'Dispo', 'Dispo') }}</th>
                                 <th>{{ knp_pagination_sortable(listOTs, 'Nb Cycle Polym', 'NbPolymssTrait') }}</th>
+                                <th> Action </th>
                             </tr>
                         </thead>
                         <tbody id="myTable">
@@ -140,6 +145,12 @@
                                     <td>{{listOT.Designation}}</td>
                                     <td>{{listOT.Dispo}}</td>
                                     <td>{{listOT.NbPolymssTrait}}</td>
+                                    <td>
+                                        {% if listOT.pourAvTrait > 50 %}
+                                            <a href="#" class="text-warning" data-toggle="tooltip" data-animation="false" title="planifier B15"><span class="m-1" style="font-size: 1em;
+                                        color: Green;"><i class="fa fa-calendar" aria-hidden="true"></i></a>
+                                        {% endif %}
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>

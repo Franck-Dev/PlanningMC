@@ -2133,22 +2133,27 @@ class PlanningMCController extends AbstractController
     }
 
      /**
-     * @Route("/METHODES/Moyens", name="MOYENS_INDUS")
+     * @Route("/{service}/Moyens", name="MOYENS_INDUS")
      */
-    public function CreationM(Request $Requet,EntityManagerInterface $manager,ProgMoyens $Prog=null, ManagerRegistry $manaReg)
+    public function DashBoardMoyens(ManagerRegistry $manaReg, $service,
+    PaginatorInterface $paginator, Request $request)
         {
         //Recherche date du jour
         $DateJour = new \DateTime();
         $jour=$DateJour->modify('today');
         $dateDebAn= new \datetime();
         $dateDebAn->modify('First day of january this year');
-
-        //La requête remonte les moyens inférieur à 23 du service 8
+        //Récupération de l'id du service
+        $repi=$manaReg->getRepository(Services::class);
+        $teams=$repi->findOneBy(['Nom' => $service]);
+        //La requête remonte tous les moyens du service
         $repo=$manaReg->getRepository(Moyens::class);
-        $Moyen=$repo ->findMoyens(intval('8'),intval('23'));
+        $Moyens=$repo ->findAllMoyensSvtService(intval('8'));
+
         $Tablo = [];
         $i = 0;
-        foreach($Moyen as $moyen){
+        //Traitement des données de chaque moyen pour indicateur
+        foreach($Moyens as $moyen){
             $currentMonthDateTime = new \DateTime();
             $JourDep = $currentMonthDateTime->modify('monday this week');
             $TboData = [];
@@ -2162,17 +2167,27 @@ class PlanningMCController extends AbstractController
                 $j = $j + 1;
             };
             $Tablo[$i]=['type'=>"stackedColumn",'name'=>$moyen['Moyen'],'indexLabelWrap'=> 'true' ,'indexLabelFontSize'=> 12,'showInLegend'=>"true",'xValueType'=>"dateTime",'yValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboData];
-            //dump($Tablo);
             $i = $i + 1;
             //$CharTot=intval($polym['DureTheoPolym']/10000);
         }
         $Productivite= new JsonResponse($Tablo);
+
+        // Mise en place de la pagination
+        $repo=$manaReg->getRepository(Moyens::class);
+        $listMoyens=$repo ->myFindAllMoyensDetails();
+        //Hydratation du nbMode dans l'entity
+        foreach ($listMoyens as $key => $moyen) {
+            $moyen[0]->setnbMode($moyen['SousTitres']);
+            $Moyens[$key]=$moyen[0];
+        }
+        $Moyens=$paginator->paginate($Moyens, $request->query->getInt('page',1),20);
 
         $Titres=[];
 
         return $this->render('planning_mc/MoyensIndus.html.twig',[
             'Titres' => $Titres,
             'Productivite' => $Productivite->getContent(),
+            'Moyens' => $Moyens
             //'formProg' => $form->createView(),
         ]);
     }
@@ -2195,31 +2210,53 @@ class PlanningMCController extends AbstractController
             if(!$Moyen){
                 $Moyen=new Moyens();
             }
-            $form = $this->createForm(CreationMoyensType::class, $Moyen);
-            
+            //Création ed la liste des services pour menu déroulant
+            $repo=$manaReg->getRepository(Services::class);
+            $listService=$repo->findAll();
+
+            foreach ($listService as $key => $service) {
+                $listeValServ[$service->getNom()]=intval($service->getId());
+            }
+
+            $form = $this->createForm(CreationMoyensType::class, $Moyen, ['listValService' => $listeValServ]);
+        
             $form->handleRequest($Requet);
-            //dump($form);
+
             if($form->isSubmitted() && $form->isValid()){
                 if(!$Moyen->getId()){
-                    //$Moyen->setDateCreation(new \datetime());
+                    //Recherche sur le type "Activitées" pour si création 1 ou 2 moyens
+                    if($Moyen->getActivitees()==='Plannifie'){
+                        //Activité juste de plannification et pas de suivi réel, donc un seul moyen
+                        $manager->persist($Moyen);
+                    }else{
+                        //Création de 2ème moyen pour activité de suivi production réel
+                        $Moyen->setActivitees('Realisee');
+                        $manager->persist($Moyen);
+                        $manager->flush();
+                        $Moyen->setActivitees('Plannifie');
+                    }
                 }
                 else{
-                    //$Moyen->setDateModif(new \datetime());
+                    //Vérification si plusieurs moyens du même nom dans base
+                    $repo=$manaReg->getRepository(Moyens::class);
+                    $nbMoyensIdent = $repo->findBy(['Libelle'=> $Moyen->getLibelle()]);
+                    if (count($nbMoyensIdent)===1 and $Moyen->getActivitees()==='Realisee') {
+                        //C'est un nouveau moyen à créer
+                        $newMoyen= clone $Moyen;
+                        $Moyen->setActivitees('Plannifie');
+                        $manager->persist($newMoyen);                       
+                    }else{
+                        $manager->persist($Moyen);
+                    }
                 }
-    
-                $manager->persist($Moyen);
+                
                 $manager->flush();
                 
-    
-                return $this->redirectToRoute('Utilisateurs');
+                return $this->redirectToRoute('MOYENS_INDUS',['service' => 'METHODES']);
             }
-            $repo=$manaReg->getRepository(ConfSsmenu::class);
-            $Titres=$repo -> findall();
-            //dump($Titres);
-        $form = $this->createForm(CreationMoyensType::class, $Moyen);
-        
-        $form->handleRequest($Requet);
-        
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
+        $Titres=$repo -> findall();
+
         return $this->render('planning_mc/CreationMoyen.html.twig',[
             'Titres' => $Titres,
             'formMoy' => $form->createView(),

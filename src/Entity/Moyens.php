@@ -74,6 +74,8 @@ class Moyens
      */
     private $moulages;
 
+    private $nbMode;
+
     public function __toString(): string
     {
         return (string) $this->getLibelle();
@@ -84,6 +86,13 @@ class Moyens
         $this->demandes = new ArrayCollection();
         $this->chargFiges = new ArrayCollection();
         $this->moulages = new ArrayCollection();
+    }
+
+    public function __clone()
+    {
+        if ($this->id) {
+            $this->id = null;
+        }
     }
 
     public function getId(): ?int
@@ -273,6 +282,18 @@ class Moyens
         if ($this->moulages->removeElement($moulage)) {
             $moulage->removeMoyen($this);
         }
+
+        return $this;
+    }
+
+    public function getnbMode(): ?string
+    {
+        return $this->nbMode;
+    }
+    
+    public function setnbMode(string $nbMode): self
+    {
+        $this->nbMode = $nbMode;
 
         return $this;
     }
