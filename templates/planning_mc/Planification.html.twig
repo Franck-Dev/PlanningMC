@@ -189,7 +189,7 @@
         </div>
     </div>
 </div>
- {# <pre>{{dump(tests)}}</pre>   #}
+ {# <pre>{{dump(tests)}}</pre> #}
  {#<pre> {{ dump(app.request.attributes.get("demande")) }} </pre>#}    
     <div class="table-responsive">
         <table class="table">
@@ -256,7 +256,7 @@
                             <td>{{ test.cycle.nom }}</td>
                             <td><input id='{{nominputHD}}' type="datetime-local" name="appt-time" value={{ dateurdeb|date('Y-m-d\\TH:i') }} onblur=calculfin('{{durecycle|date('H:i')}}',this.value,{{test.Id}}) pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}" required></td><!-- Calcul de la nouvelle date de fin suite modification de la date de départ -->
                             <td><input id='{{nominputHF}}' type="datetime-local" name="appt-time" value={{ dateurdeb|date_modify( dureecycle )|date('Y-m-d\\TH:i') }} pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}" required> </td><!-- Intégration de la date et heure de fin suivant la durée du cycle -->
-                            <td>{{ test.outillages }}</td>
+                            <td data-toggle="tooltip" data-html="true" title={% for up in test.listOT %} "Ref: {{ up.ref }} / {{ up.designation }}<br>" {%  endfor %}>{{ test.listOT|length }}</td>
                             <td>{{ test.reccurance ? 'OUI' : 'NON'}}</td>
                             <td><input id='{{nominputS}}' type="hidden" value={{ test.plannifie ? 'OUI' : 'NON'}} readonly>
                                 {% if (test.recurvalide == true)  %}
@@ -320,23 +320,26 @@
 <script src="{{ asset('build/jquery.min.js') }}"></script>
 <script src="{{ asset('build/bootstrap.min.js')}}"></script>
 <script id="item-template" type="text/x-handlebars-template">
-            <table class="infos">
-                <tr>
-                    <td colspan="3" class="programmes">{% verbatim %}{{programmes}}{% endverbatim %}</td>
-                    <th><img src="{{asset('build/images/{{statut}}.png')}}" width="31" height="20" alt="{% verbatim %}{{icone}}{% endverbatim %}"></th>
-                    <td colspan="3" class="statut">{% verbatim %}{{statut}}{% endverbatim %}</td>
-                </tr>
-            </table>
-    </script>
-    <script id="item-popup" type="text/x-handlebars-template">
-            <table class="infos">
-                <tr>
-                    <td colspan="3" class="programmes">{% verbatim %}{{programmes}}{% endverbatim %}</td>
-                    <td colspan="3" class="statut">{% verbatim %}{{statut}}{% endverbatim %}</td>
-                </tr>
-            </table>
-    </script>
+    <table class="infos">
+        <tr>
+            <td colspan="3" class="programmes">{% verbatim %}{{programmes}}{% endverbatim %}</td>
+            <th><img src="{{asset('build/images/{{statut}}.png')}}" width="31" height="20" alt="{% verbatim %}{{icone}}{% endverbatim %}"></th>
+            <td colspan="3" class="statut">{% verbatim %}{{statut}}{% endverbatim %}</td>
+        </tr>
+    </table>
+</script>
+<script id="item-popup" type="text/x-handlebars-template">
+    <table class="infos">
+        <tr>
+            <td colspan="3" class="programmes">{% verbatim %}{{programmes}}{% endverbatim %}</td>
+            <td colspan="3" class="statut">{% verbatim %}{{statut}}{% endverbatim %}</td>
+        </tr>
+    </table>
+</script>
 <script type="text/javascript">
+$(document).ready(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+        });
 //Mise à jour de l'indicateur d'occupation moyen à chaque click
 function MaJkpi(id,Url){
     //console.log(document.getElementById(id));

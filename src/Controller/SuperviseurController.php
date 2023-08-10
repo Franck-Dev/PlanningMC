@@ -71,7 +71,7 @@ class SuperviseurController extends AbstractController
         $taskANul=$repo->findChargeStatut($firstDateTime, $lastDateTime, $tbMoyens, 'ANNULE');
         $taskTER=$repi->findChargeStatut($firstDateTime, $lastDateTime, $tbMoyens, 'TERMINE');
 
-
+        dump($taskPla);
         //Traitement du cas des retard qui sont en statut PLANNIFIE
         $taskRetard=$repo->findChargeStatut($firstDateTime, new \DateTime(), $tbMoyens, 'PLANNIFIE');
         //Modification du statut juste pour échéancier
@@ -86,7 +86,7 @@ class SuperviseurController extends AbstractController
         $indic2['Nom']='test';
         $indic2['Valeur']=70;
 
-        //Concatenantion de tous les tableaux en un seul par type de statut
+        //Concatenation de tous les tableaux en un seul par type de statut
         $taskTotal['RETARD/ANNULE']=$taskAnuRet;
         $taskTotal['A FAIRE']=$taskPla;
         $taskTotal['EN COURS']=$taskEC;

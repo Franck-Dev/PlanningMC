@@ -34,7 +34,7 @@
                                     <a href="{{ path('sup_OT', {'OT': key}) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="Supprimer"><span class="m-1" style="font-size: 1em;
                                     color: Red;"><i class="fa fa-trash"></i></span></a>
                                     {% if nbPol > 7 and nbPol <= 9 %}
-                                        <a href="{{ path('val_OT', {'OT': key}) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="valider"><span class="m-1" style="font-size: 1em;
+                                        <a href="{{ path('val_OT', {'OT': key, 'Datas': OT, 'idChargement' : idChargement, 'CTO' : CTO.0.Nom, 'idDemande' : idDemande, 'DateJour' : DateJour }) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="valider"><span class="m-1" style="font-size: 1em;
                                         color: Green;"><i class="fa fa-check" aria-hidden="true"></i></a>
                                         <a href="#" class="badge badge-warning" title="Nombre de polymérisation">{{nbPol}}</a>              
                                     {% elseif nbPol > 9 %}

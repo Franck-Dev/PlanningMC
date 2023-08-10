@@ -110,7 +110,7 @@ class Demandes
     private $ListCTO;
 
     /**
-     * @ORM\ManyToMany(targetEntity=Outillages::class, inversedBy="demandes")
+     * @ORM\ManyToMany(targetEntity=Outillages::class, inversedBy="demandes", fetch="EAGER")
      */
     private $ListOT;
 
