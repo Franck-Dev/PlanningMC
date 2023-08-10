@@ -817,12 +817,89 @@ class PlanningMCController extends AbstractController
                 $demande->setPlannifie(0);
                 $demande->setRecurValide(0);
                 $demande->setUserCrea($user->getUsername());
-                //$demande->addListOF($demande->getListOF());                   
+
+                //Si des outillages ont été sélectionnés
+                if ($demande->getListOT()) {
+                    //Création du chargement outillage avec la liste de ces derniers
+                    $chargement = new Chargement;
+                    $chargement->setNomChargement('MANU');
+                    $chargement->setDatePlannif(new \DateTime());
+                    $chargement->setRemplissage(0);
+                    $chargement->setProgramme($demande->getCycle()->getNom());
+                    //Rajout des outillages
+                    foreach ($demande->getListOT() as $key => $OT) {
+                        $chargement->addOutillage($OT);
+                    }
+                    $manager->persist($chargement);
+                    $manager->flush();
+                    $demande->setChargement($chargement);
+
+                    //On rajoute le chargement aux OF Sélectionnés
+                    foreach ($demande->getListOF() as $key => $OF) {
+                        $OF->setChargement($chargement);
+                        $OF->setStatut('PLANNIFIE');
+                        $manager->persist($chargement);
+                    }
+                    $manager->flush();
+                }      
             }
             else{
                 $demande->setDateModif(new \datetime());
                 //dump($user);
                 $demande->setUserModif($user->getUsername());
+                //Modification du chargement si besoin
+                if ($demande->getChargement()) {
+                    //Si il existe, je le modifie
+                    $newDemande=$requette->request->all();
+                    //On compare les 2 listes (New et Old)
+                    foreach ($demande->getChargement()->getOutillages() as $key => $OT) {
+                        $listOldCharg[$key]=$OT->getId();                        
+                    }
+                    $listOTnewDem=$newDemande['demandes']['ListOT'];
+                    //Si outillage en plus, on rajoute
+                    for ($i=0; $i < count($listOTnewDem) ; $i++) { 
+                        if (!in_array($listOTnewDem[$i],$listOldCharg)) {
+                            $repoChar=$manaReg->getRepository(Outillages::class);
+                            $OT=$repoChar->find($listOTnewDem[$i]);
+                            $demande->getChargement()->addOutillage($OT);
+                        }  
+                    }
+                    //Si outillage en moins, on enlève
+                    for ($i=0; $i < count($listOldCharg) ; $i++) { 
+                        if (!in_array($listOldCharg[$i],$listOTnewDem)) {
+                            $repoChar=$manaReg->getRepository(Outillages::class);
+                            $OT=$repoChar->find($listOTnewDem[$i]);
+                            $demande->getChargement()->removeOutillage($OT);
+                        }  
+                    }
+                }
+                //Idem pour les OFs
+                $repoCharge=$manaReg->getRepository(Charge::class);
+                $listOldOF=$repoCharge->findBy(['demandes'=>$demande->getId()]);
+                if ($listOldOF) {
+                     //Si il en existe, je les modifie
+                     $newDemande=$requette->request->all();
+                     //On compare les 2 listes (New et Old)
+                     foreach ($listOldOF as $key => $OF) {
+                         $listOldChargOF[$key]=$OF->getId();                        
+                     }
+                     $listOFnewDem=$newDemande['demandes']['ListOF'];
+                     //Si OF en plus, on rajoute
+                     for ($i=0; $i < count($listOFnewDem) ; $i++) { 
+                         if (!in_array($listOFnewDem[$i],$listOldChargOF)) {
+                             $newOF=$repoCharge->find($listOFnewDem[$i]);
+                             $newOF->setChargement($demande->getChargement());
+                         }  
+                     }
+                     //Si OF en moins, on enlève
+                     for ($i=0; $i < count($listOldChargOF) ; $i++) { 
+                         if (!in_array($listOldChargOF[$i],$listOFnewDem)) {
+                             $oldOF=$repoCharge->find($listOldChargOF[$i]);
+                             $oldOF->setChargement();
+                         }  
+                     }
+                }
+                    
             }
             //Enregistrement de la demande
             $manager = $manaReg->getManager();
@@ -1727,6 +1804,27 @@ class PlanningMCController extends AbstractController
         return $this->render('planning_mc/form/_formChargeOF.html.twig', [
             'controller_name' => 'PlannificationSAP',
             'dataChargeOF' => $listOFCharge,
+        ]);
+    }
+
+    /**
+     * @Route("/LOGISTIQUE/Creation/ChargeOT", name="Charge_OT", condition="request.isXmlHttpRequest()")
+     */
+    public function chargeOT(Request $request, ManagerRegistry $manaReg)
+    {
+        //Récupération des OT contenus dans la demande
+        $repo=$manaReg->getRepository(Demandes::class);
+        $demande=$repo->find($request->request->get('demande'));
+        $listOTCharge=$demande->getListOT();
+        foreach ($listOTCharge as $key => $OT) {
+            $listeOTCharge[$key]=$OT;
+            dump($OT);
+        }
+        dump($listeOTCharge);
+        
+        return $this->render('planning_mc/form/_formChargeOT.html.twig', [
+            'controller_name' => 'PlannificationSAP',
+            'listeOT' => $listeOTCharge,
         ]);
     }
 

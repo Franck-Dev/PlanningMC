@@ -39,7 +39,7 @@ class Chargement
     private $Remplissage;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Charge", mappedBy="chargement")
+     * @ORM\OneToMany(targetEntity="App\Entity\Charge", mappedBy="chargement", fetch="EAGER")
      */
     private $OF;
 
@@ -49,7 +49,7 @@ class Chargement
     private $Programme;
 
     /**
-     * @ORM\ManyToMany(targetEntity=Outillages::class, inversedBy="chargements")
+     * @ORM\ManyToMany(targetEntity=Outillages::class, inversedBy="chargements", fetch="EAGER")
      */
     private $Outillages;
 
