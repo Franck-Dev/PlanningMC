@@ -109,6 +109,11 @@ class ProgMoyens
      */
     private $articles;
 
+    /**
+     * @ORM\ManyToMany(targetEntity=Moyens::class, inversedBy="progMoyens", fetch="EAGER")
+     */
+    private $moyenVal;
+
     public function __toString(): string
     {
         return (string) $this->getNom();
@@ -121,6 +126,7 @@ class ProgMoyens
         $this->chargFiges = new ArrayCollection();
         $this->avion = new ArrayCollection();
         $this->articles = new ArrayCollection();
+        $this->moyenVal = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -421,6 +427,30 @@ class ProgMoyens
         if ($this->articles->removeElement($article)) {
             $article->removeProgPolym($this);
         }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Moyens>
+     */
+    public function getMoyenVal(): Collection
+    {
+        return $this->moyenVal;
+    }
+
+    public function addMoyenVal(Moyens $moyenVal): self
+    {
+        if (!$this->moyenVal->contains($moyenVal)) {
+            $this->moyenVal[] = $moyenVal;
+        }
+
+        return $this;
+    }
+
+    public function removeMoyenVal(Moyens $moyenVal): self
+    {
+        $this->moyenVal->removeElement($moyenVal);
 
         return $this;
     }

@@ -235,7 +235,7 @@ class PlanningMCController extends AbstractController
                     }
                 }
             }
-            return $this->redirectToRoute('Planning');
+            return $this->redirectToRoute('Planning',['service' => 'MOYENS CHAUD']);
     } 
      /**
      * @Route("/PlanningMC/public/Creation/PolymDirect")
@@ -371,7 +371,7 @@ class PlanningMCController extends AbstractController
                 }            
             }
         }
-        return $this->redirectToRoute('Planning');
+        return $this->redirectToRoute('Planning',['service' => 'MOYENS CHAUD']);
     }
 
      /**
@@ -605,7 +605,7 @@ class PlanningMCController extends AbstractController
             $manager->persist($planning);
             $manager->flush();
             
-            return $this->redirectToRoute('Planning');
+            return $this->redirectToRoute('Planning',['service' => 'MOYENS CHAUD']);
 
         } else {
             //Remonté d'info pour modification du statut de la polymérisation
@@ -683,7 +683,7 @@ class PlanningMCController extends AbstractController
                 $request->getSession()->getFlashbag()->add('success', 'Création de la polym n°' . $planning->getId() . ' réalisée');
             }
         }    
-        return $this->redirectToRoute('Planning');
+        return $this->redirectToRoute('Planning',['service' => 'MOYENS CHAUD']);
     }
     
      /**
@@ -1164,7 +1164,7 @@ class PlanningMCController extends AbstractController
         $manager->persist($polPla);
         $manager->flush();
 
-        return $this->redirectToRoute('Demandes');
+        return $this->redirectToRoute('Demandes',['service'=>'MOULAGE']);
     }
 
     /**
@@ -1243,7 +1243,7 @@ class PlanningMCController extends AbstractController
                 
             if($mode==false){
                     
-                return $this->redirectToRoute('Planification');
+                return $this->redirectToRoute('Planification',['service'=>'MOYENS CHAUD']);
             }
             else{
                 //return $this->redirectToRoute('Demandes');
@@ -1411,7 +1411,8 @@ class PlanningMCController extends AbstractController
         $this->addFlash('success', "Enregistrement de l\'".$OT." avec les OF [".implode(',', $listOFs)."] dans chargement n° ".$chargement->getId()." effectué");
 
         //return new Response($chargement->getId());
-        return $this->redirectToRoute('Modif_Demandes',['id' => $demande->getId()]);
+        return $this->redirectToRoute('Modif_Demandes',['id' => $demande->getId(),'service'=>'MOYENS CHAUD']);
+        
     }
 
     /**
@@ -1470,9 +1471,7 @@ class PlanningMCController extends AbstractController
         $lastDateTime = $lastDateTime->modify('23 hours');
     }
 //Chargement d'une variable pour toutes les demandes créées
-    $test = $manaReg
-    ->getRepository(demandes::class)
-    ->myFindByDays($firstDateTime);
+    $test = $manaReg->getRepository(demandes::class)->myFindByDays($firstDateTime);
 
 //Recherche des moyens à afficher sur planning
         $repos=$manaReg->getRepository(Moyens::class);
@@ -1816,11 +1815,10 @@ class PlanningMCController extends AbstractController
         $repo=$manaReg->getRepository(Demandes::class);
         $demande=$repo->find($request->request->get('demande'));
         $listOTCharge=$demande->getListOT();
+        //Création de la liste des outillages
         foreach ($listOTCharge as $key => $OT) {
             $listeOTCharge[$key]=$OT;
-            dump($OT);
         }
-        dump($listeOTCharge);
         
         return $this->render('planning_mc/form/_formChargeOT.html.twig', [
             'controller_name' => 'PlannificationSAP',
@@ -1867,7 +1865,8 @@ class PlanningMCController extends AbstractController
         
         $this->addFlash('success', "Enregistrement du chargement n° ".$chargt->getId()." effectué avec succès");
 
-        return $this->redirectToRoute($request->get('route'));
+        return $this->redirectToRoute($request->get('route'),['service'=>$request->get('service')]);
+        
     }
 
     /**
@@ -2068,6 +2067,8 @@ class PlanningMCController extends AbstractController
             }            
             $avion->setLibelle($avionApi['designation']);
             $avion->setIri('/api/programme_avions/'.$avionApi['id']);
+            $avion->setidApi($avionApi['id']);
+
             $manager->persist($avion);
             $manager->flush();
         }
@@ -2075,7 +2076,8 @@ class PlanningMCController extends AbstractController
         if(!$Prog){
             $Prog=new ProgMoyens();
         }
-        $form = $this->createForm(CreationProgType::class, $Prog);
+
+        $form = $this->createForm(CreationProgType::class, $Prog, ['idService' => 8, 'activitees' => 'Plannifie']);
         
         $form->handleRequest($Requet);
         
@@ -2093,7 +2095,7 @@ class PlanningMCController extends AbstractController
             $manager->flush();
             
 
-            return $this->redirectToRoute('Consultation PRP');
+            return $this->redirectToRoute('Consultation PRP',['service'=>'METHODES']);
         }
 
         $repo=$manaReg->getRepository(ConfSsmenu::class);
@@ -2103,6 +2105,7 @@ class PlanningMCController extends AbstractController
         return $this->render('planning_mc/Creation.html.twig',[
             'Titres' => $Titres,
             'formProg' => $form->createView(),
+            'type' => "POLYMERISATION"
         ]);
 
     }
@@ -2126,10 +2129,10 @@ class PlanningMCController extends AbstractController
      * @Route("/METHODES/PROGRAMMATION/Consultation", name="Consultation PRP")
      * @Route("METHODES/PROGRAMMATION/Consultation/{id}", name="Consul_ProgMoy")
      */
-    public function Consultation_PRP(CategoryMoyens $moyen=null, ManagerRegistry $manaReg)
+    public function Consultation_PRP(CategoryMoyens $moyen=null, ManagerRegistry $manaReg, $id=null)
     {
 //Si pas de moyen affecté, c'est une consulation générale des programmes        
-        if(!$moyen){
+        if(!$id){
             $cycles = $manaReg
             ->getRepository(ProgMoyens::class)
             ->findAll();
@@ -2137,22 +2140,19 @@ class PlanningMCController extends AbstractController
 //Sinon par type de moyen du programme consulté
         else{$cycles = $manaReg
             ->getRepository(ProgMoyens::class)
-            ->findOneBySomeField($moyen->getId());
-
-            dump($moyen->getId());
+            ->findBy(['CateMoyen' => $id]);
         }
-        dump($cycles);
+
         //$category = $cycles->getCateMoyen();}
         //dump($category);
         $moyen=new CategoryMoyens();
         $repo=$manaReg->getRepository(CategoryMoyens::class);
         $moyen=$repo -> findall();
-        dump($moyen);
+
 
         $repo=$manaReg->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'PROGRAMMATION']);
-        dump($Titres);
-        dump($cycles);
+
         
         return $this->render('planning_mc/Consultation.html.twig',[
             'Titres' => $Titres,
@@ -2194,7 +2194,7 @@ class PlanningMCController extends AbstractController
             $entityManager->flush();
                         
 
-            return $this->redirectToRoute('Consultation OUT');
+            return $this->redirectToRoute('Consultation OUT',['service' => 'METHODES']);
         }
 
         return $this->render('planning_mc/CreationOutillages.html.twig',[

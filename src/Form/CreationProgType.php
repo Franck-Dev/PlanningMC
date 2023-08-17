@@ -2,9 +2,11 @@
 
 namespace App\Form;
 
+use App\Entity\Moyens;
 use App\Entity\ProgAvions;
 use App\Entity\ProgMoyens;
 use App\Entity\CategoryMoyens;
+use App\Repository\MoyensRepository;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
@@ -23,9 +25,15 @@ class CreationProgType extends AbstractType
             ->add('Nom')
             ->add('Description')
             ->add('Tps_Theo')
-            ->add('Duree', TimeType::class)
-            ->add('Tps_Chargement', TimeType::class)
-            ->add('Tps_Dechargement', TimeType::class)
+            ->add('Duree', TimeType::class,[
+                'widget' => 'single_text',
+            ])
+            ->add('Tps_Chargement', TimeType::class,[
+                'widget' => 'single_text',
+            ])
+            ->add('Tps_Dechargement', TimeType::class,[
+                'widget' => 'single_text',
+            ])
             ->add('Thermocouples')
             ->add('SPC')
             ->add('couleur', colortype::class)
@@ -34,7 +42,24 @@ class CreationProgType extends AbstractType
                 'mapped' => true,
                 'choice_label' => 'libelle',
                 'multiple' => true,
-                'expanded' => true))
+                'expanded' => true,
+                'label' => 'Programmes Avions'
+                ))
+            ->add('moyenVal', EntityType::class, array(
+                'class' =>Moyens::class,
+                'choice_label' => 'libelle',
+                'multiple' => true,
+                'expanded' => true,
+                'query_builder' => function (MoyensRepository $er)  use ($options){
+                    return $er->createQueryBuilder('u')
+                      ->where('u.Id_Service = :id')
+                      ->andWhere('u.Activitees = :act')
+                      ->setParameter('id', $options['idService'])
+                      ->setParameter('act', $options['activitees'])
+                      ->orderBy('u.Libelle', 'ASC');
+                    },
+                'label' => 'Moyens validés'
+                ))
         ;
     }
 
@@ -42,6 +67,8 @@ class CreationProgType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => ProgMoyens::class,
+            'idService' => "",
+            'activitees' => "",
         ]);
     }
 }

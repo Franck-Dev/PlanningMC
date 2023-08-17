@@ -201,6 +201,10 @@
 								{% endif %}								
 							{% endfor %}
 
+							{% if app.user.username == cycle.UserCrea and acces == false %}
+								{% set acces = true %}
+							{% endif %}
+
 							{% if acces == true and cycle.plannifie == 0 %}
 								<ul class="fa-ul">
 									<li><a href="{{ path('Modif_Demandes', {'id': cycle.id}) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="Modifier"><span class="m-1" style="font-size: 1.3em; 

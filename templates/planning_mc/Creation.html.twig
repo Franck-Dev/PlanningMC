@@ -5,14 +5,78 @@
 {% block title %}APAMC{% endblock %}
 
 {% block body %}
-	<h1>Création des Programmes de  ! ✅</h1>
+	<h1>Création des Programmes de {{ type }} ! ✅</h1>
 
-    {{form_start(formProg)}}
-
-    {{form_widget(formProg)}}
-
-    <button type="submit" class="btn btn-success">Ajouter le programme</button>
-
-    {{form_end(formProg)}}
+    {% block form %}
+		{{ form_start(formProg) }}
+		<div class="form-row align-items-center">
+			<div class="form-group col-md-2">
+				{{form_row(formProg.CateMoyen, {'help' :  "Sélectionner une catégorie de moyen" })}}
+			</div>
+			<div class="form-group col-md-4">
+				{{form_row(formProg.Nom, {'help' :  "Donner un nom connue de tous" })}}
+			</div>
+			<div class="form-group col-md-6">
+				{{form_row(formProg.Description, {'help' :  "Donner un maximum de renseignement supplémentaires" })}}
+			</div>
+		</div>
+		<div class="form-row justify-content-center">
+			<div class="form-group col-md-1">
+				{{form_row(formProg.Tps_Theo, {'help' :  "Temps de polymérisation à la programmation" })}}
+			</div>
+			<div class="form-group col-md-2">
+				{{form_row(formProg.Duree, {'help' :  "Durée max réelle de polymérisation" })}}
+			</div>
+            <div class="form-group col-md-2">
+				{{form_row(formProg.Tps_Chargement, {'help' :  "Temps de chargement max pour gestion sans outillages" })}}
+			</div>
+            <div class="form-group col-md-2">
+				{{form_row(formProg.Tps_Dechargement, {'help' :  "Temps de chargement max pour gestion sans outillages" })}}
+			</div>
+            <div class="form-group col-md-4">
+				{{form_row(formProg.couleur, {'help' :  "Attention à ne pas prendre une couleur trop claire ou trop foncée pour le texte à l'intérieur" })}}
+			</div>
+		</div>
+		<div class="form-row justify-content-center">
+			<div class="form-group col-md-3 text-white">
+				{{form_row(formProg.Thermocouples, {'help' :  "Sélectionner si polymérisation en ATC" })}}
+			</div>
+            <div class="form-group col-md-3 text-white">
+			{{form_row(formProg.SPC, {'help' :  "Sélectionner si surveillance de cette polymérisation avec carte de contrôle" })}}
+		</div>
+		</div>
+		
+		<div class="form-row justify-content-around">
+			<div class="form-group col-md-3">
+				
+				<div class="row align-items-center">
+					<div class="col">
+						{{ form_label(formProg.avion) }}
+					</div>
+					<div class="col text-white" id="some-custom-id">
+						{{ form_widget(formProg.avion) }}
+					</div>
+				</div>
+			</div>
+            <div class="form-group col-md-3">
+				<div class="row align-items-center">
+					<div class="col">
+						{{ form_label(formProg.moyenVal) }}
+					</div>
+					<div class="col text-white" id="some-custom-id">
+						{{ form_widget(formProg.moyenVal) }}
+					</div>
+				</div>
+			</div>
+		</div>
+        <div class="form-row justify-content-center">
+            <div class="form-group">
+                <button type="submit" class="btn btn-success">
+                    Enregistrer la Demande
+                </button>
+            </div>
+        </div>
+		{{ form_end(formProg) }}
+{% endblock %}
 
 {% endblock %}

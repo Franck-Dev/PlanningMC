@@ -16,6 +16,7 @@
             color:gray;
             margin:0;
             padding:0;
+            font-size: x-large;
         }
         .card-header {
             color: black;
@@ -265,7 +266,7 @@
                             {% endif %} 
                         >
                             <td data-toggle="tooltip" data-html="true" title="{{test.userCrea}}">{{ test.Id }}</td>
-                            <td>{{ test.cycle.nom }}</td>
+                            <td data-toggle="tooltip" data-html="true" title="{{test.outillages}}">{{ test.cycle.nom }}</td>
                             <td><input id='{{nominputHD}}' type="datetime-local" name="appt-time" value={{ dateurdeb|date('Y-m-d\\TH:i') }} onblur=calculfin('{{durecycle|date('H:i')}}',this.value,{{test.Id}}) pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}" required></td><!-- Calcul de la nouvelle date de fin suite modification de la date de départ -->
                             <td><input id='{{nominputHF}}' type="datetime-local" name="appt-time" value={{ dateurdeb|date_modify( dureecycle )|date('Y-m-d\\TH:i') }} pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}" required> </td><!-- Intégration de la date et heure de fin suivant la durée du cycle -->
                             <td onmouseover='listeOT({{toolTipId}},"{{test.Id}}")' id='{{toolTipId}}'>{{ test.listOT|length }}</td>
@@ -283,9 +284,17 @@
                             </td>
                             <td> {% if (test.plannifie == 0) %}
                                     <select id='{{nomselectM}}'>
-                                        {% for numero in items %}
-                                            <option value={ numero.libelle }>{{ numero.libelle }}</option>
-                                        {% endfor %}   
+                                        <!-- Si programme avec moyen validé, on récupère cette liste, Sinon on récupère la liste entière des moyens du service  -->
+                                        {% if test.cycle.moyenVal is empty%}
+                                            {% for numero in items %}
+                                                <option value={ numero.libelle }>{{ numero.libelle }}</option>
+                                            {% endfor %}
+                                        {% else %}
+                                             {% for numero in test.Cycle.moyenVal %}
+                                                <option value={ numero.libelle }>{{ numero.libelle }}</option>
+                                            {% endfor %}
+                                        {% endif %}
+                                          
                                     </select><br>
                                     {{ test.moyenutilise }}
                                 {% else %}

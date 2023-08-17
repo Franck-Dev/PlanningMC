@@ -76,6 +76,11 @@ class Moyens
 
     private $nbMode;
 
+    /**
+     * @ORM\ManyToMany(targetEntity=ProgMoyens::class, mappedBy="moyenVal")
+     */
+    private $progMoyens;
+
     public function __toString(): string
     {
         return (string) $this->getLibelle();
@@ -86,6 +91,7 @@ class Moyens
         $this->demandes = new ArrayCollection();
         $this->chargFiges = new ArrayCollection();
         $this->moulages = new ArrayCollection();
+        $this->progMoyens = new ArrayCollection();
     }
 
     public function __clone()
@@ -294,6 +300,33 @@ class Moyens
     public function setnbMode(string $nbMode): self
     {
         $this->nbMode = $nbMode;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ProgMoyens>
+     */
+    public function getProgMoyens(): Collection
+    {
+        return $this->progMoyens;
+    }
+
+    public function addProgMoyen(ProgMoyens $progMoyen): self
+    {
+        if (!$this->progMoyens->contains($progMoyen)) {
+            $this->progMoyens[] = $progMoyen;
+            $progMoyen->addMoyenVal($this);
+        }
+
+        return $this;
+    }
+
+    public function removeProgMoyen(ProgMoyens $progMoyen): self
+    {
+        if ($this->progMoyens->removeElement($progMoyen)) {
+            $progMoyen->removeMoyenVal($this);
+        }
 
         return $this;
     }

@@ -50,37 +50,50 @@
                         <div class="items border border-light">
                             {% for item in tache %}
                                 {% set nomCard = ['cd',num]|join %}<!-- Conception des noms des cards contenant les données -->
-                                {% set titre = [item.action,'-',item.identification]|join %}<!-- Conception des titres -->
                                 {% set icone = ['build/images/',item.Statut,'.png']|join %}<!-- Conception du chemin de l'image correspondant au statut -->
                                 <!-- Recherche infos svt les OF liés à la demande-->
                                 {% set limitePoly = " Pas d'OF liés " %}
-                                {% set nbOFOK = 0 %}
-                                {% if item.NumDemande.ListOF is iterable %}
-                                    {% for OF in item.NumDemande.ListOF %}
-                                        <!-- Détermination de la date limite de polymérisation-->
-                                        {% set limitePoly = OF.WorkLife %}
-                                        <!-- Détermination du pourcentage d'avancement des OF au moulage(statut Moul ou Charg)-->
-                                        {% if OF.Statut == "CHARG" %}
-                                            {% set nbOFOK = nbOFOK + 1 %}
+                                {% if key == 'EN COURS' or key == 'TERMINE' %}
+                                    {% set titre = [item.programmes.nom,'-',item.moyens.libelle]|join %}<!-- Conception des titres -->
+                                    {% set datDeb = item.DebPolym|date('d/m/y H:i') %}
+                                    {% set comments = 'RAS' %}
+                                    {% set pourc = 5 %}
+                                    {% set bgColor = 'bg-success' %}
+                                {% else %}
+                                    {% set titre = [item.action,'-',item.identification]|join %}<!-- Conception des titres -->
+                                    {% set datDeb = item.DebutDate|date('d/m/y H:i') %}
+                                    {% set comments = item.NumDemande.Commentaires %}
+                                    {% set bgColor = 'bg-warning' %}
+                                    <!-- Recherche infos svt les OF liés à la demande-->
+                                    {% set nbOFOK = 0 %}
+                                    {% if item.NumDemande.ListOF is iterable %}
+                                        {% for OF in item.NumDemande.ListOF %}
+                                            <!-- Détermination de la date limite de polymérisation-->
+                                            {% set limitePoly = OF.WorkLife %}
+                                            <!-- Détermination du pourcentage d'avancement des OF au moulage(statut Moul ou Charg)-->
+                                            {% if OF.Statut == "CHARG" %}
+                                                {% set nbOFOK = nbOFOK + 1 %}
+                                            {% endif %}  
+                                        {% endfor %}
+                                        {% if nbOFOK != 0 %}
+                                            {% set pourc = (nbOFOK / item.NumDemande.ListOF|length)*100 %} 
+                                        {% else %}
+                                            {% set pourc = 5 %} 
                                         {% endif %}  
-                                    {% endfor %}
-                                    {% if nbOFOK != 0 %}
-                                        {% set pourc = (nbOFOK / item.NumDemande.ListOF|length)*100 %} 
-                                    {% else %}
-                                        {% set pourc = 5 %} 
-                                    {% endif %}  
-                                                                
+                                                                    
+                                    {% endif %}
                                 {% endif %}
+                                
                                 <div class="card draggable border-primary shadow-sm" id='{{nomCard}}' draggable="true" ondragstart="drag(event)">
                                     <div class="card-body p-2">
-                                        <div class="card-header bg-warning">
+                                        <div class="card-header {{bgColor}}">
                                             <img src="{{asset(icone)}}" id ="icone" class="rounded-circle float-right" tooltip="{{item.Statut}}">
                                             <a href="#" class="lead font-weight-bolder">{{titre}}</a>
                                         </div>
                                         <div class="card-body">
                                             <p>
-                                                <br>Début : {{ item.DebutDate|date('d/m/y H:i') }} / Limite Polym : {{limitePoly}}</br>
-                                                <br>Commentaires : {{item.NumDemande.Commentaires}}</br>
+                                                <br>Début : {{ datDeb }} / Limite Polym : {{limitePoly}}</br>
+                                                <br>Commentaires : {{ comments }}</br>
                                             </p>
                                             <div class="progress m-1">
                                                 <div class="progress-bar" role="progressbar" style="{{ ['width: ',pourc,'%']|join }}" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">{{ [pourc,'%']|join }}</div>
