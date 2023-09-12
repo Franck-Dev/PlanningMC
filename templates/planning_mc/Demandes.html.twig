@@ -105,7 +105,7 @@
 	<!-- Création de la liste des avions du user -->
 	{% set avions={} %}
 	{% for avion in app.user.programmeAvion %}
-		{% set avions = avions | merge([avion['designation']]) %}
+		{% set avions = avions | merge([avion]) %}
 	{% endfor %}
 	<!-- Début du tableau des demandes -->
 		<h1>Demandes en cours ✅</h1>

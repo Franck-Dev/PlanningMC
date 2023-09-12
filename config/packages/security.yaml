@@ -22,7 +22,7 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
         main:
-            provider: your_custom_user_provider
+            #provider: your_custom_user_provider
             custom_authenticators:
                 - App\Security\ApiKeyAuthenticator
             lazy: true
@@ -51,7 +51,7 @@ security:
         ROLE_CE_MOULAGE:  [ROLE_MOULEUR,ROLE_GESTION_EQ]
         ROLE_CE_ASS:      [ROLE_AJUSTEUR,ROLE_GESTION_EQ]
         ROLE_CE_GESTION:  [ROLE_GESTIONNAIRE,ROLE_GESTION_EQ]
-        ROLE_RESP_POLYM:  [ROLE_CE_POLYM, ROLE_CE_MOULAGE]
+        ROLE_RESP_POLYM:  [ROLE_CE_POLYM, ROLE_CE_MOULAGE, ROLE_GESTION_EQ]
         ROLE_RESP_MOULAGE: [ROLE_CE_MOULAGE]
         ROLE_RESP_ASS:    [ROLE_CE_ASS]
         ROLE_MOULEUR:     [ROLE_USER]

@@ -6,12 +6,15 @@ use App\Entity\User;
 use App\Entity\Moyens;
 use App\Entity\ConfSmenu;
 use App\Form\ModifMdPType;
-use App\Form\RegistrationType;
-use App\Security\ApiKeyAuthenticator;
-use App\Services\CallApiService;
+use App\Form\ModifUserType;
 use App\Services\ComService;
+use App\Form\RegistrationType;
+use App\Services\CallApiService;
+use App\Security\ApiKeyAuthenticator;
+use Symfony\Component\Form\FormError;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Persistence\ObjectManager;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,7 +22,6 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -40,6 +42,7 @@ class SecurityController extends AbstractController
 
         if($form->isSubmitted() && $form->isValid()){
             // Création liste avions
+            dump($form->getData());
             if ($form->getData()->getProgrammeAvion()){
                 foreach($form->getData()->getProgrammeAvion() as $index => $avion){
                     $listAvions[$index]='/api/programme_avions/'.explode("-", $avion)[0];
@@ -47,7 +50,7 @@ class SecurityController extends AbstractController
             }else{
                 $listAvions=[];
             }
-            
+
             // Création du body à envoyer
             foreach($request->request as $key => $data){
                 $body['password']=$data['password'];
@@ -66,6 +69,7 @@ class SecurityController extends AbstractController
 
             // Création du $user pour enregistrement en local par retour enregistrement dans api
             $user->hydrate($response);
+            $user->setIdUserApi($response['id']);
             // Hachage du mot de passe
             $hash=$encoder->hashPassword($user, $user->getPassword());
             $user->setPassword($hash);
@@ -81,6 +85,7 @@ class SecurityController extends AbstractController
             Votre compte doit être vérifier et valider par votre supérieur hiérarchique si vous n\'êtes pas opérateur.');
             //Notification de l'admin pour vérification et validation du compte
             $com->sendNotif('Un nouvel utilisateur: '. $user->getUsername(). ' est inscrit.',['browser']);
+            
             return $this->redirectToRoute('security_login');
         }
 
@@ -120,7 +125,8 @@ class SecurityController extends AbstractController
     /**
     ** @Route("/inscription/Modification_MdP", name="Modif_MdP")
     */
-    Public function ModifMdP(request $request, user $user=null, ValidatorInterface $validator, ApiKeyAuthenticator $auth, CallApiService $api){
+    Public function ModifMdP(request $request, user $user=null, ComService $com, 
+    ValidatorInterface $validator, CallApiService $api){
 
         $Titres=[];
         $errors=[];
@@ -151,10 +157,16 @@ class SecurityController extends AbstractController
             //On va chercher dans la base l'utilisateur en question
             $userResp=$api->getDatasAPI('/api/users/'.$user[0]['id'],'Usine',['password'=>$request->get('modif_md_p')['password']],'PATCH');
             
+             //Notification du user de son changement de mot de passe
+             $com->sendNotif('Bonjour '. $user->getUsername(). ' , vous avez bien modifier votre mot de passe. 
+             Votre compte re-valider par l\'admin.');
+             //Notification de l'admin pour vérification et validation du compte
+             $com->sendNotif('Changement mot de passe de : '. $user->getUsername(). ', a valider.',['browser']);
+ 
             return $this->redirectToRoute('security_login');
         }
 
-        return $this->renderForm('security/ModificationMdP.html.twig',[
+        return $this->render('security/ModificationMdP.html.twig',[
             'form' => $form,
             'errors' => $errors,
             'Titres' => $Titres
@@ -165,27 +177,72 @@ class SecurityController extends AbstractController
     ** @Route("/inscription/Modification_User/{id}", name="Modif_User")
     */
 
-    Public function ModifUser(request $request, user $user=null, ValidatorInterface $validator, ApiKeyAuthenticator $auth, CallApiService $api){
+    Public function ModifUser(request $request, user $user=null, ManagerRegistry $manaReg,
+     ComService $com, Security $security, CallApiService $api, $id=null){
 
         $Titres=[];
         $errors=[];
 
-        dd($user);
-        $form=$this->createForm(RegistrationType::class, $user);
+        //$user= new User;
+        //$response=$api->getDatasAPI('/api/users/'.$id,'Usine',[],'GET');
+
+        // Création du $user pour enregistrement en local par retour enregistrement dans api
+        //$user->hydrate($response);
+
+        $form=$this->createForm(ModifUserType::class, $user);
         $form->handleRequest($request);
 
         if($form->isSubmitted() && $form->isValid())
         {
-           dd($form);
-        }
-        if($form->isSubmitted() && $form->isValid()){
-            //On va chercher dans la base l'utilisateur en question
-            $userResp=$api->getDatasAPI('/api/users/'.$user[0]['id'],'Usine',['password'=>$request->get('modif_md_p')['password']],'PATCH');
-            
-            return $this->redirectToRoute('security_login');
+           //Reconstruire la liste avion à envoyer dans le body
+            $listeAvion=$form->get('listeAvion')->getConfig()->getData();
+            $i=0;
+            foreach(json_decode($listeAvion) as $index => $avion){
+                if (in_array($avion, $request->get('modif_user')['programmeAvion'])) {
+                    $listAvionsAPI[$i]='/api/programme_avions/'.$index;
+                    $listAvions[$i]=['designation' => $avion];
+                    $i++;
+                }
+            }
+
+            //Récupération poste
+            $listePoste=json_decode($form->get('listePoste')->getConfig()->getData(),true);
+
+            if (in_array( $request->get('modif_user')['poste'],$listePoste)) {
+                $idPoste=array_search($request->get('modif_user')['poste'],$listePoste);
+                $body['poste']='/api/postes/'.$idPoste;
+            }
+
+            //Récupération service
+            $listeServ=json_decode($form->get('listeServ')->getConfig()->getData(),true);
+            if (in_array( $request->get('modif_user')['service'],$listeServ)) {
+                $idService=array_search($request->get('modif_user')['service'],$listeServ);
+                $body['service']='/api/services/'.$idService;
+            }
+
+           // Création du body à envoyer
+           $body['programmeAvion']=$listAvionsAPI;
+           $body['mail']=$form->getData()->getMail();
+           $body['username']=$form->getData()->getUsername();
+  
+           //Modification à envoyer dans API
+           $userResp=$api->getDatasAPI('/api/users/'.$user->getIdUserApi(),'Usine',$body,'PATCH',$security->getUser()->getUserTokenAPI());
+
+           //Modification à faire dans table user
+           $user->setProgrammeAvion($listAvions);
+           $manager = $manaReg->getManager();
+           $manager->persist($user);
+           $manager->flush();
+        
+            //Notification du user de sa modification
+            $com->sendNotif($user->getUsername(). ' , les modifications de votre compte ont bien été prises en compte.');
+            //Notification de l'admin pour information
+            $com->sendNotif('Modification de l\'utilisateur : '. $user->getUsername(),['browser']);
+
+           return $this->redirectToRoute('home');
         }
 
-        return $this->renderForm('security/ModificationMdP.html.twig',[
+        return $this->render('security/ModificationUser.html.twig',[
             'form' => $form,
             'errors' => $errors,
             'Titres' => $Titres

@@ -131,8 +131,9 @@ class SuperviseurController extends AbstractController
             //Créer une liste filtrer par nbPolym
             //Création du tableau de recherche
             if ($user->getProgrammeAvion()) {
+                dump($user->getProgrammeAvion());
                 foreach ($user->getProgrammeAvion() as $key=>$avion) {
-                    $listAvions[$key]=$avion['designation'];
+                    $listAvions[$key]=$avion;
                 }
             } else {
                 $listAvions=[];

@@ -90,6 +90,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     private $programmeAvion = [];
 
+    /**
+     * @ORM\Column(type="smallint")
+     */
+    private $idUserApi;
+
+    private $userTokenAPI;
+
     public function __toString(): string
     {
         return (string) $this->getUsername();
@@ -288,6 +295,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getProgrammeAvion(): ?array
     {
+        if (!empty($this->programmeAvion)) {
+            foreach ($this->programmeAvion as  $key => $value) {
+                if (array_key_exists('designation',$value)) {
+                    $test[$key]=$value['designation'];
+                } else {
+                    $test[$key]=$value;
+                }
+            }
+            return $test;
+        }
         return $this->programmeAvion;
     }
 
@@ -298,4 +315,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getIdUserApi(): ?int
+    {
+        return $this->idUserApi;
+    }
+
+    public function setIdUserApi(int $idUserApi): self
+    {
+        $this->idUserApi = $idUserApi;
+
+        return $this;
+    }
+
+    public function getUserTokenAPI(): ?string
+    {
+        return $this->userTokenAPI;
+    }
+
+    public function setUserTokenAPI(string $userTokenAPI): ?string
+    {
+        return $this->userTokenAPI=$userTokenAPI;
+    }
 }

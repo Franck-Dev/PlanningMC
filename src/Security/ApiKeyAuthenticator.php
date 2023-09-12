@@ -73,7 +73,7 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
         } else {
             $matricule=$_username;
         }
-        dump($matricule);
+        dump($matricule,$_COOKIE);
         $body=['matricule'=>$matricule, 'password'=>$request->get('_password')];
         $apiToken=$this->CallApi->getDatasAPI('/api/login','Usine',$body,'POST',null);
         //Test login direct
@@ -83,7 +83,7 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
                 $usiter=$this->utilisateur->loadUserByIdentifier($matricule);}),
                 new PasswordCredentials($request->get('_password'))
             ); */
-        dump($apiToken);
+        dump($apiToken, $_COOKIE);
         if (null === $apiToken) {
             // The token header was empty, authentication fails with HTTP Status
             // Code 401 "Unauthorized"
@@ -107,15 +107,27 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
                 }
             }
             $user=new User;
+            //Connection au user du site via userIdApi
+            $repo=$this->manaReg->getRepository(User::class);
+            $user=$repo -> findOneBy(['idUserApi' => $userToken['id']]);
+            $userId=$user->getid();
             //Hydratation du User
             $user->hydrate($userToken);
+            //Rajout des données du user
+            $user->setUserTokenAPI($apiToken);
+            $user->setId($userId);
+            $user->setIdUserApi($userToken['id']);
+            //Mise à jour des données suivant API
+            $manager = $this->manaReg->getManager();
+            $manager->persist($user);
+            $manager->flush();
             return $user;
         }));
     }
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
-        $token->setAttributes($token->getUser()->getProgrammeAvion());
+        $token->setAttributes(['progAvion' => $token->getUser()->getProgrammeAvion(), 'apiToken' => $token->getUser()->getUserTokenAPI()]);
         return new RedirectResponse($this->router->generate('home'),301);
     }
 

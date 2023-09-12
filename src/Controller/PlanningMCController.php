@@ -848,7 +848,7 @@ class PlanningMCController extends AbstractController
                 //dump($user);
                 $demande->setUserModif($user->getUsername());
                 //Modification du chargement si besoin
-                if ($demande->getChargement()) {
+                if ($demande->getChargement() and $demande->getChargement()->getNomChargement() != 'MANU') {
                     //Si il existe, je le modifie
                     $newDemande=$requette->request->all();
                     //On compare les 2 listes (New et Old)

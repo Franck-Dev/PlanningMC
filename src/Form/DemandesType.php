@@ -3,10 +3,10 @@
 namespace App\Form;
 
 use App\Entity\Charge;
-use App\Entity\Chargement;
 use App\Entity\Demandes;
 use App\Entity\Planning;
 use App\Entity\ChargFige;
+use App\Entity\Chargement;
 use App\Entity\Outillages;
 use App\Entity\ProgMoyens;
 use App\Form\ChargementType;
@@ -29,6 +29,7 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
@@ -68,7 +69,7 @@ class DemandesType extends AbstractType
         //Création du tableau de recherche
         if ($progAvions) {
             foreach ($progAvions as $key=>$avion) {
-                $listAvions[$key]=$avion['designation'];
+                $listAvions[$key]=$avion;
             }
         } else {
             $listAvions=[];
@@ -169,11 +170,11 @@ class DemandesType extends AbstractType
         $builder -> add('heure_propose', TimeType::class,[
             'widget' => 'single_text',
         ]);
-        $builder -> add('outillages',TextareaType::class, [
+        $builder -> add('outillages',TextType::class, [
             'row_attr' => ['class' => 'text-editor', 'id' => 'Outillage'],
             'label' => 'Autres Outillages',
             'required' => false]);
-        $builder -> add('commentaires', TextareaType::class, [
+        $builder -> add('commentaires', TextType::class, [
             'row_attr' => ['class' => 'text-editor', 'id' => 'Commentaire'],
             'required' => false]);
         $builder -> add('Reccurance',ChoiceType::class, [
