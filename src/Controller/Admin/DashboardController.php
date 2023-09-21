@@ -20,7 +20,7 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
 
 /**
- * @IsGranted("ROLE_ADMIN")
+ * @IsGranted("ROLE_GESTION_EQ")
  */
 class DashboardController extends AbstractDashboardController
 {
@@ -44,7 +44,7 @@ class DashboardController extends AbstractDashboardController
     {
         yield MenuItem::linktoDashboard('Dashboard', 'fa fa-home');
         yield MenuItem::section('Site configuration');
-        if ($this->isGranted('ROLE_ADMIN') && '...') {
+        if ($this->isGranted('ROLE_SUPER_ADMIN') && '...') {
             yield MenuItem::linkToCrud('Users', 'fas fa-user', User::class);
             yield MenuItem::linkToCrud('Services', 'fas fa-industry', Services::class);
             yield MenuItem::linkToCrud('Categories', 'fas fa-puzzle-piece', CategoryMoyens::class);
@@ -53,15 +53,15 @@ class DashboardController extends AbstractDashboardController
             yield MenuItem::linkToCrud('Pace of work', 'fa fa-clock-o', TypesEquipe::class);
         }
         yield MenuItem::section('Administration Polym');
-        if ($this->isGranted('ROLE_CE_POLYM') || $this->isGranted('ROLE_ADMIN')) {
+        if ($this->isGranted('ROLE_CE_POLYM') || $this->isGranted('ROLE_SUPER_ADMIN')) {
             yield MenuItem::linkToCrud('Demands', 'fas fa-list', Demandes::class)
             ->setDefaultSort(['Plannifie' => 'DESC']);
+            yield MenuItem::linkToCrud('Teams', 'fas fa-users', NomEquipe::class);
             yield MenuItem::linkToCrud('Organization', 'fas fa-calendar', OrgaEq::class);
         }
         yield MenuItem::section('Administration Molding');
-        if ($this->isGranted('ROLE_CE_MOULAGE') || $this->isGranted('ROLE_ADMIN')) {
-            yield MenuItem::linkToCrud('Demands', 'fas fa-list', Demandes::class)
-            ->setQueryParameter('id',2);
+        if ($this->isGranted('ROLE_CE_MOULAGE') || $this->isGranted('ROLE_SUPER_ADMIN')) {
+            yield MenuItem::linkToCrud('Teams', 'fas fa-users', NomEquipe::class);
             yield MenuItem::linkToCrud('Organization', 'fas fa-calendar', OrgaEq::class);
         }
         yield MenuItem::section('Retour Application');

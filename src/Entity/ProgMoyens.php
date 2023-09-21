@@ -94,6 +94,26 @@ class ProgMoyens
      */
     private $chargFiges;
 
+    /**
+     * @ORM\Column(type="array", nullable=true)
+     */
+    private $codeAvion= [];
+
+    /**
+     * @ORM\ManyToMany(targetEntity=ProgAvions::class, inversedBy="progMoyens", fetch="EAGER")
+     */
+    private $avion;
+
+    /**
+     * @ORM\ManyToMany(targetEntity=Articles::class, mappedBy="ProgPolym")
+     */
+    private $articles;
+
+    /**
+     * @ORM\ManyToMany(targetEntity=Moyens::class, inversedBy="progMoyens", fetch="EAGER")
+     */
+    private $moyenVal;
+
     public function __toString(): string
     {
         return (string) $this->getNom();
@@ -104,6 +124,9 @@ class ProgMoyens
         $this->demandes = new ArrayCollection();
         $this->outillages = new ArrayCollection();
         $this->chargFiges = new ArrayCollection();
+        $this->avion = new ArrayCollection();
+        $this->articles = new ArrayCollection();
+        $this->moyenVal = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -341,6 +364,93 @@ class ProgMoyens
                 $chargFige->setProgramme(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getCodeAvion(): ?array
+    {
+        return $this->codeAvion;
+    }
+
+    public function setCodeAvion(?array $codeAvion): self
+    {
+        $this->codeAvion = $codeAvion;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|ProgAvions>
+     */
+    public function getAvion(): Collection
+    {
+        return $this->avion;
+    }
+
+    public function addAvion(ProgAvions $avion): self
+    {
+        if (!$this->avion->contains($avion)) {
+            $this->avion[] = $avion;
+        }
+
+        return $this;
+    }
+
+    public function removeAvion(ProgAvions $avion): self
+    {
+        $this->avion->removeElement($avion);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Articles>
+     */
+    public function getArticles(): Collection
+    {
+        return $this->articles;
+    }
+
+    public function addArticle(Articles $article): self
+    {
+        if (!$this->articles->contains($article)) {
+            $this->articles[] = $article;
+            $article->addProgPolym($this);
+        }
+
+        return $this;
+    }
+
+    public function removeArticle(Articles $article): self
+    {
+        if ($this->articles->removeElement($article)) {
+            $article->removeProgPolym($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Moyens>
+     */
+    public function getMoyenVal(): Collection
+    {
+        return $this->moyenVal;
+    }
+
+    public function addMoyenVal(Moyens $moyenVal): self
+    {
+        if (!$this->moyenVal->contains($moyenVal)) {
+            $this->moyenVal[] = $moyenVal;
+        }
+
+        return $this;
+    }
+
+    public function removeMoyenVal(Moyens $moyenVal): self
+    {
+        $this->moyenVal->removeElement($moyenVal);
 
         return $this;
     }

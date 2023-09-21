@@ -1,0 +1,242 @@
+{% extends Titres != [] ? 'base.html.twig' : 'base_ssMenu.html.twig' %} 
+{% block title %}TABLEAU DE BORD DE {{ app.user }}{% endblock %}
+{% block head %}<META HTTP-EQUIV="Refresh" CONTENT="300">{% endblock %}
+
+{% block stylesheets %}
+    <style type="text/css">
+        #cardKit, #cardOT, #cardMoy{
+            overflow : scroll;
+            max-height : 500px;
+        }
+        #tableKits,#tableOT{
+            color : white;
+        }
+        #icone{
+            height: 1em;
+            width: 1em;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<h1 class="text-uppercase display-4 d-none d-sm-block">
+    TABLEAU DE BORD DE {{ app.user }}
+</h1>
+<div class="row mb-3">
+    <div class="col py-2">
+        {% include 'indicateurs/Frames/IndicHeader.html.twig' %}
+    </div>
+</div>
+<hr>
+<div class="row my-4">
+    <div class="col-lg-7 col-md-8 col-xs-12">
+        <!-- <h4 class="card-title">Etats des kits</h4> -->
+        <div class="table-responsive text-nowrap">
+            <!-- Tableau kits tissus découpés -->  
+            <div class="d-flex justify-content-start mb-1">
+                {{ knp_pagination_filter(listKits, {'idMM': 'idMM','DesignationSAP': 'Designation','ReferenceSAP': 'Reference'}) }}
+            </div>                     
+            <table class="table table-sm" id="tableKits">
+                <thead class="thead-inverse">
+                    <tr class="filters">
+                        <th>{{ knp_pagination_sortable(listKits, 'idMM', 'idMM') }}</th>
+                        <th>{{ knp_pagination_sortable(listKits, 'ReferenceSAP', 'ReferenceSAP') }}</th>
+                        <th>{{ knp_pagination_sortable(listKits, 'DesignationSAP', 'DesignationSAP') }}</th>
+                        <th>{{ knp_pagination_sortable(listKits, 'TackLife', 'TackLife') }}</th>
+                        <th>{{ knp_pagination_sortable(listKits, '-18°C', 'PeremptionMoins18') }}</th>
+                        <th>{{ knp_pagination_sortable(listKits, 'Peremption Moulage', 'ADrapAv') }}</th>
+                        <th>{{ knp_pagination_sortable(listKits, 'Peremption Polym', 'ACuirAv') }}</th>
+                        <th>{{ knp_pagination_sortable(listKits, 'Date Decong', 'Decongel') }}</th>
+                        <th>{{ knp_pagination_sortable(listKits, 'Date Creation', 'createdAt') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for listKit in listKits %}
+                        <tr>
+                            <td>{{listKit.idMM}}</td>
+                            <td>{{listKit.ReferenceSAP}}</td>
+                            <td>{{listKit.DesignationSAP}}</td>
+                            <td>{{listKit.TackLife}}</td>
+                            <td>{{listKit.PeremptionMoins18|date('Y-m-d H:i')}}</td>
+                            <td>{{listKit.ADrapAv|date('Y-m-d H:i')}}</td>
+                            <td>{{listKit.ACuirAv|date('Y-m-d H:i')}}</td>
+                            <td>{{listKit.Decongel|date('Y-m-d H:i')}}</td>
+                            <td>{{listKit.createdAt|date('Y-m-d H:i')}}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="d-flex justify-content-center mt-1">
+            {% do listKits.setPageRange(2) %}
+                {{ knp_pagination_render(listKits, 'planning_mc/form/_base_pagination.html.twig')}}
+        </div>
+    </div>
+    <div class="col-lg-5 col-md-4 col-xs-12">
+        <div class="card mb-3">
+            <div class="card-header">
+                KITS TISSUS
+            </div>
+            <div class="card-body"  id="cardKit">
+                <table class="table table-sm">
+                <thead class="thead-inverse">
+                    <tr class="filters">
+                        <th>{{ knp_pagination_sortable(listKits, 'idMM', 'idMM') }}</th>
+                        <th>{{ knp_pagination_sortable(listKits, 'DesignationSAP', 'DesignationSAP') }}</th>
+                        <th>{{ knp_pagination_sortable(listKits, 'Peremption Moulage', 'ADrapAv') }}</th>
+                        <th>{{ knp_pagination_sortable(listKits, 'Peremption Polym', 'ACuirAv') }}</th>
+                        <th>{{ knp_pagination_sortable(listKits, 'Date Decong', 'Decongel') }}</th>
+                        <th>{{ knp_pagination_sortable(listKits, 'Status', 'status') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for listKit in listKits %}
+                        <tr>
+                            <td>{{listKit.idMM}}</td>
+                            <td>{{listKit.DesignationSAP}}</td>
+                            <td>{{listKit.ADrapAv|date('Y-m-d H:i')}}</td>
+                            <td>{{listKit.ACuirAv|date('Y-m-d H:i')}}</td>
+                            <td>{{listKit.Decongel|date('Y-m-d H:i')}}</td>
+                            <td>{{listKit.status}}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+</div>
+</hr>
+<hr>
+<div class="row my-4">
+    <div class="col-lg-4 col-md-5">
+        <div class="card mb-3">
+            <div class="card-header">
+                OUTILLAGES
+            </div>
+            <div class="card-body"  id="cardOT">
+                <h4 class="card-title">Synthèse</h4>
+                <!-- Tableau suivi traitement outillage -->
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="thead-inverse">
+                            <tr class="filters">
+                                <th>{{ knp_pagination_sortable(listOTs, 'Statut', 'pourAvTrait') }}</th>
+                                <th>{{ knp_pagination_sortable(listOTs, 'Ref OT', 'ref') }}</th>
+                                <th>{{ knp_pagination_sortable(listOTs, 'Designation', 'Designation') }}</th>
+                                <th>{{ knp_pagination_sortable(listOTs, 'Dispo', 'Dispo') }}</th>
+                                <th>{{ knp_pagination_sortable(listOTs, 'Nb Cycle Polym', 'NbPolymssTrait') }}</th>
+                                <th> Action </th>
+                            </tr>
+                        </thead>
+                        <tbody id="myTable">
+                            {% for listOT in suiviOT %}
+                                <tr>
+                                    <td>
+                                        {% if listOT.pourAvTrait < 50 %}
+                                            <img id="icone" src="{{asset('build/images/CONFORME.png')}}" alt="{% verbatim %}{{icone}}{% endverbatim %}">
+                                        {% elseif listOT.pourAvTrait > 75 %}
+                                            <img id="icone" src="{{asset('build/images/ANNULATION.png')}}" alt="{% verbatim %}{{icone}}{% endverbatim %}">
+                                        {% else %}
+                                            <img id="icone" src="{{asset('build/images/RETARD.png')}}" alt="{% verbatim %}{{icone}}{% endverbatim %}">
+                                        {% endif %}
+                                    </td>
+                                    <td>{{listOT.Ref}}</td>
+                                    <td>{{listOT.Designation}}</td>
+                                    <td>{{listOT.Dispo}}</td>
+                                    <td>{{listOT.NbPolymssTrait}}</td>
+                                    <td>
+                                        {% if listOT.pourAvTrait > 50 %}
+                                            <a href="#" class="text-warning" data-toggle="tooltip" data-animation="false" title="planifier B15"><span class="m-1" style="font-size: 1em;
+                                        color: Green;"><i class="fa fa-calendar" aria-hidden="true"></i></a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <a href="#" class="btn btn-primary">Button</a>
+            </div>
+        </div>
+        <div class="card mb-3" id="cardMoy">
+            <div class="card-header">
+                MOYENS
+            </div>
+            <div class="card-body">
+                <h4 class="card-title">Disponibilité</h4>
+                <!-- Tableau suivi traitement outillage -->
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="thead-inverse">
+                            <tr class="filters">
+                                <th>{{ knp_pagination_sortable(moyens, 'Nom', 'Libelle') }}</th>
+                                <th>{{ knp_pagination_sortable(moyens, 'Dispo', 'Operationnel') }}</th>
+                                <th>{{ knp_pagination_sortable(moyens, 'Maintenance', 'DateMaintenance') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="myTable">
+                            {% for Moyen in moyens %}
+                                <tr>
+                                    <td>{{Moyen.Libelle}}</td>
+                                    <td>{{Moyen.Operationnel}}</td>
+                                    <td>{{Moyen.DateMaintenance|date('Y-m-d H:i')}}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <a href="#" class="btn btn-primary">Button</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8 col-md-7">
+        <div class="table-responsive">
+            <!-- Tableau suivi traitement outillage -->
+            <div class="d-flex justify-content-start">
+                {{ knp_pagination_filter(listOTs, {'Ref': 'Ref','Designation': 'Designation','Dispo': 'Dispo'}) }}
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm" id="tableOT">
+                    <thead class="thead-inverse">
+                        <tr class="filters">
+                            <th>{{ knp_pagination_sortable(listOTs, 'Ref', 'ref') }}</th>
+                            <th>{{ knp_pagination_sortable(listOTs, 'Designation', 'Designation') }}</th>
+                            <th>{{ knp_pagination_sortable(listOTs, 'NbEmpreinte', 'NbEmpreinte') }}</th>
+                            <th>{{ knp_pagination_sortable(listOTs, 'Cycle', 'CycleMoulage') }}</th>
+                            <th>{{ knp_pagination_sortable(listOTs, 'TpsDecharge', 'TpsDecharge') }}</th>
+                            <th>{{ knp_pagination_sortable(listOTs, 'TpsCharge', 'TpsCharge') }}</th>
+                            <th>{{ knp_pagination_sortable(listOTs, 'Nb TCC', 'NbThermocouples') }}</th>
+                            <th>{{ knp_pagination_sortable(listOTs, 'Nb Indus', 'NbIndus') }}</th>
+                            <th>{{ knp_pagination_sortable(listOTs, 'Date Dispo', 'DateDispo') }}</th>
+                            <th>{{ knp_pagination_sortable(listOTs, 'nbMaxPolym', 'nbMaxPolym') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="myTable">
+                        {% for listOT in listOTs %}
+                            <tr>
+                                <td>{{listOT.Ref}}</td>
+                                <td>{{listOT.Designation}}</td>
+                                <td>{{listOT.NbEmpreinte}}</td>
+                                <td>{{listOT.CycleMoulage|date('H:i')}}</td>
+                                <td>{{listOT.TpsDecharge|date('H:i')}}</td>
+                                <td>{{listOT.TpsCharge|date('H:i')}}</td>
+                                <td>{{listOT.NbThermocouples}}</td>
+                                <td>{{listOT.NbIndus}}</td>
+                                <td>{{listOT.DateDispo|date('Y-m-d H:i')}}</td>
+                                <td>{{listOT.nbMaxPolym}}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-center mt-1">
+                {% do listOTs.setPageRange(2) %}
+                    {{ knp_pagination_render(listOTs, 'planning_mc/form/_base_pagination.html.twig')}}
+            </div>
+        </div>
+    </div>
+</div>
+</hr>
+
+{% endblock %}

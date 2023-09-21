@@ -1,0 +1,8 @@
+
+<select class="select" id="{{ art }}" >
+{% for OF in listOFs %}
+    {% set a = 0 %}
+        <option value=a>{{ OF.OF }}</option>
+    {% set a = a + 1 %}
+{% endfor %}
+</select>

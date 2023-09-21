@@ -116,6 +116,11 @@ class Charge
      */
     private $workLife;
 
+    /**
+     * @ORM\ManyToOne(targetEntity=Moulage::class, inversedBy="of")
+     */
+    private $moulage;
+
     public function __toString(): string
     {
         return (string) $this->getDateDeb()->format('Y-m-d')." | ".
@@ -365,5 +370,17 @@ class Charge
             return $date->format('Y-m-d');
         }
         
+    }
+
+    public function getMoulage(): ?Moulage
+    {
+        return $this->moulage;
+    }
+
+    public function setMoulage(?Moulage $moulage): self
+    {
+        $this->moulage = $moulage;
+
+        return $this;
     }
 }

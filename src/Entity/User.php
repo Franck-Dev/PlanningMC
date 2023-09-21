@@ -2,17 +2,18 @@
 
 namespace App\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
  */
-class User implements UserInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {     
     /**
      * @ORM\Id()
@@ -34,13 +35,13 @@ class User implements UserInterface
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Assert\Length(min=8, minMessage="Minimum de 8 caracteres")
+     * @Assert\Length(min=6, minMessage="Minimum de 6 caracteres")
      */
     private $service;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Assert\Length(min=8, minMessage="Minimum de 8 caracteres")
+     * @Assert\Length(min=6, minMessage="Minimum de 6 caracteres")
      */
     private $poste;
 
@@ -83,6 +84,18 @@ class User implements UserInterface
      * @ORM\OneToMany(targetEntity=NomEquipe::class, mappedBy="Manager")
      */
     private $nomEquipes;
+
+    /**
+     * @ORM\Column(type="array", nullable=true)
+     */
+    private $programmeAvion = [];
+
+    /**
+     * @ORM\Column(type="smallint")
+     */
+    private $idUserApi;
+
+    private $userTokenAPI;
 
     public function __toString(): string
     {
@@ -280,4 +293,47 @@ class User implements UserInterface
         return $this;
     }
 
+    public function getProgrammeAvion(): ?array
+    {
+        if (!empty($this->programmeAvion)) {
+            foreach ($this->programmeAvion as  $key => $value) {
+                if (array_key_exists('designation',$value)) {
+                    $test[$key]=$value['designation'];
+                } else {
+                    $test[$key]=$value;
+                }
+            }
+            return $test;
+        }
+        return $this->programmeAvion;
+    }
+
+    public function setProgrammeAvion(?array $programmeAvion): self
+    {
+        $this->programmeAvion = $programmeAvion;
+
+        return $this;
+    }
+
+    public function getIdUserApi(): ?int
+    {
+        return $this->idUserApi;
+    }
+
+    public function setIdUserApi(int $idUserApi): self
+    {
+        $this->idUserApi = $idUserApi;
+
+        return $this;
+    }
+
+    public function getUserTokenAPI(): ?string
+    {
+        return $this->userTokenAPI;
+    }
+
+    public function setUserTokenAPI(string $userTokenAPI): ?string
+    {
+        return $this->userTokenAPI=$userTokenAPI;
+    }
 }

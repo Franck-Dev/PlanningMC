@@ -258,4 +258,30 @@ public function findJourW($dateF,$dateD)
         // returns an array of Product objects
     return $query -> execute ();
 }
+    /**
+     * Fonction permettant de récupérer la liste des polyms lancées dans un tableau de moyen et svt un statut
+     *
+     * @param  mixed $datedeb
+     * @param  mixed $datefin
+     * @param  array $moyen Tableau liste de moyen à chercher
+     * @param  string $statut Statut à rechercher
+     * @return array Retour de la liste des polyms
+     */
+    public function findChargeStatut(\DateTime $datedeb, \DateTime $datefin, $moyen, $statut): array
+    {
+        $entityManager = $this -> getEntityManager ();
+        $query = $entityManager -> createQuery (
+            'SELECT p
+            FROM App\Entity\PolymReal p LEFT OUTER JOIN  App\Entity\Moyens g WITH g.id = p.Moyens 
+            WHERE p.DebPolym > :dateD AND p.FinPolym < :dateF  AND g.Libelle IN (:moyens) AND p.Statut = :statut
+            ORDER BY p.DebPolym ASC');
+        $query-> setParameter ( 'dateD' , $datedeb );
+        $query-> setParameter ('dateF' , $datefin);
+        $query-> setParameter ('moyens' , $moyen);
+        $query-> setParameter ('statut' , $statut);
+
+        // returns an array of Product objects
+        return $query -> execute ();
+    }
+
 }

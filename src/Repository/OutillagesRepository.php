@@ -70,4 +70,52 @@ class OutillagesRepository extends ServiceEntityRepository
         $results = $query->getResult();
         return $results;
     }
+
+    public function myFindByCyc($dispo, $cycleId){
+        $qb = $this->createQueryBuilder('outillages')
+           ->leftJoin ('outillages.Programme','t')
+           ->andwhere('t.id = :cycle')
+           ->andWhere('outillages.Dispo = :dispo')
+           ->setParameter('cycle', $cycleId)
+           ->setParameter('dispo', $dispo);
+         
+        $query = $qb->getQuery();
+        $results = $query->getResult();
+        return $results;
+    }
+    
+    /**
+     * myFindByChargement Recherche les outillages liés à un chargement
+     *
+     * @param  mixed $idCharge
+     * @return void
+     */
+    public function myFindByChargement($idCharge){
+        $qb = $this->createQueryBuilder('outillages')
+           ->innerJoin ('outillages.chargements','t')
+           ->where('t.id = :id')
+           ->setParameter('id', $idCharge);
+         
+        $query = $qb->getQuery();
+        $results = $query->getResult();
+        return $results;
+    }
+    
+    /**
+     * myFindByAvion Permet de récupérer tous les outillages d'une liste de programme 
+     *
+     * @param  array $listAvions
+     * @param  string $tri (ASC ou DESC)
+     * @return void
+     */
+    public function myFindByAvion($listAvions){
+        $qb=$this->createQueryBuilder('u')
+            ->leftjoin("u.Projet", "t")
+            ->where('t.libelle IN (:avions)')
+            ->setParameter('avions', $listAvions)
+            ->orderBy('u.nbPolymssTrait', 'DESC');
+        $query = $qb->getQuery();
+        $results = $query->getResult();
+        return $results;
+    }
 }

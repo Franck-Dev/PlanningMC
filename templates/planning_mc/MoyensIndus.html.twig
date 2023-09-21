@@ -5,14 +5,63 @@
 {% block title %}APAMC{% endblock %}
 
 {% block body %}
-	<h1>Création des Moyens Pour les Pièces Composites  ! ✅</h1>
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1>Tableau de Bord des Moyens PE Composites  ! ✅</h1>
+        {% if is_granted('ROLE_CE') %}
+                <a href="{{ path('CreationMoyen') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
+                class="fa fa-download fa-sm text-white-50"></i> Création Moyen</a>
+        {% endif %}
+</div>
 <div class="conteiner-fluid">
-    <div class="card shadow">
-        <h4 class="card-header">Répartition Heures par Moyens</h4>
-        <div class="card-block">
-            <div id="ChartProgMoy"></div>
+        <div>
+        <h4>Liste des moyens</h4>
+                <div class="table-responsive text-nowrap">
+                        <!-- Tableau kits tissus découpés -->  
+                        <div class="d-flex justify-content-start mb-1">
+                                {{ knp_pagination_filter(Moyens, {'libelle': 'Libelle','categoryMoyens': 'Category'}) }}
+                        </div>                     
+                        <table class="table table-sm" id="tableKits">
+                                <thead class="thead-inverse">
+                                <tr class="filters">
+                                        <th>{{ knp_pagination_sortable(Moyens, 'Libelle', 'libelle') }}</th>
+                                        <th>{{ knp_pagination_sortable(Moyens, 'Description', 'description') }}</th>
+                                        <th>{{ knp_pagination_sortable(Moyens, 'Service', 'IdService') }}</th>
+                                        <th>{{ knp_pagination_sortable(Moyens, 'Category', 'categoryMoyens') }}</th>
+                                        <th>{{ knp_pagination_sortable(Moyens, 'Operationnel', 'operationnel') }}</th>
+                                        <th>{{ knp_pagination_sortable(Moyens, 'Maintenance', 'DateMaintenance') }}</th>
+                                        <th>{{ knp_pagination_sortable(Moyens, 'Mode', 'nbMode') }}</th>
+                                        <th>Action</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for Moyen in Moyens %}
+                                        <tr>
+                                                <td>{{Moyen.libelle}}</td>
+                                                <td>{{Moyen.description}}</td>
+                                                <td>{{Moyen.IdService}}</td>
+                                                <td>{{Moyen.categoryMoyens}}</td>
+                                                <td>{{Moyen.operationnel}}</td>
+                                                <td>{{Moyen.dateMaintenance|date('Y-m-d H:i')}}</td>
+                                                <td>{{Moyen.nbMode}}</td>
+                                                <td><a href="{{ path('ModificationMoyen', {'id': Moyen.id}) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="Modifier"><span class="m-1" style="font-size: 1.3em; 
+                                                        color: Orange;"><i class="fa fa-pencil"></i></span></a>
+                                                </td>
+                                        </tr>
+                                {% endfor %}
+                                </tbody>
+                        </table>
+                </div>
+                <div class="d-flex justify-content-center mt-1">
+                        {% do Moyens.setPageRange(2) %}
+                        {{ knp_pagination_render(Moyens, 'planning_mc/form/_base_pagination.html.twig')}}
+                </div>
         </div>
-    </div>
+        <div class="card shadow">
+                <h4 class="card-header">Répartition Heures par Moyens</h4>
+                <div class="card-block">
+                <div id="ChartProgMoy"></div>
+                </div>
+        </div>
 </div>
 
 {% endblock %}

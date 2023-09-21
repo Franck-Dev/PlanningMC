@@ -53,9 +53,22 @@ class ChargFige
      */
     private $Programme;
 
+    private $Remplissage;
+
+    /**
+     * @ORM\ManyToMany(targetEntity=Demandes::class, mappedBy="ListCTO")
+     */
+    private $demandes;
+
+    public function __toString(): string
+    {
+        return (string) $this->getCode()." | Remplissage (". $this->getRemplissage() . '%)';
+    }
+
     public function __construct()
     {
         $this->OT = new ArrayCollection();
+        $this->demandes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -145,6 +158,45 @@ class ChargFige
     public function setProgramme(?ProgMoyens $Programme): self
     {
         $this->Programme = $Programme;
+
+        return $this;
+    }
+
+    public function getRemplissage(): ?string
+    {
+        return $this->Remplissage;
+    }
+    
+    public function setRemplissage(string $Remplissage): self
+    {
+        $this->Remplissage = $Remplissage;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Demandes>
+     */
+    public function getDemandes(): Collection
+    {
+        return $this->demandes;
+    }
+
+    public function addDemande(Demandes $demande): self
+    {
+        if (!$this->demandes->contains($demande)) {
+            $this->demandes[] = $demande;
+            $demande->addListCTO($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDemande(Demandes $demande): self
+    {
+        if ($this->demandes->removeElement($demande)) {
+            $demande->removeListCTO($this);
+        }
 
         return $this;
     }

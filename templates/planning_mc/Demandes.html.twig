@@ -50,7 +50,7 @@
 				<h5 class="card-header">Date début plannification</h5>
 				<div class="card-body">
 					<div class="input-group">
-						<form action="{{ path('Demandes')}}" method="POST" onclick=Changeheure()>
+						<form action="{{ path('Demandes',{'service':'MOULAGE'})}}" method="POST" onclick=Changeheure()>
 							<input type="date" id="datejourplanif" name="DatedebPlan" value={{datedeb|date('Y-m-d')}}>
 							<select id='UserCE' name='UtilisateursCE'>
 								{% set a = 0 %}
@@ -102,6 +102,12 @@
 			</div>
 		</div>
 	</div>
+	<!-- Création de la liste des avions du user -->
+	{% set avions={} %}
+	{% for avion in app.user.programmeAvion %}
+		{% set avions = avions | merge([avion]) %}
+	{% endfor %}
+	<!-- Début du tableau des demandes -->
 		<h1>Demandes en cours ✅</h1>
 	{% for Moyen in Moyens %}
     	{% set moy ={id:  Moyen.id ,content: Moyen.Libelle} %}
@@ -109,15 +115,15 @@
 		<!-- Modal -->
 		<div class="modal" id="demandesModal" aria-hidden="true">
 			<div class="modal-dialog" role="document">
-					{# <pre>{{dump('myDat')}}</pre>  #}
 				<div class="modal-content">
 					<div class="modal-header">
 						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
 							<span aria-hidden="true">&times;</span>
 						</button>
 					</div>
+					<!-- Création des demandes avant gestion des outillages APAMC v1.9-->
 					<div class="modal-body" id="content">
-						{{ render(controller('App\\Controller\\PlanningMCController::DemandesCrea',{ 'datejour':  datedeb|date('Y-m-d'), 'user': app.user })) }}
+						{# {{ render(controller('App\\Controller\\PlanningMCController::DemandesCrea',{ 'datejour':  datedeb|date('Y-m-d'), 'user': app.user })) }} #}
 					</div>
 				</div>
 			</div>
@@ -159,7 +165,7 @@
 				
 							</tr>
 				</thead>
-				{% for cycle in Cycles if cycle.datePropose|date('d/m/Y') == myDate|date('d/m/Y') %}					
+				{% for cycle in Cycles|filter(cycle => cycle.datePropose|date('d/m/Y') == myDate|date('d/m/Y')) %}					
 					<tbody class="text-primary">
 					<tr>
 						<td>
@@ -185,14 +191,28 @@
 						<td>{{ cycle.dateCreation ? cycle.dateCreation|date('d/m/Y H:i:s') : '' }}</td>
 						<td>{{ cycle.dateModif ? cycle.dateModif|date('d/m/Y H:i:s') : '' }}</td>
 						<td>
-							{% if app.user.username == cycle.UserCrea and cycle.plannifie == 0 %}
+							<!-- Gestion de l'accès aux demandes suivant user et/ou progAvions -->
+							{% set acces = false %}
+							{% for item in cycle.cycle.avion if not acces %}
+								{% if item.libelle in avions %}
+									{% set acces = true %}
+								{% else %}
+									{% set acces = false %}
+								{% endif %}								
+							{% endfor %}
+
+							{% if app.user.username == cycle.UserCrea and acces == false %}
+								{% set acces = true %}
+							{% endif %}
+
+							{% if acces == true and cycle.plannifie == 0 %}
 								<ul class="fa-ul">
 									<li><a href="{{ path('Modif_Demandes', {'id': cycle.id}) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="Modifier"><span class="m-1" style="font-size: 1.3em; 
 									color: Orange;"><i class="fa fa-pencil"></i></span></a></li>
 									<li><a href="{{ path('Sup_Demandes', {'id': cycle.id}) }}" class="text-danger" data-toggle="tooltip" data-animation="false" title="Supprimer"><span class="m-1" style="font-size: 1.3em;
 									color: Tomato;"><i class="fa fa-trash"></i></span></a></li>
 								</ul>	
-							{% elseif  app.user.username == cycle.UserCrea and cycle.planning.Statut != 'ANNULER' %}
+							{% elseif  acces == true and cycle.planning.Statut != 'ANNULER' %}
 								<ul class="fa-ul">
 									<li><a href="{{ path('Deprog_Demandes', {'id': cycle.id}) }}" class="text-danger" data-toggle="tooltip" data-animation="false" title="Annuler"><span class="m-1" style="font-size: 1.3em;
 								 	color: Tomato;"><i class="fa fa-envelope-o"></i></span></a></li>
@@ -214,8 +234,11 @@
 {% block javascripts %}
 <script src="{{ asset('build/vis.js') }}"></script>
 <script src="{{ asset('build/handlebars.min.js') }}"></script>
-	<script src="{{ asset('build/prototype.js') }}"></script>
-	<script src="{{ asset('build/sweetalert.min.js') }}"></script>
+<script src="{{ asset('build/prototype.js') }}"></script>
+<script src="{{ asset('build/sweetalert.min.js') }}"></script>
+<script src="{{ asset('build/app.js') }}"></script>
+<script src="{{ asset('build/jquery.min.js') }}"></script>
+<script src="{{ asset('build/bootstrap.min.js') }}"></script>
     <script id="item-template" type="text/x-handlebars-template">
             <table class="infos">
                 <tr>
@@ -255,15 +278,6 @@ var options = {
 			zoomKey: "ctrlKey",
             orientation: 'top'};
 var timeline = new vis.Timeline (conteneur, items, groups, options);
-</script>
-
-<script src="{{ asset('build/jquery.min.js') }}"></script>
-<script type="text/javascript">   
-
-function Changeheure()
-{
-
-}
 </script>
 {% endblock %}
 

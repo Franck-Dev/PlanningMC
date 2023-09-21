@@ -91,4 +91,46 @@ class PlanningRepository extends ServiceEntityRepository
         // returns an array of Product objects
         return $query -> execute ();
     }
-}
+        
+    /**
+     * Fonction permettant de récupérer la liste des polyms plannifiées dans un tableau de moyen et svt un statut
+     *
+     * @param  mixed $datedeb
+     * @param  mixed $datefin
+     * @param  array $moyen Tableau liste de moyen à chercher
+     * @param  string $statut Statut à rechercher
+     * @return array Retour de la liste des polyms
+     */
+    public function findChargeStatut(\DateTime $datedeb, \DateTime $datefin, $moyen, $statut): array
+    {
+        $entityManager = $this -> getEntityManager ();
+        //Gestion du statut 'RETARD' en modifiant les dates
+        if ($statut == 'RETARD') {
+            $statut = 'PLANNIFIE';
+            $query = $entityManager -> createQuery (
+                'SELECT p
+                FROM App\Entity\Planning p LEFT OUTER JOIN  App\Entity\Demandes g WITH g.id = p.NumDemande
+                WHERE p.DebutDate > :dateD AND p.DebutDate < :dateF  AND p.Identification IN (:moyens) AND p.Statut = :statut
+                ORDER BY p.DebutDate ASC');
+            $query-> setParameter ( 'dateD' , $datedeb );
+            $query-> setParameter ('dateF' , $datefin);
+            $query-> setParameter ('moyens' , $moyen);
+            $query-> setParameter ('statut' , $statut);
+    
+            // returns an array of Product objects
+            return $query -> execute ();
+        }
+        $query = $entityManager -> createQuery (
+            'SELECT p
+            FROM App\Entity\Planning p LEFT OUTER JOIN  App\Entity\Demandes g WITH g.id = p.NumDemande
+            WHERE p.DebutDate > :dateD AND p.FinDate < :dateF  AND p.Identification IN (:moyens) AND p.Statut = :statut
+            ORDER BY p.DebutDate ASC');
+        $query-> setParameter ( 'dateD' , $datedeb );
+        $query-> setParameter ('dateF' , $datefin);
+        $query-> setParameter ('moyens' , $moyen);
+        $query-> setParameter ('statut' , $statut);
+
+        // returns an array of Product objects
+        return $query -> execute ();
+    }    
+}   

@@ -69,4 +69,17 @@ class ArticlesRepository extends ServiceEntityRepository
         $results = $query->getResult();
         return $results;
     }
+
+    public function myFindByArtProg($RefPC, $cycle){
+        $qb = $this->createQueryBuilder('articles')
+           ->leftJoin ('articles.ProgPolym','t')
+           ->where('articles.Reference = :ref')
+           ->andWhere('t.Nom = :cyc')
+           ->setParameter('ref', $RefPC)
+           ->setParameter('cyc', $cycle);
+         
+        $query = $qb->getQuery();
+        $results = $query->getResult();
+        return $results;
+    }
 }

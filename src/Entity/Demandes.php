@@ -95,13 +95,30 @@ class Demandes
     private $RecurValide;
 
     /**
-     * @ORM\OneToMany(targetEntity=Charge::class, mappedBy="demandes")
+     * @ORM\OneToMany(targetEntity=Charge::class, mappedBy="demandes", fetch="EAGER")
      */
     private $ListOF;
+
+    /**
+     * @ORM\OneToOne(targetEntity=Chargement::class, cascade={"persist", "remove"})
+     */
+    private $Chargement;
+
+    /**
+     * @ORM\ManyToMany(targetEntity=ChargFige::class, inversedBy="demandes")
+     */
+    private $ListCTO;
+
+    /**
+     * @ORM\ManyToMany(targetEntity=Outillages::class, inversedBy="demandes", fetch="EAGER")
+     */
+    private $ListOT;
 
     public function __construct()
     {
         $this->ListOF = new ArrayCollection();
+        $this->ListCTO = new ArrayCollection();
+        $this->ListOT = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -322,6 +339,66 @@ class Demandes
                 $listOF->setDemandes(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getChargement(): ?Chargement
+    {
+        return $this->Chargement;
+    }
+
+    public function setChargement(?Chargement $Chargement): self
+    {
+        $this->Chargement = $Chargement;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ChargFige>
+     */
+    public function getListCTO(): Collection
+    {
+        return $this->ListCTO;
+    }
+
+    public function addListCTO(ChargFige $listCTO): self
+    {
+        if (!$this->ListCTO->contains($listCTO)) {
+            $this->ListCTO[] = $listCTO;
+        }
+
+        return $this;
+    }
+
+    public function removeListCTO(ChargFige $listCTO): self
+    {
+        $this->ListCTO->removeElement($listCTO);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, outillages>
+     */
+    public function getListOT(): Collection
+    {
+        return $this->ListOT;
+    }
+
+    public function addListOT(outillages $listOT): self
+    {
+        if (!$this->ListOT->contains($listOT)) {
+            $this->ListOT[] = $listOT;
+        }
+
+        return $this;
+    }
+
+    public function removeListOT(outillages $listOT): self
+    {
+        $this->ListOT->removeElement($listOT);
 
         return $this;
     }

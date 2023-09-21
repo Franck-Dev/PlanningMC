@@ -22,7 +22,7 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
         main:
-            provider: your_custom_user_provider
+            #provider: your_custom_user_provider
             custom_authenticators:
                 - App\Security\ApiKeyAuthenticator
             lazy: true
@@ -43,14 +43,15 @@ security:
             # https://symfony.com/doc/current/security/impersonating_user.html
             # switch_user: true
     role_hierarchy:
-        ROLE_SUPER_ADMIN: [ROLE_ADMIN, ROLE_RESP_OUTIL, ROLE_RESP_LABO, ROLE_RESP_ASS, ROLE_RESP_QUALITE]
+        ROLE_SUPER_ADMIN: [ROLE_ADMIN, ROLE_RESP_OUTIL, ROLE_RESP_LABO, ROLE_RESP_ASS, ROLE_RESP_QUALITE, ROLE_CE]
         ROLE_ADMIN:       [ROLE_PROGRAMMEUR, ROLE_SUPERVISEUR]
         ROLE_PROGRAMMEUR: [ROLE_METHODES, ROLE_USER]
         ROLE_SUPERVISEUR: [ROLE_RESP_POLYM, ROLE_GESTIONAIRE]
         ROLE_CE_POLYM:    [ROLE_PLANIF, ROLE_REGLEUR,ROLE_GESTION_EQ]
         ROLE_CE_MOULAGE:  [ROLE_MOULEUR,ROLE_GESTION_EQ]
         ROLE_CE_ASS:      [ROLE_AJUSTEUR,ROLE_GESTION_EQ]
-        ROLE_RESP_POLYM:  [ROLE_CE_POLYM, ROLE_CE_MOULAGE]
+        ROLE_CE_GESTION:  [ROLE_GESTIONNAIRE,ROLE_GESTION_EQ]
+        ROLE_RESP_POLYM:  [ROLE_CE_POLYM, ROLE_CE_MOULAGE, ROLE_GESTION_EQ]
         ROLE_RESP_MOULAGE: [ROLE_CE_MOULAGE]
         ROLE_RESP_ASS:    [ROLE_CE_ASS]
         ROLE_MOULEUR:     [ROLE_USER]
@@ -69,6 +70,7 @@ security:
         ROLE_RESP_OUTIL: [ROLE_CE_OUTIL]
         ROLE_CONTROLEUR_OUTIL:  [ROLE_USER]
         ROLE_GESTION_EQ:    [ROLE_USER]
+        ROLE_CE:    [ROLE_CE_OUTIL,ROLE_CE_LABO,ROLE_CE_QUALITE,ROLE_CE_GESTION,ROLE_CE_MOULAGE,ROLE_CE_ASS,ROLE_CE_POLYM]
         
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used

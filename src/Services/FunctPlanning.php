@@ -7,7 +7,16 @@ use App\Repository\PlanningRepository;
 use App\Repository\PolymRealRepository;
 
 class FunctPlanning
-{
+{    
+    /**
+     * Function permettant de récupérer les datas en forme pour le planning Vue.js
+     *
+     * @param  mixed $repo RepositoryPlanning
+     * @param  mixed $repos RepositoryMoyens
+     * @param  mixed $repi RepositoryPolymReal
+     * @param  mixed $params Filtre sur statut des polyms plannifiées
+     * @return void Résultat sous forme html pour consommation par Vue.js
+     */
     public function planning(PlanningRepository $repo, MoyensRepository $repos, PolymRealRepository $repi, $params=null) {
         if ($params) {
             $Taches=$repo -> findBy(['Statut'=>$params]);
@@ -31,10 +40,10 @@ class FunctPlanning
                 //On cherche le moyen attribué à la polym suivant la demande et l'activité Plannification
                 $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification(),'Activitees'=> 'Plannifie']);
                 if($Pourc<75){
-                    $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires,'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%; background:red"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
+                    $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires,'visibleFrameTemplate' => '<div class="progress"><div class="progress-bar progress-bar-warning" role="progressbar" style="width:' .$Pourc.'%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">' .$Pourc. '%</div></div>'];
                 }
                 else{
-                    $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires, 'visibleFrameTemplate' => '<div class="progress-wrapper"><div class="progress" style="width:'.$Pourc.'%"></div><label class="progress-label">'.$Pourc.'%<label></div>'];
+                    $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires, 'visibleFrameTemplate' => '<div class="progress"><div class="progress-bar progress-bar-success" role="progressbar" style="width:' .$Pourc.'%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">' .$Pourc. '%</div></div>'];
                 }
                 
                 $i = $i + 1;
@@ -64,9 +73,9 @@ class FunctPlanning
         return $result=[$data];
     }
 
-    public function moyens(MoyensRepository $repos) {
+    public function moyens(MoyensRepository $repos, int $idServ) {
         //Recherche des moyens à afficher sur planning
-        $moyens=$repos -> findAllMoyensSvtService ( intval('8'), intval('1') );
+        $moyens=$repos -> findAllMoyensSvtService ( $idServ, intval('1') );
         $item=$moyens;   
         $data = [];
         $TbEtat=[];

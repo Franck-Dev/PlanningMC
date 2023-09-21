@@ -4,3 +4,9 @@
 #index:
 #    path: /
 #    defaults: { _controller: 'App\Controller\DefaultController::index' }
+CreaDemPolymf:
+    path: /Creation/PolymDirect
+    controller: App\Controller\PlanningMCController::CreaDemPolymf
+CreaDemPolym:
+    path: /PlanningMC/ModificationPolym
+    controller: App\Controller\PlanningMCController::CreaDemPolym

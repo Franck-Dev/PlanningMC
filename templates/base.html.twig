@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <title>{% block title %}APAMC{% endblock %}</title>
-		<link rel="stylesheet" href="https://bootswatch.com/4/lumen/bootstrap.min.css">
+
 		<link rel="stylesheet" href="{{ asset('build/bootstrap.min.css') }}">
         <link rel="stylesheet" href="{{ asset('build/App.css') }}">
         <!-- Add icon library -->
@@ -25,6 +25,45 @@
             td{
                 font-weight: bold;
                 color:  #6EB4CD;
+            }
+            .lds-dual-ring.hidden { 
+             display: none;
+            }
+            .lds-dual-ring {
+                display: inline-block;
+                width: 80px;
+                height: 80px;
+            }
+            .lds-dual-ring:after {
+                content: "WAIT";
+                display: block;
+                width: 64px;
+                height: 64px;
+                margin: 5% auto;
+                border-radius: 50%;
+                border: 6px solid #fff;
+                border-color: #fff transparent #fff transparent;
+                animation: lds-dual-ring 1.2s linear infinite;
+            }
+            @keyframes lds-dual-ring {
+                0% {
+                    transform: rotate(0deg);
+            }
+                100% {
+                    transform: rotate(360deg);
+            }
+            }
+
+            .overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100vh;
+                background: rgba(0,0,0,.8);
+                z-index: 999;
+                opacity: 1;
+                transition: all 0.5s;
             }
         </style>
         {% endblock %}
@@ -50,28 +89,28 @@
                             <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id={{ menu.Nom }}>{{menu.Nom}}<span class="caret"></span></a>
                                 <div class="dropdown-menu" aria-labelledby={{menu.Nom}}>
-                                    <a class="dropdown-item" href="{{path(menu.IdSmenu1)}}">{{menu.IdSmenu1}} </a>
-                                    <a class="dropdown-item" href="{{path(menu.IdSmenu2)}}">{{menu.IdSmenu2}}</a>
+                                    <a class="dropdown-item" href="{{path(menu.IdSmenu1, {'service':menu.Nom})}}">{{menu.IdSmenu1}} </a>
+                                    <a class="dropdown-item" href="{{path(menu.IdSmenu2, {'service':menu.Nom})}}">{{menu.IdSmenu2}}</a>
                                     <div class="dropdown-divider"></div>
                                     {% if menu.IdSmenu3 is empty %}
                                     {% else %}
-                                        <a class="dropdown-item" href="{{path(menu.IdSmenu3)}}">{{menu.IdSmenu3}}</a>
+                                        <a class="dropdown-item" href="{{path(menu.IdSmenu3, {'service':menu.Nom})}}">{{menu.IdSmenu3}}</a>
                                     {% endif %}
                                     {% if menu.IdSmenu4 is empty %}
                                     {% else %}
-                                        <a class="dropdown-item" href="{{path(menu.IdSmenu4)}}">{{menu.IdSmenu4}}</a>
+                                        <a class="dropdown-item" href="{{path(menu.IdSmenu4, {'service':menu.Nom})}}">{{menu.IdSmenu4}}</a>
                                     {% endif %}
                                     {% if menu.IdSmenu5 is empty %}
                                     {% else %}
-                                        <a class="dropdown-item" href="{{path(menu.IdSmenu5)}}">{{menu.IdSmenu5}}</a>
+                                        <a class="dropdown-item" href="{{path(menu.IdSmenu5, {'service':menu.Nom})}}">{{menu.IdSmenu5}}</a>
                                     {% endif %}
                                     {% if menu.IdSmenu6 is empty %}
                                     {% else %}
-                                        <a class="dropdown-item" href="{{path(menu.IdSmenu6)}}">{{menu.IdSmenu6}}</a>
+                                        <a class="dropdown-item" href="{{path(menu.IdSmenu6, {'service':menu.Nom})}}">{{menu.IdSmenu6}}</a>
                                     {% endif %}
                                     {% if menu.IdSmenu7 is empty %}
                                     {%else%}
-                                        <a class="dropdown-item" href="{{path(menu.IdSmenu7)}}">{{menu.IdSmenu7}}</a>
+                                        <a class="dropdown-item" href="{{path(menu.IdSmenu7, {'service':menu.Nom})}}">{{menu.IdSmenu7}}</a>
                                     {% endif %}
                                 </div>
                             </li>
@@ -103,6 +142,8 @@
                     <input class="form-control mr-sm-2" type="text" placeholder="Search">
                     <button class="btn btn-secondary my-2 my-sm-0" type="submit">Search</button></pre>#} 
                     </form>
+                    <a href="{{ path('Modif_User', {'id': app.user.id}) }}" class="text-warning" data-toggle="tooltip" data-animation="false" title="Modifier"><span class="m-1" style="font-size: 1.5em;
+                    color: Blue;"><i class="fa fa-edit"></i></span></a>
                 {% else %}
                     <form class="form-inline my-2 my-lg-0">
                         <a href="#" class="btn btn-primary disabled">Visiteur</a>
@@ -120,6 +161,9 @@
         {% endfor %}
 		{% block body %}{% endblock %}
 		</div>
+        <div class="cont d-flex justify-content-center align-items-center">
+            <div id="loader" class="lds-dual-ring hidden overlay"></div>
+        </div>
 		{% block javascripts %}
             <script src="{{ asset('build/app.js') }}"></script>
             <script src="{{ asset('build/jquery.min.js') }}"></script>

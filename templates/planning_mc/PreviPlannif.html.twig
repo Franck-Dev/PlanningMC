@@ -59,7 +59,7 @@ td{
                     
                             </tr>
                     </thead
-                    {% for key, test in tests if test.PlanningSAP.Jour|date('d/m/Y') == myDate|date('d/m/Y') %}  
+                    {% for key, test in tests|filter(test => test.PlanningSAP.Jour|date('d/m/Y') == myDate|date('d/m/Y')) %}  
                     <tbody>
                         {% set nameTarget = ['#','collapse',loop.index]|join %}
                         <tr class="accordion-toggle"  data-toggle="collapse" data-target={{nameTarget}} id="{{ test.PlanningSAP.Cycles }}" 
@@ -199,7 +199,7 @@ function SelectCTO(ID,jour,prog,dossiers) {
 	$.ajax({
 		cache: false,
 		type: 'POST',
-        data: {nom: tbDatasChargt[0].innerText, remp: pourcRemp, jour: dateJour, cycle: prog, charge: dossiers},
+        data: {nom: tbDatasChargt[0].innerText, remp: pourcRemp, jour: dateJour, cycle: prog, charge: dossiers, route : 'PreviPlannif'},
 		url: "{{ path('Chargt_Crea') }}",
 		success: function(data) 
 		{
@@ -244,7 +244,6 @@ function detailsOF(idPlannif,DateP,Cycle) {
             });
 		}
 	});
-    alert(Cycle);
 }
 </script>
 {% endblock %}

@@ -3,11 +3,12 @@
 namespace App\Services;
 
 use phpDocumentor\Reflection\Types\Boolean;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Encoder\JsonEncode;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * CallApiService accèdeaux données des API
@@ -81,17 +82,40 @@ class CallApiService
         }
         $path=$_ENV['APP_SERVER'].$port_api;
         //Requette
-        dump($path.$url);
-        $response = $this->client->request(
-            $method,
-            $path.$url,
-            [
-                'headers' => ['content-type'=>'application/json',
-                                'X-AUTH-TOKEN'=>$apiToken
-            ],
-                'json' => $tabBody
-            ]
-        );
+        //dump($path.$url);
+        //Gestion du content-type suivant méthodes
+        if ($method === 'PATCH') {
+            $contenType='application/merge-patch+json';
+        } else {
+            $contenType='application/json';
+        }
+        
+        if (!$tabBody) {
+            $response = $this->client->request(
+                $method,
+                $path.$url,
+                [
+                    'headers' => ['content-type'=>$contenType,
+                                    'X-AUTH-TOKEN'=>$apiToken
+                ]]
+            );
+        } else {
+            $keyCookie = (array_key_exists('PHPSESSID',$_COOKIE)!=true) ? null : $_COOKIE['PHPSESSID'];
+            $cookie=Cookie::create('PHPSESSID')
+                ->withValue($keyCookie)
+                ->withExpires(strtotime('Fri, 20-September-2023 15:25:52 GMT'))
+                ->withDomain('localhost')
+                ->withSecure(true);
+            $response=$this->client->withOptions(['headers'=>['cookie'=>$cookie]]);
+            $response = $this->client->request(
+                $method,
+                $path.$url,
+                [
+                    'headers' => ['content-type'=>$contenType
+                ],
+                    'json' => $tabBody
+                ]
+            );}
         return $response->toArray();
     }
     

@@ -4,7 +4,20 @@
 {% block stylesheets %}
     <link rel="stylesheet" href="{{ asset('build/vis.css') }}">
     <style type="text/css">
-
+        .tooltip-inner {
+            max-width: none;
+            height: 100%;
+            white-space: nowrap;
+            background:white;
+            border:1px solid lightgray;
+            -webkit-box-shadow: 0px 3px 3px 0px rgba(0,0,0,0.3);
+            -moz-box-shadow: 0px 3px 3px 0px rgba(0,0,0,0.3);
+            box-shadow: 0px 3px 3px 0px rgba(0,0,0,0.3);
+            color:gray;
+            margin:0;
+            padding:0;
+            font-size: x-large;
+        }
         .card-header {
             color: black;
             font:   blue;
@@ -183,13 +196,13 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div id="Modale" class="modal-body">
-                {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolym',{'user': app.user}) )}}
+            <div id="Content" class="modal-body">
+                {# {{ render(controller('App\\Controller\\PlanningMCController::CreaDemPolym',{'user': app.user}) )}} #}
             </div>
         </div>
     </div>
 </div>
- {#<pre>{{dump(items)}}</pre>#}  
+ {# <pre>{{dump(tests)}}</pre> #}
  {#<pre> {{ dump(app.request.attributes.get("demande")) }} </pre>#}    
     <div class="table-responsive">
         <table class="table">
@@ -215,7 +228,7 @@
                     <thead class="text-primary">
                             <tr> 
                                 <!-- Titre du tableau -->
-                                    <th> Id </th>
+                                    <th> Demande </th>
                                     <th> Cycle </th>
                                     <th> Date et Heure Début </th>
                                     <th> Heure Fin Théo </th>
@@ -228,7 +241,7 @@
                     
                             </tr>
                     </thead>
-                    {% for test in tests if test.datePropose|date('d/m/Y') == myDate|date('d/m/Y') %}<!-- Boucle sur toutes les demandes effectuées -->	
+                    {% for test in tests|filter(test => test.datePropose|date('d/m/Y') == myDate|date('d/m/Y'))  %}<!-- Boucle sur toutes les demandes effectuées -->	
                     {% set durecycle = test.cycle.duree | date('H:i') %}<!-- Mise au format des durée de polymérisation -->
                     {% set dureecycle = [durecycle|date('H'),'hours',' ',durecycle|date('i'),'minutes']|join %}	
                     {% set nominputHF = ['HeureFin',test.Id]|join %}<!-- Conception des noms des inputs contenant la date de fin après calculfin -->
@@ -243,19 +256,20 @@
                     {% set dateurdeb = [test.datepropose|date('Y/m/d'),' ',test.heurepropose|date('H:i')]|join %}<!-- Mise en forme de la date et heure de départ de polymérisation -->	
                     {% set UrlId = ['UrlId',test.Id]|join %}<!-- Conception des noms des inputs cachés contenant l'url de la demande à traiter' -->
                     {% set CycleId = ['CycleId',test.Id]|join %}<!-- Conception des noms des inputs cachés contenant le cycle de la demande à traiter' -->
-
+                    {% set toolTipId = ['ToolTipId',test.Id]|join %}<!-- Conception des noms des inputs cachés contenant la demande à traiter' -->
                     <tbody>
-                        <tr id="{{ test.Id }}" {% if (test.plannifie == 1) %}
+                        <tr id="{{ test.Id }}"
+                            {% if (test.plannifie == 1) %}
                                 style="background-color:green"
                             {% else %}
-                            style="background-color:red"
+                                style="background-color:red"
                             {% endif %} 
                         >
-                            <td>{{ test.Id }}</td>
-                            <td>{{ test.cycle.nom }}</td>
+                            <td data-toggle="tooltip" data-html="true" title="{{test.userCrea}}">{{ test.Id }}</td>
+                            <td data-toggle="tooltip" data-html="true" title="{{test.outillages}}">{{ test.cycle.nom }}</td>
                             <td><input id='{{nominputHD}}' type="datetime-local" name="appt-time" value={{ dateurdeb|date('Y-m-d\\TH:i') }} onblur=calculfin('{{durecycle|date('H:i')}}',this.value,{{test.Id}}) pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}" required></td><!-- Calcul de la nouvelle date de fin suite modification de la date de départ -->
                             <td><input id='{{nominputHF}}' type="datetime-local" name="appt-time" value={{ dateurdeb|date_modify( dureecycle )|date('Y-m-d\\TH:i') }} pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}" required> </td><!-- Intégration de la date et heure de fin suivant la durée du cycle -->
-                            <td>{{ test.outillages }}</td>
+                            <td onmouseover='listeOT({{toolTipId}},"{{test.Id}}")' id='{{toolTipId}}'>{{ test.listOT|length }}</td>
                             <td>{{ test.reccurance ? 'OUI' : 'NON'}}</td>
                             <td><input id='{{nominputS}}' type="hidden" value={{ test.plannifie ? 'OUI' : 'NON'}} readonly>
                                 {% if (test.recurvalide == true)  %}
@@ -270,9 +284,17 @@
                             </td>
                             <td> {% if (test.plannifie == 0) %}
                                     <select id='{{nomselectM}}'>
-                                        {% for numero in items %}
-                                            <option value={ numero.libelle }>{{ numero.libelle }}</option>
-                                        {% endfor %}   
+                                        <!-- Si programme avec moyen validé, on récupère cette liste, Sinon on récupère la liste entière des moyens du service  -->
+                                        {% if test.cycle.moyenVal is empty%}
+                                            {% for numero in items %}
+                                                <option value={ numero.libelle }>{{ numero.libelle }}</option>
+                                            {% endfor %}
+                                        {% else %}
+                                             {% for numero in test.Cycle.moyenVal %}
+                                                <option value={ numero.libelle }>{{ numero.libelle }}</option>
+                                            {% endfor %}
+                                        {% endif %}
+                                          
                                     </select><br>
                                     {{ test.moyenutilise }}
                                 {% else %}
@@ -310,32 +332,36 @@
 </div>
 {% endblock %}
 {% block javascripts %}
+<script src="{{ asset('build/popper.min.js') }}"></script>
 <script src="{{ asset('build/canvasjs.min.js') }}"></script>
 <script src="{{ asset('build/tether.min.js') }}"></script>
 <script src="{{ asset('build/vis.js') }}"></script>
 <script src="{{ asset('build/handlebars.min.js') }}"></script>
-<script src="{{ asset('build/prototype.js') }}"></script>
+{# <script src="{{ asset('build/prototype.js') }}"></script> #}
 <script src="{{ asset('build/sweetalert.min.js') }}"></script>
 <script src="{{ asset('build/jquery.min.js') }}"></script>
 <script src="{{ asset('build/bootstrap.min.js')}}"></script>
 <script id="item-template" type="text/x-handlebars-template">
-            <table class="infos">
-                <tr>
-                    <td colspan="3" class="programmes">{% verbatim %}{{programmes}}{% endverbatim %}</td>
-                    <th><img src="{{asset('build/images/{{statut}}.png')}}" width="31" height="20" alt="{% verbatim %}{{icone}}{% endverbatim %}"></th>
-                    <td colspan="3" class="statut">{% verbatim %}{{statut}}{% endverbatim %}</td>
-                </tr>
-            </table>
-    </script>
-    <script id="item-popup" type="text/x-handlebars-template">
-            <table class="infos">
-                <tr>
-                    <td colspan="3" class="programmes">{% verbatim %}{{programmes}}{% endverbatim %}</td>
-                    <td colspan="3" class="statut">{% verbatim %}{{statut}}{% endverbatim %}</td>
-                </tr>
-            </table>
-    </script>
+    <table class="infos">
+        <tr>
+            <td colspan="3" class="programmes">{% verbatim %}{{programmes}}{% endverbatim %}</td>
+            <th><img src="{{asset('build/images/{{statut}}.png')}}" width="31" height="20" alt="{% verbatim %}{{icone}}{% endverbatim %}"></th>
+            <td colspan="3" class="statut">{% verbatim %}{{statut}}{% endverbatim %}</td>
+        </tr>
+    </table>
+</script>
+<script id="item-popup" type="text/x-handlebars-template">
+    <table class="infos">
+        <tr>
+            <td colspan="3" class="programmes">{% verbatim %}{{programmes}}{% endverbatim %}</td>
+            <td colspan="3" class="statut">{% verbatim %}{{statut}}{% endverbatim %}</td>
+        </tr>
+    </table>
+</script>
 <script type="text/javascript">
+$(document).ready(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+        });
 //Mise à jour de l'indicateur d'occupation moyen à chaque click
 function MaJkpi(id,Url){
     //console.log(document.getElementById(id));
@@ -510,7 +536,7 @@ var options = {
                         },
                         success: function(data){
                             console.log(data);                           
-                            $('#Modale').html(data); // affichage des résultats dans la modal
+                            $('#Content').html(data); // affichage des résultats dans la modal
                             $('#Modale').show();
                         }
                     });
@@ -830,7 +856,25 @@ $(function(){
 				});
             RepartitionCharge.render();
 });
-
+//Requette pour renvoyer la liste des Outillages d'une demande
+function listeOT(idToolTip,idDemande) {
+    var cibleNbrPcs=document.getElementById(idToolTip);
+    $.ajax({
+		cache: false,
+		type: 'POST',
+        data: {demande: idDemande},
+		url: "{{ path('Charge_OT') }}",
+		success: function(data) 
+		{
+            $(idToolTip).tooltip({
+                animated: 'fade',
+                placement: 'bottom',
+                html: true,
+                title : data
+            });
+		}
+	});
+}
 </script>
 {% endblock %}
 

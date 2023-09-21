@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Entity\ChargFige;
 use App\Repository\ChargeRepository;
 use App\Repository\ArticlesRepository;
 use App\Repository\ChargementRepository;
@@ -118,11 +119,12 @@ class FunctChargPlan
      * @return void
      * Retourne un array comportant la liste des OTs du CTO
      */
-    private function checkOTCTO($ChargementsFiG, $repo, $Out, $Art, $Creno) {
+    public function checkOTCTO($ChargementsFiG, $repo, $Out, $Art, $Creno) {
          
         $q=0;         
         //On  va récupérer les OT composants chaque CTO
         foreach($ChargementsFiG as $ChargeFiG){
+            dump($ChargeFiG);
             //Pour chaque chargement figé on récupère sa composition en outillages
             $listeOT = $Out->myFindByCharFiG($ChargeFiG->getCode());
             if ($listeOT) {
@@ -169,11 +171,11 @@ class FunctChargPlan
             //On cherche les articles liés à chaque OT
             $ArtOFCTJ=$Art->myFindByOT($OTCTO->getRef());
             // Cas des OT multi empreintes
-            dump('Liste des articles composant l\'OT'.$OTCTO->getRef());
+            dump('Liste des articles composant l\''.$OTCTO->getRef());
             dump($ArtOFCTJ);
             if (sizeof($ArtOFCTJ)>1) {
                 dump('Attention multi empreintes à traiter');
-                $retourDatas=$this->checkOFChargMultiEmp($ArtOFCTJ, $Creno, $Horizon, $repo, $Art);
+                $retourDatas=$this->checkOFChargMultiEmp($ArtOFCTJ, $Creno, $Horizon, $repo, $Art, $OTCTO);
             } elseif (sizeof($ArtOFCTJ)==1) {
                 //Il y a une seule pièce sur l'outillage
                 $retourDatas[0]=$this->checkOFCharge($ArtOFCTJ[0], $Creno, $Horizon, $repo);
@@ -231,7 +233,7 @@ class FunctChargPlan
         if ($OFPast) {
             //Récupération de l'article trouvé
             $deltaJours=date_diff(clone($Creno['Jour']), $OFPast[0]['DateDeb']);
-                $datasOF=["OF" => $OFPast[0]['OF'], "Designation" => $OFPast[0]['Designation'], "Horizon"=> $deltaJours->format('%R%a')];
+                $datasOF=["OF" => $OFPast[0]['OF'], "Designation" => $OFPast[0]['Designation'], "Horizon"=> $deltaJours->format('%R%a'), "Ref" => $ArtOT->getReference()];
                 $refOK=true;
             } else {
             //On va chercher dans l'horizon si on trouve des OF correspondant au cycle en cours
@@ -245,7 +247,7 @@ class FunctChargPlan
                 //Dans les OF trouvés, vérification si un OF de la ref existe
                 foreach ($chargeTotJour as $ArtCTJ) {
                     if ($ArtOT->getReference() == $ArtCTJ->getReferencePcs()) {
-                        $datasOF=["OF" => $ArtCTJ->getOrdreFab(), "Designation" => $ArtCTJ->getDesignationPCS(), "Horizon"=> $ix];
+                        $datasOF=["OF" => $ArtCTJ->getOrdreFab(), "Designation" => $ArtCTJ->getDesignationPCS(), "Horizon"=> $ix, "Ref" => $ArtCTJ->getReferencePcs()];
                         $refOK=true;
                         dump('On a trouvé la référence');
                         dump($datasOF);
@@ -261,7 +263,7 @@ class FunctChargPlan
             dump($OFArtManq);
             if ($OFArtManq) {
                 $deltaJours=date_diff($dateInit, $OFArtManq->getDateDeb());
-                $datasOF=["OF" => $OFArtManq->getOrdreFab(), "Designation" => $OFArtManq->getDesignationPCS(), "Horizon"=> $deltaJours->format('%R%a')];
+                $datasOF=["OF" => $OFArtManq->getOrdreFab(), "Designation" => $OFArtManq->getDesignationPCS(), "Horizon"=> $deltaJours->format('%R%a'), "Ref" => $ArtCTJ->getReferencePcs()];
             } else {
                 $Message[$i]='Manque la référence '.$ArtOT->getReference(). ', '.$ArtOT->getDesignation();
                 dump($Message);
@@ -280,17 +282,20 @@ class FunctChargPlan
      * @param  mixed $repo
      * @return void
      */
-    private function checkOFChargMultiEmp($ArtOT, $Creno, $Horizon, $repo, $Art) {
+    private function checkOFChargMultiEmp($ArtOT, $Creno, $Horizon, $repo, $Art, $OT) {
         
         $r=0;
         $retourDatas=[];
         foreach ($ArtOT as $RefOT){
-            // Il faut vérifier si l'article correspond à la polym
-            $datasArtOT=$Art->findBy(['Reference'=>$RefOT->getReference()]);
-            // Si ok, recherche d'un OF dans la charge
-            $ChargEmp=$this->checkOFCharge($RefOT, $Creno, $Horizon, $repo);
+            // Il faut vérifier si l'article correspond à la polym et si série
+            if ($Art->myFindByArtProg($RefOT->getReference(), $Creno['Cycles'])) {
+                // Si ok, recherche d'un OF dans la charge
+                $ChargEmp=$this->checkOFCharge($RefOT, $Creno, $Horizon, $repo);
+            }
+            //Voir si controle du nombre d'empreintes outillages
             if (empty($ChargEmp)===false) {
                 $retourDatas[$r]=$ChargEmp;
+                $ChargEmp=[];
                 $r++;
             }
         }

@@ -6,11 +6,15 @@ use App\Entity\User;
 use App\Entity\Moyens;
 use App\Entity\ConfSmenu;
 use App\Form\ModifMdPType;
+use App\Form\ModifUserType;
+use App\Services\ComService;
 use App\Form\RegistrationType;
-use App\Security\ApiKeyAuthenticator;
 use App\Services\CallApiService;
+use App\Security\ApiKeyAuthenticator;
+use Symfony\Component\Form\FormError;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\Common\Persistence\ObjectManager;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,18 +22,16 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
 class SecurityController extends AbstractController
 {
     /**
     * @Route("/inscription", name="security_registration")
     */
-    Public function registration(request $request, EntityManagerInterface  $manager, UserPasswordHasherInterface $encoder, ManagerRegistry $manaReg){
+    Public function registration(request $request, ManagerRegistry $manaReg, CallApiService $api, UserPasswordHasherInterface $encoder, ComService $com){
         $repo=$manaReg->getRepository(ConfSmenu::class);
 
         $Titres=$repo -> findAll();
@@ -37,50 +39,52 @@ class SecurityController extends AbstractController
         $user= new User();
         $form=$this->createForm(RegistrationType::class, $user);
         $form->handleRequest($request);
+
         if($form->isSubmitted() && $form->isValid()){
-            $hash=$encoder->hashPassword($user, $user->getPassword());
-            //Attribution des rôles suivant les postes (a revoir pour faire une page admin)
-            switch ($user->getService()->getNom()) {
-                case "METHODES PE":
-                    if($user->getPoste()->getLibelle() == "Programmeur"){
-                        $user->setRoles(['ROLE_METHODES','ROLE_PROGRAMMEUR']);
-                    } elseif ($user->getPoste()->getLibelle() == "Support") {
-                        //dump($user->getPoste()->getLibelle());
-                        $user->setRoles(['ROLE_METHODES','ROLE_DATATOOLS']);
-                    }else{
-                        $user->setRoles(['ROLE_METHODES']);
-                    }
-                    break;
-                case "MOYEN CHAUD":
-                    if($user->getPoste()->getLibelle() == "Maitrise"){
-                        $user->setRoles(['ROLE_CE_POLYM']);
-                    }else{
-                        $user->setRoles(['ROLE_REGLEUR']);
-                    }
-                    break;
-                case "MOULAGE":
-                    if($user->getPoste()->getLibelle() == "Maitrise"){
-                        $user->setRoles(['ROLE_CE_MOULAGE']);
-                    }elseif($user->getPoste()->getLibelle() == "Responsable"){
-                        $user->setRoles(['ROLE_RESP_MOULAGE']);
-                    }  
-                    else{
-                        $user->setRoles(['ROLE_USER']);
-                    }
-                    break;
-                case "EXTER":
-                    $user->setRoles(['ROLE_USER']);
-                break;
-                case "ORDO":
-                    $user->setRoles(['ROLE_GESTIONAIRE']);
-                break;
+            // Création liste avions
+            dump($form->getData());
+            if ($form->getData()->getProgrammeAvion()){
+                foreach($form->getData()->getProgrammeAvion() as $index => $avion){
+                    $listAvions[$index]='/api/programme_avions/'.explode("-", $avion)[0];
+                }
+            }else{
+                $listAvions=[];
             }
-            $user->setIsActive('0');
+
+            // Création du body à envoyer
+            foreach($request->request as $key => $data){
+                $body['password']=$data['password'];
+                $body['matricule']=intval($data['matricule']);
+                $body['nom']=$data['nom'];
+                $body['prenom']=$data['prenom'];
+                $body['poste']='/api/postes/'.explode("-",$data['poste'])[0];
+                $body['service']='/api/services/'.explode("-",$data['service'])[0];
+                $body['programmeAvion']=$listAvions;
+                $body['unite']='/api/divisions/'.explode("-",$data['unite'])[0];
+                $body['site']='/api/usines/'.explode("-",$data['site'])[0];
+                $body['mail']=$data['mail'];
+
+            }
+            $response=$api->getDatasAPI('/api/users','Usine',$body,'POST');
+
+            // Création du $user pour enregistrement en local par retour enregistrement dans api
+            $user->hydrate($response);
+            $user->setIdUserApi($response['id']);
+            // Hachage du mot de passe
+            $hash=$encoder->hashPassword($user, $user->getPassword());
             $user->setPassword($hash);
-            $user->setDateCreation(new \datetime());
-            // Par defaut l'utilisateur aura toujours le rôle ROLE_USER
+            // Mise en tableau simple des programmes avions
+            //$user->setProgrammeAvion(call_user_func_array('array_merge', $user->getProgrammeAvion()));
+            // Enregistrement
+            $manager = $manaReg->getManager();
             $manager->persist($user);
-            $manager->flush($user);
+            $manager->flush();
+
+            //Notification du user de son inscription
+            $com->sendNotif('Bonjour '. $user->getUsername(). ' , merci de vous être inscrit sur l\'APAMC. 
+            Votre compte doit être vérifier et valider par votre supérieur hiérarchique si vous n\'êtes pas opérateur.');
+            //Notification de l'admin pour vérification et validation du compte
+            $com->sendNotif('Un nouvel utilisateur: '. $user->getUsername(). ' est inscrit.',['browser']);
             
             return $this->redirectToRoute('security_login');
         }
@@ -99,7 +103,7 @@ class SecurityController extends AbstractController
             // get the login error if there is one
             $error = $authenticationUtils->getLastAuthenticationError();
             $Titres =[];
-            dump( $authenticationUtils);
+
         return $this->render('security/login.html.twig',[
             'error' => $authenticationUtils->getLastAuthenticationError(),
             'last_user' => $authenticationUtils->getLastUsername(),
@@ -119,9 +123,10 @@ class SecurityController extends AbstractController
     }
 
     /**
-     * * @Route("/inscription/Modification", name="Modif_Inscription")
+    ** @Route("/inscription/Modification_MdP", name="Modif_MdP")
     */
-    Public function ModifMdP(request $request, user $user=null, ValidatorInterface $validator, ApiKeyAuthenticator $auth, CallApiService $api){
+    Public function ModifMdP(request $request, user $user=null, ComService $com, 
+    ValidatorInterface $validator, CallApiService $api){
 
         $Titres=[];
         $errors=[];
@@ -151,21 +156,93 @@ class SecurityController extends AbstractController
         if($form->isSubmitted() && $form->isValid()){
             //On va chercher dans la base l'utilisateur en question
             $userResp=$api->getDatasAPI('/api/users/'.$user[0]['id'],'Usine',['password'=>$request->get('modif_md_p')['password']],'PATCH');
-            //$hash=$encoder->hashPassword($user, $request->get('modif_md_p')['password']);
-            //dump($hash);
-
-            //$user->setIsActive('0');
-            //$user->setPassword($request->get('modif_md_p')['password']);
-            //$manager->persist($user);
-            //$manager->flush($user);
             
+             //Notification du user de son changement de mot de passe
+             $com->sendNotif('Bonjour '. $user->getUsername(). ' , vous avez bien modifier votre mot de passe. 
+             Votre compte re-valider par l\'admin.');
+             //Notification de l'admin pour vérification et validation du compte
+             $com->sendNotif('Changement mot de passe de : '. $user->getUsername(). ', a valider.',['browser']);
+ 
             return $this->redirectToRoute('security_login');
         }
-         dump($errors);
-        //dump($request);
-        //dump($request->get('modif_md_p')['password']);
 
-        return $this->renderForm('security/ModificationMdP.html.twig',[
+        return $this->render('security/ModificationMdP.html.twig',[
+            'form' => $form,
+            'errors' => $errors,
+            'Titres' => $Titres
+        ]);
+    }
+
+    /**
+    ** @Route("/inscription/Modification_User/{id}", name="Modif_User")
+    */
+
+    Public function ModifUser(request $request, user $user=null, ManagerRegistry $manaReg,
+     ComService $com, Security $security, CallApiService $api, $id=null){
+
+        $Titres=[];
+        $errors=[];
+
+        //$user= new User;
+        //$response=$api->getDatasAPI('/api/users/'.$id,'Usine',[],'GET');
+
+        // Création du $user pour enregistrement en local par retour enregistrement dans api
+        //$user->hydrate($response);
+
+        $form=$this->createForm(ModifUserType::class, $user);
+        $form->handleRequest($request);
+
+        if($form->isSubmitted() && $form->isValid())
+        {
+           //Reconstruire la liste avion à envoyer dans le body
+            $listeAvion=$form->get('listeAvion')->getConfig()->getData();
+            $i=0;
+            foreach(json_decode($listeAvion) as $index => $avion){
+                if (in_array($avion, $request->get('modif_user')['programmeAvion'])) {
+                    $listAvionsAPI[$i]='/api/programme_avions/'.$index;
+                    $listAvions[$i]=['designation' => $avion];
+                    $i++;
+                }
+            }
+
+            //Récupération poste
+            $listePoste=json_decode($form->get('listePoste')->getConfig()->getData(),true);
+
+            if (in_array( $request->get('modif_user')['poste'],$listePoste)) {
+                $idPoste=array_search($request->get('modif_user')['poste'],$listePoste);
+                $body['poste']='/api/postes/'.$idPoste;
+            }
+
+            //Récupération service
+            $listeServ=json_decode($form->get('listeServ')->getConfig()->getData(),true);
+            if (in_array( $request->get('modif_user')['service'],$listeServ)) {
+                $idService=array_search($request->get('modif_user')['service'],$listeServ);
+                $body['service']='/api/services/'.$idService;
+            }
+
+           // Création du body à envoyer
+           $body['programmeAvion']=$listAvionsAPI;
+           $body['mail']=$form->getData()->getMail();
+           $body['username']=$form->getData()->getUsername();
+  
+           //Modification à envoyer dans API
+           $userResp=$api->getDatasAPI('/api/users/'.$user->getIdUserApi(),'Usine',$body,'PATCH',$security->getUser()->getUserTokenAPI());
+
+           //Modification à faire dans table user
+           $user->setProgrammeAvion($listAvions);
+           $manager = $manaReg->getManager();
+           $manager->persist($user);
+           $manager->flush();
+        
+            //Notification du user de sa modification
+            $com->sendNotif($user->getUsername(). ' , les modifications de votre compte ont bien été prises en compte.');
+            //Notification de l'admin pour information
+            $com->sendNotif('Modification de l\'utilisateur : '. $user->getUsername(),['browser']);
+
+           return $this->redirectToRoute('home');
+        }
+
+        return $this->render('security/ModificationUser.html.twig',[
             'form' => $form,
             'errors' => $errors,
             'Titres' => $Titres

@@ -5,6 +5,7 @@ namespace App\Security;
 
 use App\Entity\User;
 use App\Services\CallApiService;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,6 +16,7 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
@@ -27,11 +29,16 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
 {
     private $CallApi;
     private $router;
+    private $manaReg;
+    private $encoder;
 
-    public function __construct(CallApiService $CallApi, UrlGeneratorInterface $router)
+    public function __construct(CallApiService $CallApi, UrlGeneratorInterface $router,
+    ManagerRegistry $manaReg, UserPasswordHasherInterface $encoder)
     {
         $this->CallApi = $CallApi;
         $this->router = $router;
+        $this->manaReg = $manaReg;
+        $this->encoder = $encoder;
     }
     
     /**
@@ -53,7 +60,7 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
     {
         //$apiToken = $request->headers->get('X-AUTH-TOKEN');
         $_username=$request->get('_username');
-        dump($request->get('modif_md_p'));
+            //dump($request->get('modif_md_p'));
         // Si le username est un nom, on récupère le matricule
         if (strstr($_username, '.', true)!==false && strstr($_username, '@', true)!==false) {
             $username = strstr($_username, '@', true);
@@ -66,7 +73,7 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
         } else {
             $matricule=$_username;
         }
-        dump($matricule);
+        dump($matricule,$_COOKIE);
         $body=['matricule'=>$matricule, 'password'=>$request->get('_password')];
         $apiToken=$this->CallApi->getDatasAPI('/api/login','Usine',$body,'POST',null);
         //Test login direct
@@ -76,14 +83,14 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
                 $usiter=$this->utilisateur->loadUserByIdentifier($matricule);}),
                 new PasswordCredentials($request->get('_password'))
             ); */
-        dump($apiToken);
+        dump($apiToken, $_COOKIE);
         if (null === $apiToken) {
             // The token header was empty, authentication fails with HTTP Status
             // Code 401 "Unauthorized"
             throw new CustomUserMessageAuthenticationException('No API token provided');
         }
 
-        return new SelfValidatingPassport(new UserBadge($apiToken['apiToken'],function($apiToken){
+        return new SelfValidatingPassport(new UserBadge($apiToken['apiToken'],function($apiToken) use ($request){
             $userToken=$this->CallApi->getUserApiToken($apiToken);
             //Gestion des erreurs d'authentification
             if ($userToken instanceof JsonResponse) {
@@ -100,16 +107,27 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
                 }
             }
             $user=new User;
+            //Connection au user du site via userIdApi
+            $repo=$this->manaReg->getRepository(User::class);
+            $user=$repo -> findOneBy(['idUserApi' => $userToken['id']]);
+            $userId=$user->getid();
             //Hydratation du User
-            dump($userToken);
             $user->hydrate($userToken);
+            //Rajout des données du user
+            $user->setUserTokenAPI($apiToken);
+            $user->setId($userId);
+            $user->setIdUserApi($userToken['id']);
+            //Mise à jour des données suivant API
+            $manager = $this->manaReg->getManager();
+            $manager->persist($user);
+            $manager->flush();
             return $user;
         }));
     }
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
-        //return null;
+        $token->setAttributes(['progAvion' => $token->getUser()->getProgrammeAvion(), 'apiToken' => $token->getUser()->getUserTokenAPI()]);
         return new RedirectResponse($this->router->generate('home'),301);
     }
 
@@ -123,23 +141,5 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
             // $this->translator->trans($exception->getMessageKey(), $exception->getMessageData())
         ];
         return new JsonResponse($data, Response::HTTP_UNAUTHORIZED);
-    }
-    
-    /**
-     * getUserIdentifierByToken Donne l'utilisateur suivant son token au travers de l'API Usine
-     *
-     * @param  string $apiToken
-     * @return array
-     */
-    private function getUserIdentifierByToken($apiToken)
-    {
-        $users=$this->CallApi->getDatasUsers($apiToken);
-        dump($users);
-        foreach ($users as $user) {
-            if ($user['apiToken'] == $apiToken)
-            {
-                return new User($user);
-            }
-        }
     }
 }

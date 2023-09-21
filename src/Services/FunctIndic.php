@@ -66,6 +66,7 @@ class FunctIndic
         $ChargeTot=$repo -> findChargeSem($debut,$fin); 
         $i=0;
         $j=0;
+        $Tablo=[];
         foreach($ChargeTot as $charge){
             $y=intval($charge['NbrRef']);
             $lundi = new \DateTime();

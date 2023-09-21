@@ -23,19 +23,22 @@ class ProgMoyensRepository extends ServiceEntityRepository
 //    /**
 //     * @return ProgMoyens[] Returns an array of ProgMoyens objects
 //     */
-    /*
-    public function findByExampleField($value)
+    
+    public function findByProgAvUser($value)
     {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
+        
+        $listCycle= $this->createQueryBuilder('p')
+            ->leftjoin("p.progAvions", "t")
+            ->andWhere('t.libelle = :val')
             ->setParameter('val', $value)
-            ->orderBy('p.id', 'ASC')
-            ->setMaxResults(10)
+            ->orderBy('p.Nom', 'DESC')
+            //->setMaxResults(10)
             ->getQuery()
             ->getResult()
         ;
+        return $listCycle;
     }
-    */
+    
 
     
     public function findOneBySomeField($ProgId): ?ProgMoyens

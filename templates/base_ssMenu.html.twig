@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{% block title %}APAMC{% endblock %}</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        {% block head %}{% endblock %}
+        {% block stylesheets %}
+        {% endblock %}
+    </head>
+    <body class="text-primary">
+
+		<div class="conteiner" >
+        {% for message in app.flashes('notification') %}
+            <div class="alert alert-info alert-dismissible fade show">
+                {{ message }}
+                {# <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button> #}
+                <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+            </div>
+        {% endfor %}
+		{% block body %}{% endblock %}
+		</div>
+        <div class="cont d-flex justify-content-center align-items-center">
+            <div id="loader" class="lds-dual-ring hidden overlay"></div>
+        </div>
+		{% block javascripts %}
+		{% endblock %}
+        {% block mesJavascripts %}
+        {% endblock %}
+    </body>
+</html>

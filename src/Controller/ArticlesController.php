@@ -27,7 +27,7 @@ class ArticlesController extends AbstractController
         $Titres=$repo -> findBy(['Description' => 'PE']);
 
         return $this->render('articles/index.html.twig', [
-            'articles' => $articlesRepository->findAll(),
+            'articles' => $articlesRepository->findBy(['Serie' => 1],['Reference' => 'ASC']),
             'Titres' => $Titres,
         ]);
     }

@@ -8,12 +8,14 @@ use App\Entity\Moyens;
 use App\Entity\Articles;
 use App\Entity\Demandes;
 use App\Entity\Planning;
+use App\Entity\Services;
 use App\Entity\ChargFige;
 use App\Entity\ConfSmenu;
 use App\Entity\PolymReal;
 use App\Entity\Chargement;
 use App\Entity\ConfSsmenu;
 use App\Entity\Outillages;
+use App\Entity\ProgAvions;
 use App\Entity\ProgMoyens;
 use App\Form\ComOutilType;
 use App\Form\DatePlanning;
@@ -36,9 +38,17 @@ use Symfony\Component\Mime\Email;
 use Doctrine\ORM\EntityRepository;
 use App\Repository\ChargeRepository;
 use Symfony\Component\Form\FormEvent;
+use App\Repository\ArticlesRepository;
+use App\Repository\DemandesRepository;
+use function PHPUnit\Framework\isNull;
 use Symfony\Component\Form\FormEvents;
+use App\Repository\ChargFigeRepository;
+use App\Repository\ChargementRepository;
+use App\Repository\OutillagesRepository;
+use App\Repository\ProgMoyensRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
+use Knp\Component\Pager\PaginatorInterface;
 use App\Repository\DefaultRepositoryFactory;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Mailer\MailerInterface;
@@ -56,6 +66,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
+
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -66,8 +77,6 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
-use function PHPUnit\Framework\isNull;
-
 //use Symfony\Component\HttpFoundation\Session\Session ;
 //use Symfony\Component\Serializer\Serializer;
 
@@ -75,23 +84,23 @@ class PlanningMCController extends AbstractController
 {
     /**
      * @Route("/Planning/Edit", name="Planning_Edit")
-     * @Security("is_granted('ROLE_REGLEUR')")
      */
     public function planningEdit(Request $request, FunctPlanning $plan, ManagerRegistry $manaReg)
     {
         $repos=$manaReg->getRepository(Moyens::class);
-        $moyens=$plan->moyens($repos);
+        $moyens=$plan->moyens($repos, 8);
         $statut=$request->request->get('state');
         $repo=$manaReg->getRepository(Planning::class);
         $repi=$manaReg->getRepository(PolymReal::class);
         $task=$plan->planning($repo, $repos, $repi, $statut);
+        dump($task,$request->request->get('state'));
 
         return new JsonResponse(['Taches'=> $task[0], 'moyen'=> $moyens[1], 'Ssmoyen'=> $moyens[0]]);
     }    
     /**
-     * @Route("/Planning", name="Planning")
+     * @Route("{service}/Planning", name="Planning")
      */
-    public function index(FunctPlanning $plan, ManagerRegistry $manaReg)
+    public function index(FunctPlanning $plan, ManagerRegistry $manaReg, $service)
     {
     //Gestion menu
         $repo=$manaReg->getRepository(ConfSmenu::class);
@@ -108,9 +117,11 @@ class PlanningMCController extends AbstractController
             $this->addFlash('warning', $polymA->getId().'/'.$polymA->getIdentification().'/'.$polymA->getDebutDate()->format('d-m-Y G:i'));
         }
         
-    //Recherche des moyens à afficher sur planning
+    //Recherche des moyens à afficher sur planning suivant service
+        $repi=$manaReg->getRepository(Services::class);
+        $teams=$repi->findOneBy(['Nom' => $service]);
         $repos=$manaReg->getRepository(Moyens::class);
-        $moyens=$plan->moyens($repos);
+        $moyens=$plan->moyens($repos,$teams->getId());
         $Ssmoyen= new JsonResponse($moyens[0]);
         $moyen= new JsonResponse($moyens[1]);
         $item= $moyens[2];
@@ -126,7 +137,8 @@ class PlanningMCController extends AbstractController
             'Taches' => $taches->getcontent(),
             'Moyens' => $moyen->getcontent(),
             'Ssmoyen' => $Ssmoyen->getcontent(),
-            'Items' => $item
+            'Items' => $item,
+            'service' => $service
         ]);
     }
      /**
@@ -223,22 +235,21 @@ class PlanningMCController extends AbstractController
                     }
                 }
             }
-            return $this->redirectToRoute('Planning');
+            return $this->redirectToRoute('Planning',['service' => 'MOYENS CHAUD']);
     } 
      /**
-     * @Route("/PlanningMC/Creation/", name="CreaDemPolymf", condition="request.isXmlHttpRequest()")
+     * @Route("/PlanningMC/public/Creation/PolymDirect")
      * @IsGranted("ROLE_CE_POLYM")
      */
-    public function CreaDemPolymf(Request $request,RequestStack $requestStack, userInterface $user=null, ManagerRegistry $manaReg)
+    public function CreaDemPolymf(Request $request, userInterface $user=null, ManagerRegistry $manaReg)
     {
-        
-        if($requestStack->getParentRequest()){
-            $request=$requestStack->getParentRequest();
+        if($request->get('form')){
             if ($request->isMethod('POST')) {
                 $demande = new Demandes();
                 //$demande->setDatePropose($request->get('DatePropose'));
-                $TabDem=$request->request->get('form');
+                $TabDem=$request->get('form');
                 //On gère si c'est une création ou une modif
+                
                 if (count($TabDem)===9){
                     //Récupération de l'objet cycle
                     $Cyc = $manaReg
@@ -275,9 +286,9 @@ class PlanningMCController extends AbstractController
                     $demande->setRecurValide($TabDem["Reccurance"]);
                     $demande->setUserCrea($user->getUsername());
                     
-                        $manager = $manaReg->getManager();
-                        $manager->persist($demande);
-                        $manager->flush();
+                    $manager = $manaReg->getManager();
+                    $manager->persist($demande);
+                    $manager->flush();
 
                     //Récupération de l'ID de la demande pour plannifier la polym en suivant
                     $DemVal = $demande->getId();
@@ -360,7 +371,7 @@ class PlanningMCController extends AbstractController
                 }            
             }
         }
-        return new JsonResponse(['Message'=>"Modification de l'item n° effectuée avec succès",'Code'=>200]);
+        return $this->redirectToRoute('Planning',['service' => 'MOYENS CHAUD']);
     }
 
      /**
@@ -511,7 +522,7 @@ class PlanningMCController extends AbstractController
     }
 
     /**
-     * @Route("/PlanningMC/", name="Polym_Edit", condition="request.isXmlHttpRequest()")
+     * @Route("/PlanningMC/", name="Polym_Edit")
      * @IsGranted("ROLE_PLANIF")
      */
     public function editpolym(Request $request, ManagerRegistry $manaReg)
@@ -559,9 +570,10 @@ class PlanningMCController extends AbstractController
                             'NON' => false,
                             'OUI' => true]])
                       ->add('save', SubmitType::class, ['label' => 'Valider'])
+                      ->setAction($this->generateUrl('CreaDemPolymf'))
                       ->getForm();
         $form->handleRequest($request);
-        //dump($form);
+
         //Pas de menu pour la fenêtre modale, juste le retour à l'accueil
         $Titres=[];
         return $this->render('planning_mc/editpolym.html.twig',[
@@ -593,7 +605,7 @@ class PlanningMCController extends AbstractController
             $manager->persist($planning);
             $manager->flush();
             
-            return $this->redirectToRoute('Planning');
+            return $this->redirectToRoute('Planning',['service' => 'MOYENS CHAUD']);
 
         } else {
             //Remonté d'info pour modification du statut de la polymérisation
@@ -626,6 +638,7 @@ class PlanningMCController extends AbstractController
                     'REMPLACER' => 'REMPLACER',
                 ]])
             ->add('save', SubmitType::class, ['label' => 'Modifier'])
+            ->setAction($this->generateUrl('CreaDemPolym'))
             ->getForm();
             $form->handleRequest($request);
             //dump($form);
@@ -639,20 +652,18 @@ class PlanningMCController extends AbstractController
     }
 
     /**
-     * @Route("/PlanningMC/ModificationPolym", name="CreaDemPolym")
+     * @Route("/PlanningMC/ModificationPolym")
      * @IsGranted("ROLE_REGLEUR")
      */
     public function CreaDemPolym(Request $request,RequestStack $requestStack, userInterface $user=null, ManagerRegistry $manaReg)
     {
         //Modification du statut de la polym
-        if($requestStack->getParentRequest()){
-            
-            $request=$requestStack->getParentRequest();
-            if ($request->isMethod('POST') and $request->request->get('form')) {
+        if($request->get('form')){    
+            if ($request->isMethod('POST')) {
                 $demande= new Demandes();
                 $planning = new Planning();
                 //$demande->setDatePropose($request->get('DatePropose'));
-                $TabDem=$request->request->get('form');
+                $TabDem=$request->get('form');
                 //dump($TabDem);
                 //Récupération de l'objet cycle
                 $PolymPla = $manaReg
@@ -668,11 +679,11 @@ class PlanningMCController extends AbstractController
                 $manager = $manaReg->getManager();
                 $manager->persist($planning);
                 $manager->flush();
-                    $request->getSession()->getFlashbag()->add('success', 'Création de la polym n°' . $planning->getId() . ' réalisée');
+                
+                $request->getSession()->getFlashbag()->add('success', 'Création de la polym n°' . $planning->getId() . ' réalisée');
             }
-        }
-        
-        return new JsonResponse(['Message'=>"Vous n'avez pas les droits pour créer une polym",'Code'=>404]);
+        }    
+        return $this->redirectToRoute('Planning',['service' => 'MOYENS CHAUD']);
     }
     
      /**
@@ -708,12 +719,10 @@ class PlanningMCController extends AbstractController
                 $Demande->setRecurValide(0);
                 $Demande->setPlannifie(0);
                 $Demande->setMoyenUtilise(Null);
-                dump($planning);
 
                 $manager = $manaReg->getManager();
                     $manager->persist($Demande);
                     $manager->flush();
-                    dump($planning);
             }
         }
         return new JsonResponse(['Message'=>"Vous n'avez pas les droits pour créer une polym",'Code'=>404]);
@@ -780,9 +789,10 @@ class PlanningMCController extends AbstractController
 	/**
      * @Route("/Demandes/Creation", name="Crea_Demandes")
      * @Route("/Demandes/Modification/{id}", name="Modif_Demandes")
+     * @IsGranted("ROLE_CE_MOULAGE")
      */
     public function DemandesCrea( Request $requette,
-    RequestStack $requestStack,
+    FunctPlanning $plan,
     EntityManagerInterface $manager,
     ManagerRegistry $manaReg,
     ComService $com,
@@ -792,26 +802,104 @@ class PlanningMCController extends AbstractController
     {
         if (!$demande) {
             $demande= new Demandes();
-            $demande->setDatepropose(new \Datetime($requette->get('datejour')));
+            $datejour=new \Datetime($requette->get('datejour'));
+            $demande->setDatepropose($datejour);
         } else {
-            # code...
+            $datejour=$demande->getDatePropose();
         }
+        
         $form = $this->createForm(DemandesType::class, $demande);
         $form->handleRequest($requette);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            //dd($demande->getListOF());
             if(!$demande->getId()){
                 $demande->setDateCreation(new \datetime());
                 $demande->setPlannifie(0);
                 $demande->setRecurValide(0);
                 $demande->setUserCrea($user->getUsername());
-                //$demande->addListOF($demande->getListOF());                   
+
+                //Si des outillages ont été sélectionnés
+                if ($demande->getListOT()) {
+                    //Création du chargement outillage avec la liste de ces derniers
+                    $chargement = new Chargement;
+                    $chargement->setNomChargement('MANU');
+                    $chargement->setDatePlannif(new \DateTime());
+                    $chargement->setRemplissage(0);
+                    $chargement->setProgramme($demande->getCycle()->getNom());
+                    //Rajout des outillages
+                    foreach ($demande->getListOT() as $key => $OT) {
+                        $chargement->addOutillage($OT);
+                    }
+                    $manager->persist($chargement);
+                    $manager->flush();
+                    $demande->setChargement($chargement);
+
+                    //On rajoute le chargement aux OF Sélectionnés
+                    foreach ($demande->getListOF() as $key => $OF) {
+                        $OF->setChargement($chargement);
+                        $OF->setStatut('PLANNIFIE');
+                        $manager->persist($chargement);
+                    }
+                    $manager->flush();
+                }      
             }
             else{
                 $demande->setDateModif(new \datetime());
                 //dump($user);
                 $demande->setUserModif($user->getUsername());
+                //Modification du chargement si besoin
+                if ($demande->getChargement() and $demande->getChargement()->getNomChargement() != 'MANU') {
+                    //Si il existe, je le modifie
+                    $newDemande=$requette->request->all();
+                    //On compare les 2 listes (New et Old)
+                    foreach ($demande->getChargement()->getOutillages() as $key => $OT) {
+                        $listOldCharg[$key]=$OT->getId();                        
+                    }
+                    $listOTnewDem=$newDemande['demandes']['ListOT'];
+                    //Si outillage en plus, on rajoute
+                    for ($i=0; $i < count($listOTnewDem) ; $i++) { 
+                        if (!in_array($listOTnewDem[$i],$listOldCharg)) {
+                            $repoChar=$manaReg->getRepository(Outillages::class);
+                            $OT=$repoChar->find($listOTnewDem[$i]);
+                            $demande->getChargement()->addOutillage($OT);
+                        }  
+                    }
+                    //Si outillage en moins, on enlève
+                    for ($i=0; $i < count($listOldCharg) ; $i++) { 
+                        if (!in_array($listOldCharg[$i],$listOTnewDem)) {
+                            $repoChar=$manaReg->getRepository(Outillages::class);
+                            $OT=$repoChar->find($listOTnewDem[$i]);
+                            $demande->getChargement()->removeOutillage($OT);
+                        }  
+                    }
+                }
+                //Idem pour les OFs
+                $repoCharge=$manaReg->getRepository(Charge::class);
+                $listOldOF=$repoCharge->findBy(['demandes'=>$demande->getId()]);
+                if ($listOldOF) {
+                     //Si il en existe, je les modifie
+                     $newDemande=$requette->request->all();
+                     //On compare les 2 listes (New et Old)
+                     foreach ($listOldOF as $key => $OF) {
+                         $listOldChargOF[$key]=$OF->getId();                        
+                     }
+                     $listOFnewDem=$newDemande['demandes']['ListOF'];
+                     //Si OF en plus, on rajoute
+                     for ($i=0; $i < count($listOFnewDem) ; $i++) { 
+                         if (!in_array($listOFnewDem[$i],$listOldChargOF)) {
+                             $newOF=$repoCharge->find($listOFnewDem[$i]);
+                             $newOF->setChargement($demande->getChargement());
+                         }  
+                     }
+                     //Si OF en moins, on enlève
+                     for ($i=0; $i < count($listOldChargOF) ; $i++) { 
+                         if (!in_array($listOldChargOF[$i],$listOFnewDem)) {
+                             $oldOF=$repoCharge->find($listOldChargOF[$i]);
+                             $oldOF->setChargement();
+                         }  
+                     }
+                }
+                    
             }
             //Enregistrement de la demande
             $manager = $manaReg->getManager();
@@ -821,28 +909,76 @@ class PlanningMCController extends AbstractController
             $com->sendNotif('La demande n° '. $demande->getId() . ' a bien été enregistré.');
             //$requette->getSession()->getFlashbag()->add('success', 'La demande'. $demande->getId() . 'a bien été enregistré.');
                 
-                return $this->redirectToRoute('Demandes');
+                return $this->redirectToRoute('Demandes',['service' => 'MOULAGE']);
         }
-
+        //Initialisation des variables
+        $datas['Liste OT vide'] = 'Pas d\'outillage'; 
+        $datasOT=[];
         $Titres=[];
+        //Recherche des moyens à afficher sur planning suivant service
+        $repi=$manaReg->getRepository(Services::class);
+        $teams=$repi->findOneBy(['Nom' => 'MOULAGE']);
+        $repos=$manaReg->getRepository(Moyens::class);
+        $moyens=$plan->moyens($repos,$teams->getId());
+        $Ssmoyen= new JsonResponse($moyens[0]);
+        $moyen= new JsonResponse($moyens[1]);
+        $item= $moyens[2];
+        //Chargement d'une variable pour les tâches déjà plannifiées
+        $repi=$manaReg->getRepository(PolymReal::class);
+        $repo=$manaReg->getRepository(Planning::class);
+        $task=$plan->planning($repo, $repos, $repi);
+        $taches = new JsonResponse($task[0]);
 
+        //Initialisation de variables pour le chargement
+        $CTO[0]['Nom']="";
+        //Si pas de chargement, j'initialise à 0
+        if (!$demande->getChargement()) {
+            $idChargement=10;
+        } else {
+            $idChargement=$demande->getChargement()->getId();
+        }
+        
         if (!$demande->getId()){
             return $this->render('planning_mc/CreationDemandes.html.twig',[
                 'Titres' => $Titres,
+                'Datas' => $datas,
+                'datasOT' => $datasOT,
+                'service' => 'MOULAGE',
+                'Taches' => $taches->getcontent(),
+                'Moyens' => $moyen->getcontent(),
+                'Ssmoyen' => $Ssmoyen->getcontent(),
+                'Moyens' => $moyen->getcontent(),
+                'Ssmoyen' => $Ssmoyen->getcontent(),
+                'Items' => $item,
+                'idChargement' => $idChargement,
+                'idDemande' => $demande->getId(),
+                'DateJour' => $datejour,
+                'CTO' => $CTO,
                 'formDemande' => $form->createView()
              ]);
         } else {
             return $this->render('planning_mc/ModificationDemandes.html.twig',[
                 'Titres' => $Titres,
+                'Datas' => $datas,
+                'datasOT' => $datasOT,
+                'service' => 'MOULAGE',
+                'Taches' => $taches->getcontent(),
+                'Moyens' => $moyen->getcontent(),
+                'Ssmoyen' => $Ssmoyen->getcontent(),
+                'Moyens' => $moyen->getcontent(),
+                'Ssmoyen' => $Ssmoyen->getcontent(),
+                'Items' => $item,
+                'idChargement' => $idChargement,
+                'idDemande' => $demande->getId(),
+                'DateJour' => $datejour,
+                'CTO' => $CTO,
                 'formDemande' => $form->createView()
              ]);
-        }
-
-        
+        } 
     }
 
     /**
-     * @Route("/Demandes", name="Demandes")
+     * @Route("{service}/Demandes", name="Demandes")
      */
     public function Demandes(Request $requette,
     EntityManagerInterface $manager,
@@ -949,20 +1085,40 @@ class PlanningMCController extends AbstractController
      * @Route("/Demandes/Supression/{id}", name="Sup_Demandes")
      */
     public function demandeSup(EntityManagerInterface $manager,
-    Demandes $demande=null,
-    userInterface $user=null,
-    ManagerRegistry $manaReg,
+    Demandes $demande=null,ChargementRepository $chargement,
+    userInterface $user=null,OutillagesRepository $out,
+    ManagerRegistry $manaReg,ChargeRepository $charge,
     ComService $com)
     {
+        $idDemande=$demande->getId();
+        //Récupération des OF liés
+        $listOF=$charge->findBy(['demandes' => $idDemande]);
+        //Suppression des OF liés à la demande
+        foreach ($listOF as $key => $OF) {
+            $OF->setChargement(null);
+            $demande->removeListOF($OF);
+        }
+        //Récupération des OT liés
+        $listOT=$out->myFindByChargement([$demande->getChargement()->getId()]);
+        foreach ($listOT as $key => $OT) {
+            $demande->removeListOT($OT);
+        }
+        //Récupération du chargement
+        $chargeDem=$chargement->find($demande->getChargement()->getId());
+
         $manager = $manaReg->getManager();
-            $manager->remove($demande);
-            $manager->flush();
+        $demande->setChargement(null);
+        //Suppression du chargement lié
+        $manager->remove($chargeDem);
+        //Suppression de la demande
+        $manager->remove($demande);
+        $manager->flush();
 
-            $com->sendNotif('La demande n° '. $demande->getId() . ' a bien été supprimée.');
-            $message="<p>Supression de la demande n° ". $demande->getId()." du ".$demande->getDatePropose(). " ". $demande->getHeurePropose()."</p>";
-            $com->sendEmail($user->getMail(),'f.dartois@daher.com', 'La demande n° '. $demande->getId() . ' a bien été supprimée.', $message );
+        $com->sendNotif('La demande n° '. $idDemande . ' a bien été supprimée.');
+        $message="<p>Supression de la demande n° ". $idDemande ." du ".$demande->getDatePropose()->format('Y-m-d'). " ". $demande->getHeurePropose()->format('H:i:s')."</p>";
+        //$com->sendEmail($user->getMail(),'f.dartois@daher.com', 'La demande n° '. $demande->getId() . ' a bien été supprimée.', $message );
 
-        return $this->redirectToRoute('Demandes');
+        return $this->redirectToRoute('Demandes',['service'=>'MOULAGE']);
     }
 
     /**
@@ -984,7 +1140,7 @@ class PlanningMCController extends AbstractController
         $subject='Demande de deprogrammation cycle : '.$demande->getCycle()->getNom();
         //TODO : Faire la recherche du mail du chef d'équipe des moyens chauds et responsables
         $CEPolym="f.dartois@daher.com";
-        $com->sendEmail($user->getMail(),$CEPolym,$subject,$message);
+        //$com->sendEmail($user->getMail(),$CEPolym,$subject,$message);
 
         //Envoie notification flash
         $com->sendNotif('Votre message concernant l\'annulation de la demande n°'.$demande->getId(). ' a été transmis, nous vous répondrons dans les meilleurs délais.',['browser']);
@@ -1008,7 +1164,7 @@ class PlanningMCController extends AbstractController
         $manager->persist($polPla);
         $manager->flush();
 
-        return $this->redirectToRoute('Demandes');
+        return $this->redirectToRoute('Demandes',['service'=>'MOULAGE']);
     }
 
     /**
@@ -1087,7 +1243,7 @@ class PlanningMCController extends AbstractController
                 
             if($mode==false){
                     
-                return $this->redirectToRoute('Planification');
+                return $this->redirectToRoute('Planification',['service'=>'MOYENS CHAUD']);
             }
             else{
                 //return $this->redirectToRoute('Demandes');
@@ -1098,6 +1254,183 @@ class PlanningMCController extends AbstractController
         return $this->render('planning_mc/CreationPolyms.html.twig',[
             'Titres' => $Titres
         ]);
+    }
+
+    /**
+     * @Route("/Demandes/Charge_Fige/{id}/OF", name="list_OT_chargement", methods={"POST"})
+     * @IsGranted("ROLE_CE_MOULAGE")
+     */
+    Public function checkOFOTsvtCTO(Request $request, 
+    FunctChargPlan $chargeFige, ChargFigeRepository $cata, 
+    ChargeRepository $repo, OutillagesRepository $Out, ArticlesRepository $Art)
+    {
+        // On va récupérer le CTO correspondant à l'id
+        $CTO=$cata->findOneBy(['id' => $request->attributes->get('id')]);
+        //Intégration dans une liste de 1 CTO
+        $listCTO[0]=$CTO;
+        //Contruction du créno à chercher $Creno['Jour']), $Creno['Cycles']
+        $creno['Jour']= new \datetime($request->get('DateJour'));
+        $creno['Cycles']=$CTO->getProgramme()->getNom();
+        $creno['NbrPcs']=1;
+        $listCreno[0]=$creno;
+        
+        //Récupération de la liste des outillages de ce CTO
+        $test=$chargeFige->checkOTCTO($listCTO, $repo, $Out, $Art, $creno);
+
+        //Récupération des nombres de polym par OT pour B15
+        foreach ($test[0]['Contenu'] as $key => $OT) {
+            $listOTDatas[$key]=$Out->findOneBy(['Ref' => $key]);
+        }
+
+        return $this->render('planning_mc/form/_form_tbDatasCharg.html.twig', [
+            'Datas' => $test[0]['Contenu'],
+            'CTO' => $test,
+            'idChargement' => $request->request->get('idChargement'),
+            'idDemande' => $request->request->get('idDemande'),
+            'DateJour' => $request->get('DateJour'),
+            'datasOT' => $listOTDatas
+        ]);
+    }
+
+    /**
+     * @Route("/Demandes/Charge_Fige/Modification/OFsOT", name="modif_OFs_OT", methods={"GET"})
+     * @IsGranted("ROLE_CE_MOULAGE")
+     */
+    Public function modifOFsOT(Request $request, FunctChargPlan $chargeFige, ChargFigeRepository $cata, ChargeRepository $repo, OutillagesRepository $Out, ArticlesRepository $Art)
+    {
+        dd($request);
+    }
+
+    /**
+     * @Route("/Demandes/Charge_Fige/Modification/OFOT", name="modif_OF_OT", methods={"GET"})
+     * @IsGranted("ROLE_CE_MOULAGE")
+     */
+    Public function modifOFOT(Request $request, 
+    FunctChargPlan $chargeFige, 
+    ChargFigeRepository $cata, 
+    ChargeRepository $repo, 
+    OutillagesRepository $Out, 
+    ArticlesRepository $Art)
+    {
+        $listOF= $repo->findBy(['ReferencePcs' => $request->get('Ref'), 'Statut' => 'OUV']);
+
+        foreach ($listOF as $key => $OF) {
+            $deltaJours=date_diff(clone($OF->getDateDeb()), new \datetime());
+            $listOFs[$key] = ['OF' => strval($OF->getOrdreFab())];
+            $listHorizon[$key] = [$deltaJours->format('%a')];
+        }
+
+        return $this->render('planning_mc/form/_select.html.twig',[
+            'listOFs' => $listOFs,
+            'art' => $request->get('Ref'),
+            'listHorizon' => $listHorizon
+        ]);
+    }
+
+    /**
+     * @Route("/Demandes/Charge_Fige/Validation/{OT}", name="val_OT")
+     * @IsGranted("ROLE_CE_MOULAGE")
+     */
+    Public function valOT(Request $request,ManagerRegistry $manaReg,
+     ChargeRepository $repo, ChargFigeRepository $chargFig,
+     OutillagesRepository $Out, DemandesRepository $Dem,
+     ChargementRepository $Chargemnt,userInterface $user=null,
+     $OT)
+    {
+        $manager = $manaReg->getManager();
+        $outillage = new Outillages;
+        //On récupère l'Id de l'OT
+        $outillage=$Out->findOneBy(['Ref' => $OT]);
+        //Création du chargement ou modification d'un déjà créé
+        if ($request->query->get('idChargement')) {
+            //On ajoute l'outillage au chargement
+            $chargement=$Chargemnt->find($request->query->get('idChargement'));         
+        } else {
+            //On créé le chargement et on ajoute l'outillage
+            $chargement = new Chargement;
+            $chargement->setNomChargement($request->query->get('CTO'));
+            $chargement->setDatePlannif(new \DateTime());
+            $chargement->setRemplissage(0);
+            $chargement->setProgramme('CREATION');
+        }
+        $chargement->addOutillage($outillage);
+        $manager->persist($chargement);
+        $manager->flush();
+        //Récupération du nb d'outillages déjà dans chargement
+        $listOTCharge=$Out->myFindByChargement($chargement->getId());
+        //Récupération du nb d'outillage composants le chargement figé CTO
+        $listOTCTO=$chargFig->findOneBy(['Code' => $request->query->get('CTO')]);
+        //Comparaison des 2 listes pour vérifier les doublons ou manquants
+
+        //Déduire le taux de remplissage
+        $pourcRemp=count($listOTCharge)/count($listOTCTO->getOT());
+        $chargement->setRemplissage($pourcRemp*100);
+        $chargement->setProgramme($listOTCTO->getProgramme());
+        $manager->persist($chargement);
+        $manager->flush();
+
+         //Vérification si demande existante avant de renvoyer le form
+         if (!$request->query->get('idDemande')) {
+            //On créé la demande et on raccroche le chargement
+            $demande= new Demandes;
+            $demande->setCycle($listOTCTO->getProgramme());
+            $demande->setDatePropose(new \DateTime($request->query->get('DateJour')));
+            $demande->setPlannifie(0);
+            $demande->setDateCreation(new \DateTime());
+            $demande->setReccurance(false);
+            $demande->setUserCrea($user->getUserName());
+        } else {
+            //On recupère la demande
+            $demande=$Dem->find($request->query->get('idDemande'));
+        }
+        //On rajoute le chargement et l'outillage
+        $demande->addListOT($outillage);
+        $demande->setChargement($chargement);
+        $manager->persist($demande);
+        $manager->flush();
+
+        //Récupérer l'id du chargement pour rajouter dans les OF de Charge
+        $datasOF=$request->query;
+        foreach ($datasOF as $key => $OFs) {
+            $listOFs=[];
+            if ($key == 'Datas') {
+                foreach ($OFs as $key => $OF) {
+                    $charge=$repo->findOneBy(['OrdreFab'=>$OF['OF'], 'NumProg' => $listOTCTO->getProgramme()->getNom()]);
+                    $listOFs[$key]=$OF;
+                    $charge->setChargement($chargement);
+                    $charge->setDemandes($demande);
+                    $charge->setStatut('PLANNIFIE');
+                    $manager->persist($chargement);
+                }
+                $manager->flush();
+                //Mise en texte du tableau des OFs pour message Flash 
+            }    
+        }
+        //dd('stop');
+        //Retourner à la modification de la demande avec le numéro du chargement
+        $this->addFlash('success', "Enregistrement de l\'".$OT." avec les OF [".implode(',', $listOFs)."] dans chargement n° ".$chargement->getId()." effectué");
+
+        //return new Response($chargement->getId());
+        return $this->redirectToRoute('Modif_Demandes',['id' => $demande->getId(),'service'=>'MOYENS CHAUD']);
+        
+    }
+
+    /**
+     * @Route("/Demandes/Charge_Fige/Supression/OT", name="sup_OT", methods={"GET"})
+     * @IsGranted("ROLE_CE_MOULAGE")
+     */
+    Public function supOT(Request $request, FunctChargPlan $chargeFige, ChargFigeRepository $cata, ChargeRepository $repo, OutillagesRepository $Out, ArticlesRepository $Art)
+    {
+
+    }
+
+    /**
+     * @Route("/Demandes/Charge_Fige/Visualisation", name="affichagePlanningMoul", methods={"GET"})
+     * @IsGranted("ROLE_CE_MOULAGE")
+     */
+    Public function affichagePlanningMoul(Request $request, FunctChargPlan $chargeFige, ChargFigeRepository $cata, ChargeRepository $repo, OutillagesRepository $Out, ArticlesRepository $Art)
+    {
+
     }
 
 	/**
@@ -1138,9 +1471,7 @@ class PlanningMCController extends AbstractController
         $lastDateTime = $lastDateTime->modify('23 hours');
     }
 //Chargement d'une variable pour toutes les demandes créées
-    $test = $manaReg
-    ->getRepository(demandes::class)
-    ->myFindByDays($firstDateTime);
+    $test = $manaReg->getRepository(demandes::class)->myFindByDays($firstDateTime);
 
 //Recherche des moyens à afficher sur planning
         $repos=$manaReg->getRepository(Moyens::class);
@@ -1275,14 +1606,23 @@ class PlanningMCController extends AbstractController
 	/**
      * @Route("/Tracabilite", name="Tracabilite")
      */
-    public function Tracabilite(ManagerRegistry $manaReg)
+    public function Tracabilite(
+        EntityManagerInterface $em,
+        ManagerRegistry $manaReg,
+        PaginatorInterface $paginator,
+        Request $request)
     {
         $repo=$manaReg->getRepository(ConfSmenu::class);
-
         $Titres=$repo -> findAll();
+        //$ChargTot=$manaReg->getRepository(Charge::class)->findAll();
+        $dql   = "SELECT c FROM App\Entity\Charge c JOIN App\Entity\PolymReal a WITH a.id = c.Polym";
+        $query = $em->createQuery($dql);
+          // Mise en place de la pagination
+        $ChargTot=$paginator->paginate($query, $request->query->getInt('page',1),250);
 
         return $this->render('planning_mc/Tracabilite.html.twig',[
             'Titres' => $Titres,
+            'ChargeTot' => $ChargTot,
         ]);
     }
     /**
@@ -1343,15 +1683,21 @@ class PlanningMCController extends AbstractController
      * @Route("/LOGISTIQUE/Ordonnancement", name="Ordo")
      * @IsGranted("ROLE_PLANIF")
      */
-    public function Ordo(FunctChargPlan $charge, ManagerRegistry $manaReg)
+    public function Ordo(FunctChargPlan $charge,
+     ManagerRegistry $manaReg,
+     PaginatorInterface $paginator,
+     Request $request)
         {   
         //Titres pour le menu
         $repo=$manaReg->getRepository(ConfSmenu::class);
-        $Titres=$repo -> findAll();
+        $Titres=$repo->findAll();
 
         // Création de la charge totale SAP
         $repo=$manaReg->getRepository(Charge::class);
-        $ChargTot=$repo -> findAll();
+        $ChargTot=$repo->findAll();
+
+        // Mise en place de la pagination
+        $ChargTot=$paginator->paginate($ChargTot, $request->query->getInt('page',1),250);
         
         // Création de la table de répartition des programmes suivant OF SAP lancés sur 1 mois
         // Date à aujourd'hui
@@ -1363,20 +1709,24 @@ class PlanningMCController extends AbstractController
         $debPeriode->format('mm YY');
         $finPeriode=$dateF->modify('Last day of december this year');
         $finPeriode->format('mm YY');
+
         // Date à 1 mois
         $jourVisu = date("Y-m-d", strtotime('+ 31 days'.date('Y') ));
         $jourVisu=new \datetime($jourVisu);
-        $ChargeMois=$repo->myFindPcsTotMois($jour,$jourVisu);
+
+        //Création variables des indicateurs Headers
+        $listIndicHeader=[];
        
         return $this->render('planning_mc/Ordo.html.twig', [
             'controller_name' => 'PlanningOrdo',
+            'listIndicHeader' => $listIndicHeader,
             'ChargeTot' => $ChargTot,
-            'ChargeMois' => $ChargeMois[0],
             'Titres' => $Titres,
             'datedeb' => $jour,
             'datefin' => $jourVisu,
             'debPeriode' => $debPeriode,
             'finPeriode' => $finPeriode,
+            'service' => 'LOGISTIQUE'
         ]);
     }
 
@@ -1414,7 +1764,7 @@ class PlanningMCController extends AbstractController
         //Récupération de la charge SAP sur 1 mois
         $ChargeTot=$repo -> findReparChargeW($jour,$jourVisu);
         $i=0;
-        dump($ChargeTot);
+        //dump($ChargeTot);
         //Attribution des CTO possible pour chacun des créneaux de polymérisation(Creation listCTO)
         $TbPcSsOT=[];
         $TbRepartChargeTot=[];
@@ -1433,7 +1783,7 @@ class PlanningMCController extends AbstractController
             }
         $i = $i + 1;
         }
-        dump($TbRepartChargeTot);
+        //dump($TbRepartChargeTot);
 
         return $this->render('planning_mc/PreviPlannif.html.twig', [
             'controller_name' => 'PlannificationSAP',
@@ -1457,6 +1807,26 @@ class PlanningMCController extends AbstractController
         return $this->render('planning_mc/form/_formChargeOF.html.twig', [
             'controller_name' => 'PlannificationSAP',
             'dataChargeOF' => $listOFCharge,
+        ]);
+    }
+
+    /**
+     * @Route("/LOGISTIQUE/Creation/ChargeOT", name="Charge_OT", condition="request.isXmlHttpRequest()")
+     */
+    public function chargeOT(Request $request, ManagerRegistry $manaReg)
+    {
+        //Récupération des OT contenus dans la demande
+        $repo=$manaReg->getRepository(Demandes::class);
+        $demande=$repo->find($request->request->get('demande'));
+        $listOTCharge=$demande->getListOT();
+        //Création de la liste des outillages
+        foreach ($listOTCharge as $key => $OT) {
+            $listeOTCharge[$key]=$OT;
+        }
+        
+        return $this->render('planning_mc/form/_formChargeOT.html.twig', [
+            'controller_name' => 'PlannificationSAP',
+            'listeOT' => $listeOTCharge,
         ]);
     }
 
@@ -1499,7 +1869,8 @@ class PlanningMCController extends AbstractController
         
         $this->addFlash('success', "Enregistrement du chargement n° ".$chargt->getId()." effectué avec succès");
 
-        return $this->redirectToRoute('PreviPlannif');
+        return $this->redirectToRoute($request->get('route'),['service'=>$request->get('service')]);
+        
     }
 
     /**
@@ -1680,16 +2051,40 @@ class PlanningMCController extends AbstractController
      * @Route("/METHODES/PROGRAMMATION/Creation_PRP", name="Creation PRP")
      * @Route("/METHODES/PROGRAMMATION/Modification_PRP/{id}", name="Modification_PRP")
      */
-    public function Creation_PRP(Request $Requet,EntityManagerInterface $manager,ProgMoyens $Prog=null, ManagerRegistry $manaReg)
+    public function Creation_PRP(Request $Requet,
+    EntityManagerInterface $manager,
+    ProgMoyens $Prog=null, 
+    ManagerRegistry $manaReg,
+    CallApiService $api)
     {
-//Si pas de programmes connus, c'est une création sinon une modif
+    //Mise à jour de la table progAvions svt api-Usine
+        //Recupération de la liste des programmes avions
+        $progAvions=$api->getDatasAPI('/api/programme_avions/','Usine',[],'GET');
+        $repo=$manaReg->getRepository(ProgAvions::class);
+        //Création du tableau de recherche
+        foreach ($progAvions as $avionApi) {
+            $avion=$repo -> findoneBy(['idApi' => $avionApi['id']]);
+            if (!$avion) {
+                $avion = new ProgAvions();
+            } else {
+                $avion->setidApi($avionApi['id']);
+            }            
+            $avion->setLibelle($avionApi['designation']);
+            $avion->setIri('/api/programme_avions/'.$avionApi['id']);
+            $avion->setidApi($avionApi['id']);
+
+            $manager->persist($avion);
+            $manager->flush();
+        }
+    //Si pas de programmes connus, c'est une création sinon une modif
         if(!$Prog){
             $Prog=new ProgMoyens();
         }
-        $form = $this->createForm(CreationProgType::class, $Prog);
+
+        $form = $this->createForm(CreationProgType::class, $Prog, ['idService' => 8, 'activitees' => 'Plannifie']);
         
         $form->handleRequest($Requet);
-        //dump($form);
+        
         if($form->isSubmitted() && $form->isValid()){
             if(!$Prog->getId()){
                 $Prog->setDateCreation(new \datetime());
@@ -1704,7 +2099,7 @@ class PlanningMCController extends AbstractController
             $manager->flush();
             
 
-            return $this->redirectToRoute('Consultation');
+            return $this->redirectToRoute('Consultation PRP',['service'=>'METHODES']);
         }
 
         $repo=$manaReg->getRepository(ConfSsmenu::class);
@@ -1714,6 +2109,7 @@ class PlanningMCController extends AbstractController
         return $this->render('planning_mc/Creation.html.twig',[
             'Titres' => $Titres,
             'formProg' => $form->createView(),
+            'type' => "POLYMERISATION"
         ]);
 
     }
@@ -1737,10 +2133,10 @@ class PlanningMCController extends AbstractController
      * @Route("/METHODES/PROGRAMMATION/Consultation", name="Consultation PRP")
      * @Route("METHODES/PROGRAMMATION/Consultation/{id}", name="Consul_ProgMoy")
      */
-    public function Consultation_PRP(CategoryMoyens $moyen=null, ManagerRegistry $manaReg)
+    public function Consultation_PRP(CategoryMoyens $moyen=null, ManagerRegistry $manaReg, $id=null)
     {
 //Si pas de moyen affecté, c'est une consulation générale des programmes        
-        if(!$moyen){
+        if(!$id){
             $cycles = $manaReg
             ->getRepository(ProgMoyens::class)
             ->findAll();
@@ -1748,9 +2144,7 @@ class PlanningMCController extends AbstractController
 //Sinon par type de moyen du programme consulté
         else{$cycles = $manaReg
             ->getRepository(ProgMoyens::class)
-            ->findOneBySomeField($moyen->getId());
-
-            dump($moyen->getId());
+            ->findBy(['CateMoyen' => $id]);
         }
 
         //$category = $cycles->getCateMoyen();}
@@ -1758,12 +2152,11 @@ class PlanningMCController extends AbstractController
         $moyen=new CategoryMoyens();
         $repo=$manaReg->getRepository(CategoryMoyens::class);
         $moyen=$repo -> findall();
-        dump($moyen);
+
 
         $repo=$manaReg->getRepository(ConfSsmenu::class);
         $Titres=$repo -> findBy(['Description' => 'PROGRAMMATION']);
-        dump($Titres);
-        dump($cycles);
+
         
         return $this->render('planning_mc/Consultation.html.twig',[
             'Titres' => $Titres,
@@ -1773,8 +2166,8 @@ class PlanningMCController extends AbstractController
     }
     
      /**
-     * @Route("/OUTILLAGE/Article/Creation", name="CreationO")
-     * @Route("/OUTILLAGE/Article/Modification/{id}", name="ModificationO")
+     * @Route("/METHODES/OUTILLAGE/Creation", name="Creation OUT")
+     * @Route("/METHODES/OUTILLAGE/Modification/{id}", name="ModificationO")
      */
     public function CreationO(Request $Requet,EntityManagerInterface $manager,Outillages $OT=null, ManagerRegistry $manaReg)
         {
@@ -1803,10 +2196,9 @@ class PlanningMCController extends AbstractController
             $entityManager = $manaReg->getManager();
             $entityManager->persist($OT);
             $entityManager->flush();
-            dump($OT);
                         
 
-            //return $this->redirectToRoute('ConsultationO');
+            return $this->redirectToRoute('Consultation OUT',['service' => 'METHODES']);
         }
 
         return $this->render('planning_mc/CreationOutillages.html.twig',[
@@ -1816,8 +2208,8 @@ class PlanningMCController extends AbstractController
     }
 
     /**
-     * @Route("/OUTILLAGE/Article/Consultation", name="ConsultationO")
-     * @Route("/OUTILLAGE/Article/Consultation/{id}", name="ConsulO")
+     * @Route("/METHODES/OUTILLAGE/Consultation", name="Consultation OUT")
+     * @Route("/METHODES/OUTILLAGE/Consultation/{id}", name="ConsulO")
      */
     public function ConsultationO(Outillages $OT=null, ManagerRegistry $manaReg)
     {
@@ -1835,7 +2227,7 @@ class PlanningMCController extends AbstractController
     }
 
     /**
-     * @Route("/OUTILLAGE/Article/Demandes", name="DemandesO")
+     * @Route("/METHODES/OUTILLAGE/Article/Demandes", name="DemandesO")
      */
     public function DemandesO(Request $requette, EntityManagerInterface $manager)
     {
@@ -1843,22 +2235,27 @@ class PlanningMCController extends AbstractController
     }
 
      /**
-     * @Route("/METHODES/Moyens", name="MOYENS_INDUS")
+     * @Route("/{service}/Moyens", name="MOYENS_INDUS")
      */
-    public function CreationM(Request $Requet,EntityManagerInterface $manager,ProgMoyens $Prog=null, ManagerRegistry $manaReg)
+    public function DashBoardMoyens(ManagerRegistry $manaReg, $service,
+    PaginatorInterface $paginator, Request $request)
         {
         //Recherche date du jour
         $DateJour = new \DateTime();
         $jour=$DateJour->modify('today');
         $dateDebAn= new \datetime();
         $dateDebAn->modify('First day of january this year');
-
-        //La requête remonte les moyens inférieur à 23 du service 8
+        //Récupération de l'id du service
+        $repi=$manaReg->getRepository(Services::class);
+        $teams=$repi->findOneBy(['Nom' => $service]);
+        //La requête remonte tous les moyens du service
         $repo=$manaReg->getRepository(Moyens::class);
-        $Moyen=$repo ->findMoyens(intval('8'),intval('23'));
+        $Moyens=$repo ->findAllMoyensSvtService(intval('8'));
+
         $Tablo = [];
         $i = 0;
-        foreach($Moyen as $moyen){
+        //Traitement des données de chaque moyen pour indicateur
+        foreach($Moyens as $moyen){
             $currentMonthDateTime = new \DateTime();
             $JourDep = $currentMonthDateTime->modify('monday this week');
             $TboData = [];
@@ -1872,17 +2269,27 @@ class PlanningMCController extends AbstractController
                 $j = $j + 1;
             };
             $Tablo[$i]=['type'=>"stackedColumn",'name'=>$moyen['Moyen'],'indexLabelWrap'=> 'true' ,'indexLabelFontSize'=> 12,'showInLegend'=>"true",'xValueType'=>"dateTime",'yValueType'=>"dateTime",'yValueFormatString'=>"###",'dataPoints'=>$TboData];
-            //dump($Tablo);
             $i = $i + 1;
             //$CharTot=intval($polym['DureTheoPolym']/10000);
         }
         $Productivite= new JsonResponse($Tablo);
+
+        // Mise en place de la pagination
+        $repo=$manaReg->getRepository(Moyens::class);
+        $listMoyens=$repo ->myFindAllMoyensDetails();
+        //Hydratation du nbMode dans l'entity
+        foreach ($listMoyens as $key => $moyen) {
+            $moyen[0]->setnbMode($moyen['SousTitres']);
+            $Moyens[$key]=$moyen[0];
+        }
+        $Moyens=$paginator->paginate($Moyens, $request->query->getInt('page',1),20);
 
         $Titres=[];
 
         return $this->render('planning_mc/MoyensIndus.html.twig',[
             'Titres' => $Titres,
             'Productivite' => $Productivite->getContent(),
+            'Moyens' => $Moyens
             //'formProg' => $form->createView(),
         ]);
     }
@@ -1905,31 +2312,53 @@ class PlanningMCController extends AbstractController
             if(!$Moyen){
                 $Moyen=new Moyens();
             }
-            $form = $this->createForm(CreationMoyensType::class, $Moyen);
-            
+            //Création ed la liste des services pour menu déroulant
+            $repo=$manaReg->getRepository(Services::class);
+            $listService=$repo->findAll();
+
+            foreach ($listService as $key => $service) {
+                $listeValServ[$service->getNom()]=intval($service->getId());
+            }
+
+            $form = $this->createForm(CreationMoyensType::class, $Moyen, ['listValService' => $listeValServ]);
+        
             $form->handleRequest($Requet);
-            //dump($form);
+
             if($form->isSubmitted() && $form->isValid()){
                 if(!$Moyen->getId()){
-                    //$Moyen->setDateCreation(new \datetime());
+                    //Recherche sur le type "Activitées" pour si création 1 ou 2 moyens
+                    if($Moyen->getActivitees()==='Plannifie'){
+                        //Activité juste de plannification et pas de suivi réel, donc un seul moyen
+                        $manager->persist($Moyen);
+                    }else{
+                        //Création de 2ème moyen pour activité de suivi production réel
+                        $Moyen->setActivitees('Realisee');
+                        $manager->persist($Moyen);
+                        $manager->flush();
+                        $Moyen->setActivitees('Plannifie');
+                    }
                 }
                 else{
-                    //$Moyen->setDateModif(new \datetime());
+                    //Vérification si plusieurs moyens du même nom dans base
+                    $repo=$manaReg->getRepository(Moyens::class);
+                    $nbMoyensIdent = $repo->findBy(['Libelle'=> $Moyen->getLibelle()]);
+                    if (count($nbMoyensIdent)===1 and $Moyen->getActivitees()==='Realisee') {
+                        //C'est un nouveau moyen à créer
+                        $newMoyen= clone $Moyen;
+                        $Moyen->setActivitees('Plannifie');
+                        $manager->persist($newMoyen);                       
+                    }else{
+                        $manager->persist($Moyen);
+                    }
                 }
-    
-                $manager->persist($Moyen);
+                
                 $manager->flush();
                 
-    
-                return $this->redirectToRoute('Utilisateurs');
+                return $this->redirectToRoute('MOYENS_INDUS',['service' => 'METHODES']);
             }
-            $repo=$manaReg->getRepository(ConfSsmenu::class);
-            $Titres=$repo -> findall();
-            //dump($Titres);
-        $form = $this->createForm(CreationMoyensType::class, $Moyen);
-        
-        $form->handleRequest($Requet);
-        
+        $repo=$manaReg->getRepository(ConfSsmenu::class);
+        $Titres=$repo -> findall();
+
         return $this->render('planning_mc/CreationMoyen.html.twig',[
             'Titres' => $Titres,
             'formMoy' => $form->createView(),

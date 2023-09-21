@@ -80,6 +80,11 @@ class PolymReal
      */
     private $charges;
 
+    public function __toString(): string
+    {
+        return (string) $this->getNomPolym();
+    }
+
     public function __construct()
     {
         $this->charges = new ArrayCollection();

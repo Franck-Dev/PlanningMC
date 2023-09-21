@@ -108,11 +108,45 @@ class Outillages
      */
     private $DateDispo;
 
+    /**
+     * @ORM\Column(type="smallint", nullable=true)
+     */
+    private $nbPolymssTrait;
+
+    /**
+     * @ORM\ManyToMany(targetEntity=Chargement::class, mappedBy="Outillages", cascade={"all"})
+     */
+    private $chargements;
+
+    /**
+     * @ORM\ManyToMany(targetEntity=Demandes::class, mappedBy="ListOT", cascade={"all"})
+     */
+    private $demandes;
+
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     */
+    private $nbMaxPolym;
+
+    private $pourAvTrait;
+
+    /**
+     * @ORM\ManyToOne(targetEntity=ProgAvions::class, inversedBy="outillages")
+     */
+    private $Projet;
+
+    public function __toString(): string
+    {
+        return (string) $this->getRef()."-".$this->getDesignation();
+    }
+
     public function __construct()
     {
         $this->Programme = new ArrayCollection();
         $this->chargFiges = new ArrayCollection();
         $this->articles = new ArrayCollection();
+        $this->chargements = new ArrayCollection();
+        $this->demandes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -379,6 +413,102 @@ class Outillages
     public function setDateDispo(?\DateTimeInterface $DateDispo): self
     {
         $this->DateDispo = $DateDispo;
+
+        return $this;
+    }
+
+    public function getNbPolymssTrait(): ?int
+    {
+        return $this->nbPolymssTrait;
+    }
+
+    public function setNbPolymssTrait(?int $nbPolymssTrait): self
+    {
+        $this->nbPolymssTrait = $nbPolymssTrait;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Chargement>
+     */
+    public function getChargements(): Collection
+    {
+        return $this->chargements;
+    }
+
+    public function addChargement(Chargement $chargement): self
+    {
+        if (!$this->chargements->contains($chargement)) {
+            $this->chargements[] = $chargement;
+            $chargement->addOutillage($this);
+        }
+
+        return $this;
+    }
+
+    public function removeChargement(Chargement $chargement): self
+    {
+        if ($this->chargements->removeElement($chargement)) {
+            $chargement->removeOutillage($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Demandes>
+     */
+    public function getDemandes(): Collection
+    {
+        return $this->demandes;
+    }
+
+    public function addDemande(Demandes $demande): self
+    {
+        if (!$this->demandes->contains($demande)) {
+            $this->demandes[] = $demande;
+            $demande->addListOT($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDemande(Demandes $demande): self
+    {
+        if ($this->demandes->removeElement($demande)) {
+            $demande->removeListOT($this);
+        }
+
+        return $this;
+    }
+
+    public function getNbMaxPolym(): ?int
+    {
+        return $this->nbMaxPolym;
+    }
+
+    public function setNbMaxPolym(?int $nbMaxPolym): self
+    {
+        $this->nbMaxPolym = $nbMaxPolym;
+
+        return $this;
+    }
+
+    public function getPourAvtrait(): ?int
+    {
+        $Pourc = (!$this->nbMaxPolym) ? 0 : ($this->nbPolymssTrait/$this->nbMaxPolym)*100 ;
+        return $Pourc;
+    }
+
+    public function getProjet(): ?ProgAvions
+    {
+        return $this->Projet;
+    }
+
+    public function setProjet(?ProgAvions $Projet): self
+    {
+        $this->Projet = $Projet;
 
         return $this;
     }

@@ -3,15 +3,50 @@
 {%block body%}
     <h1> Inscription au site</h1>
 
-    {{ form_start(form)}}
-
-    {{ form_row(form.username,{'label': 'Nom d\'utilisateur', 'attr':{'placeholder':'Votre NOM Prenom'}} )}}
-    {{ form_row(form.email)}}
-    {{ form_row(form.password)}}
-    {{ form_row(form.confirm_password)}}
-    {{ form_row(form.service)}}
-    {{ form_row(form.poste)}}
-
-    <button type="submit" class="btn btn-success">Inscription</button>
-    {{ form_end(form)}}
+    <div class="d-flex align-items-center justify-content-center">
+		{{ form_start(form)}}
+		<div class="form-row">
+			<div class="form-group col-md-6">
+				{{ form_row(form.nom)}}
+			</div>
+			<div class="form-group col-md-4">
+				{{ form_row(form.prenom)}}
+			</div>
+            <div class="form-group col-md-2">
+				{{ form_row(form.matricule)}}
+			</div>
+		</div>
+		<div class="form-row align-items-center">
+			<div class="form-group col-md-6">
+				{{ form_row(form.mail)}}
+			</div>
+			<div class="form-group col-md-3">
+				{{ form_row(form.password)}}
+			</div>
+			<div class="form-group col-md-3">
+				 {{ form_row(form.confirm_password, {'attr' : {'placeholder' : "Recommences :)" }})}}
+			</div>
+		</div>
+        <div class="form-row">
+			<div class="form-group col-md-6">
+				{{ form_row(form.site)}}
+			</div>
+			<div class="form-group col-md-6">
+				{{ form_row(form.unite)}}
+			</div>
+		</div>
+		<div class="form-group">
+			{{ form_row(form.service)}}
+            {{ form_row(form.poste)}}
+		</div>
+		<div class="form-group">
+			 {{ form_row(form.programmeAvion)}}
+		</div>
+		<div class="form-group">
+			<button type="submit" class="btn btn-success">
+				Inscription
+			</button>
+		</div>
+		{{ form_end(form)}}
+	</div>
 {%endblock%}

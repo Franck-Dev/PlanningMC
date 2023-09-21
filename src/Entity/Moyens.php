@@ -69,6 +69,18 @@ class Moyens
      */
     private $chargFiges;
 
+    /**
+     * @ORM\ManyToMany(targetEntity=Moulage::class, mappedBy="Moyen")
+     */
+    private $moulages;
+
+    private $nbMode;
+
+    /**
+     * @ORM\ManyToMany(targetEntity=ProgMoyens::class, mappedBy="moyenVal")
+     */
+    private $progMoyens;
+
     public function __toString(): string
     {
         return (string) $this->getLibelle();
@@ -78,6 +90,15 @@ class Moyens
     {
         $this->demandes = new ArrayCollection();
         $this->chargFiges = new ArrayCollection();
+        $this->moulages = new ArrayCollection();
+        $this->progMoyens = new ArrayCollection();
+    }
+
+    public function __clone()
+    {
+        if ($this->id) {
+            $this->id = null;
+        }
     }
 
     public function getId(): ?int
@@ -239,6 +260,72 @@ class Moyens
             if ($chargFige->getMoyen() === $this) {
                 $chargFige->setMoyen(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Moulage>
+     */
+    public function getMoulages(): Collection
+    {
+        return $this->moulages;
+    }
+
+    public function addMoulage(Moulage $moulage): self
+    {
+        if (!$this->moulages->contains($moulage)) {
+            $this->moulages[] = $moulage;
+            $moulage->addMoyen($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMoulage(Moulage $moulage): self
+    {
+        if ($this->moulages->removeElement($moulage)) {
+            $moulage->removeMoyen($this);
+        }
+
+        return $this;
+    }
+
+    public function getnbMode(): ?string
+    {
+        return $this->nbMode;
+    }
+    
+    public function setnbMode(string $nbMode): self
+    {
+        $this->nbMode = $nbMode;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ProgMoyens>
+     */
+    public function getProgMoyens(): Collection
+    {
+        return $this->progMoyens;
+    }
+
+    public function addProgMoyen(ProgMoyens $progMoyen): self
+    {
+        if (!$this->progMoyens->contains($progMoyen)) {
+            $this->progMoyens[] = $progMoyen;
+            $progMoyen->addMoyenVal($this);
+        }
+
+        return $this;
+    }
+
+    public function removeProgMoyen(ProgMoyens $progMoyen): self
+    {
+        if ($this->progMoyens->removeElement($progMoyen)) {
+            $progMoyen->removeMoyenVal($this);
         }
 
         return $this;

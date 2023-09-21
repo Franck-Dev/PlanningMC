@@ -1,0 +1,239 @@
+{% extends 'base.html.twig' %}
+
+{% form_theme formDemande 'bootstrap_4_layout.html.twig'%}
+
+{% block title %}Demandes de créneaux de polymérisations{% endblock %}
+
+{% block stylesheet %}
+
+{% endblock %}
+
+{% block body %}
+	<h1>Demandes de créneaux de polymérisations ✅</h1>
+	<div class="row d-flex align-items-top justify-content-center m-2">
+		<div class="d-flex align-items-center justify-content-center col-sm-12 col-lg-6">
+			{% block form %}
+		
+			{% endblock %}
+		</div>
+		<div class="d-flex col-sm-12 col-lg-6">
+			<!-- Pie Chart -->
+			<div class="card shadow mb-4 vw-100 vh-50">
+				<!-- Card Header - Dropdown -->
+				<div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+					<h6 class="m-0 font-weight-bold text-primary">Données Techniques CTO <span id="Num_CTO"></span></h6>
+					<div class="dropdown no-arrow">
+						<a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+							data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+							<i class="fa fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+						</a>
+						<div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+							aria-labelledby="dropdownMenuLink">
+							<div class="dropdown-header">Traitement des données:</div>
+							<a class="dropdown-item" href="#">Modifier</a>
+							<a class="dropdown-item" href="#">Valider</a>
+							<div class="dropdown-divider"></div>
+							<a class="dropdown-item" href="#">Simulation Moulage</a>
+						</div>
+					</div>
+				</div>
+				<!-- Card Body -->
+				<div class="card-body">
+					<div class="pt-4 pb-2">
+						{% include "planning_mc/form/_form_tbDatasCharg.html.twig" %}
+					</div>
+					
+				</div>
+				<div class="card-footer">
+					<div class="mt-1 text-center small">
+						<span class="mr-2">
+							<i class="fa fa-circle text-primary"></i> Articles
+						</span>
+						<span class="mr-2">
+							<i class="fa fa-circle text-success"></i> Outillages
+						</span>
+						<span class="mr-2">
+							<i class="fa fa-circle text-info"></i> Moyens
+						</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row d-flex align-items-top justify-content-center m-2">
+		<div class="d-flex col-sm-12 col-lg-12">
+			<!-- Pie Chart -->
+			<div class="card shadow mb-4 vw-100 vh-50">
+				<!-- Card Header - Dropdown -->
+				<div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+					<h6 class="m-0 font-weight-bold text-primary">Organisation de Moulage :</h6>
+					<div class="dropdown no-arrow">
+						<a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+							data-toggle="dropdown" 
+							aria-haspopup="true" aria-expanded="false">
+							<i class="fa fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+						</a>
+						<div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+							aria-labelledby="dropdownMenuLink">
+							<div class="dropdown-header">Plannification des OF:</div>
+							<a class="dropdown-item" href="#">Modifier</a>
+							<a class="dropdown-item" href="#">Valider</a>
+							<div class="dropdown-divider"></div>
+							<a class="dropdown-item" href="#">Simulation Moulage</a>
+						</div>
+					</div>
+				</div>
+				<!-- Card Body -->
+				<div class="card-body">
+					<div class="pt-4 pb-2">
+						<div id="myDatasCTOMoul">
+							{% include "planning_mc/Planning.html.twig" %}
+							{# {{ render(controller('App\\Controller\\PlanningMCController::Index',{ 'service' : service})) }} #}
+						</div>
+					</div>
+					
+				</div>
+				<div class="card-footer">
+					<div class="mt-1 text-center small">
+						<span class="mr-2">
+							<i class="fa fa-circle text-primary"></i> Articles
+						</span>
+						<span class="mr-2">
+							<i class="fa fa-circle text-success"></i> Outillages
+						</span>
+						<span class="mr-2">
+							<i class="fa fa-circle text-info"></i> Moyens
+						</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+{% endblock %}
+{% block javascripts %}
+
+{% endblock %}
+{% block mesJavascripts %}
+<script type="text/javascript">
+var $cycle = $('#demandes_cycle');
+var $datW = $('#demandes_date_propose');
+var $heurW = $('#demandes_heure_propose');
+var $CTO = $('#demandes_ListCTO');
+var $listOF = $('#demandes_ListOF');
+var $listOT = $('#demandes_ListOT');
+var $idChargement = $('#demandes_Chargement');
+var $idDemande = $('#demandes_id');
+
+// When sport gets selected ...
+$cycle.change(function() {
+  // ... retrieve the corresponding form.
+  var $form = $(this).closest('form');
+  // Simulate form data, but only include the selected sport value.
+  var data = {};
+  data[$cycle.attr('name')] = $cycle.val();
+  data[$datW.attr('name')] = $datW.val();
+  data[$heurW.attr('name')] = $heurW.val();
+  data[$CTO.attr('name')] = $CTO.val();
+  // Submit data via AJAX to the form's action path.
+  $.ajax({
+    url : $form.attr('action'),
+    type: $form.attr('method'),
+    data : data,
+	beforeSend: function() {
+        $('#loader').removeClass('hidden')
+    },
+    complete: function(html) {
+      // Replace current position field ...
+      $('#demandes_ListOF').replaceWith(
+        // ... with the returned one from the AJAX response.
+        $(html.responseText).find('#demandes_ListOF')
+      );
+	  $('#demandes_ListCTO').replaceWith(
+        // ... with the returned one from the AJAX response.
+        $(html.responseText).find('#demandes_ListCTO')
+      );
+	  $('#demandes_ListCTO').on('change',$('#demandes_ListCTO'), function(event){
+		rebindDatasCTO($('#demandes_ListCTO'),$idChargement, $idDemande);
+	  });
+	  $('#demandes_ListOT').replaceWith(
+        // ... with the returned one from the AJAX response.
+        $(html.responseText).find('#demandes_ListOT')
+      );
+      // Position field now displays the appropriate positions.
+	  $('#loader').addClass('hidden');
+    }
+  });
+  
+});
+
+// Function qui renvoie les données du CTO avec les OF associés trouvés dans la charge du jour + qqs jours autour
+function rebindDatasCTO($CTO, $idChargement, $idDemande){
+	console.log(location);
+	console.log($('#demandes_chargement option:selected').val());
+	$.ajax({
+    url : 'http://'+location.host+'/PlanningMC/Public/Demandes/Charge_Fige/'+$CTO.val()+'/OF',
+    method: 'POST',
+    data : {DateJour: $datW.val(), idChargement : $('#demandes_chargement option:selected').val(), idDemande : $idDemande.val()},
+    complete: function(html) {
+      // Replace current position field ...
+      $('#myDatasCTO').replaceWith(
+        // ... with the returned one from the AJAX response.
+        $(html.responseText)
+      );
+	  $('#Num_CTO').text($('#demandes_ListCTO option:selected').text());
+    }
+  });
+};
+
+$CTO.change(function() {
+	rebindDatasCTO($('#demandes_ListCTO'),$idChargement, $idDemande)
+	var $data={};
+	$data[$CTO.attr('name')] = $CTO.val();
+});
+
+$listOF.change(function() {
+	console.log('toto');
+	var $data={};
+	$data[$listOF.attr('name')] = $listOF.val();
+	alert($data[$listOF.attr('name')]);
+});
+	//Permet de modifier l'OF présélectionné dans le select
+	function affichageSelectOF($art, $url){
+
+		$.ajax({
+			url : $url,
+			method: 'GET',
+			data : {Ref: $art},
+			complete: function(html) {
+			//Création de la liste des OF pour le select
+				var Moy="<select class=\"select\" id=\""+$art+"\">";
+				for (let i = 0; i < html.length; i++) {
+					Moy+="\n<option value="+html[i].content+"></option>";  
+				}
+				Moy+="\n</select><br>";
+				$('#'+$art).replaceWith(
+					// ... with the returned one from the AJAX response.
+					$(html.responseText)
+				);
+			}
+		});
+	};
+
+	//Permet de valider l'outillage avec ses OF
+	function valideOFOT($OT, $url){
+
+		var $elements=$($OT).children();
+		// for loop sur OF
+		var $index=0;
+		var $OFs=[];
+        for (var i = 0; i < $OT.length; i++) {
+			$OFs.push($elements[$index].innerText);
+			$index+=5
+        }
+		console.log($OFs);
+		console.log($url);
+		return $OFs
+	};
+</script>
+{% endblock %}

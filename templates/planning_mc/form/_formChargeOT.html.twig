@@ -1,0 +1,19 @@
+<div class="table-responsive h-100">
+    <table class="table">
+        <thead>	
+            <tr>
+                <th>Ref</th>
+                <th>Désignation</th>
+            </tr>	
+        </thead>
+        {% for key, OT in listeOT %}                               
+            {# {% set nameTR = ['IDChargt',jour,CTO.Nom,loop.index]|join %} #}
+                    <tbody class="border bg-secondary">
+                        <tr>
+                            <td>{{OT.ref}}</td>
+                            <td>{{OT.designation}}</td>
+                        </tr>
+                    </tbody>
+        {% endfor %}
+    </table>
+</div>
