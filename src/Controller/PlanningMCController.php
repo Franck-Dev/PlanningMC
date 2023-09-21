@@ -84,7 +84,6 @@ class PlanningMCController extends AbstractController
 {
     /**
      * @Route("/Planning/Edit", name="Planning_Edit")
-     * @Security("is_granted('ROLE_REGLEUR')")
      */
     public function planningEdit(Request $request, FunctPlanning $plan, ManagerRegistry $manaReg)
     {
@@ -94,6 +93,7 @@ class PlanningMCController extends AbstractController
         $repo=$manaReg->getRepository(Planning::class);
         $repi=$manaReg->getRepository(PolymReal::class);
         $task=$plan->planning($repo, $repos, $repi, $statut);
+        dump($task,$request->request->get('state'));
 
         return new JsonResponse(['Taches'=> $task[0], 'moyen'=> $moyens[1], 'Ssmoyen'=> $moyens[0]]);
     }    
@@ -1713,9 +1713,13 @@ class PlanningMCController extends AbstractController
         // Date à 1 mois
         $jourVisu = date("Y-m-d", strtotime('+ 31 days'.date('Y') ));
         $jourVisu=new \datetime($jourVisu);
+
+        //Création variables des indicateurs Headers
+        $listIndicHeader=[];
        
         return $this->render('planning_mc/Ordo.html.twig', [
             'controller_name' => 'PlanningOrdo',
+            'listIndicHeader' => $listIndicHeader,
             'ChargeTot' => $ChargTot,
             'Titres' => $Titres,
             'datedeb' => $jour,

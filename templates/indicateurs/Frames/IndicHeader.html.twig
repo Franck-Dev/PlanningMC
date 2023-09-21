@@ -13,23 +13,23 @@
     </div> 
     <!-- Earnings (Monthly) Card Example -->
     <div class="row">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2" id="card_kpi">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                QUANTITE PIECES (Mois)</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{[ChargeMois.NbrRef,' pcs']|join}}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class=""></i>
+        {% for key, indicHeader in listIndicHeader %}
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-primary shadow h-100 py-2" id="card_kpi">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">{{indicHeader.label}}</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{[indicHeader.val,' ',indicHeader.unit]|join}}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="{{indicHeader.icon}}"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-
+        {% endfor %}
         <!-- Earnings (Monthly) Card Example -->
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-left-success shadow h-100 py-2" id="card_kpi">

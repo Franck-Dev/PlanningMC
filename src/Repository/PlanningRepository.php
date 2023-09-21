@@ -104,6 +104,22 @@ class PlanningRepository extends ServiceEntityRepository
     public function findChargeStatut(\DateTime $datedeb, \DateTime $datefin, $moyen, $statut): array
     {
         $entityManager = $this -> getEntityManager ();
+        //Gestion du statut 'RETARD' en modifiant les dates
+        if ($statut == 'RETARD') {
+            $statut = 'PLANNIFIE';
+            $query = $entityManager -> createQuery (
+                'SELECT p
+                FROM App\Entity\Planning p LEFT OUTER JOIN  App\Entity\Demandes g WITH g.id = p.NumDemande
+                WHERE p.DebutDate > :dateD AND p.DebutDate < :dateF  AND p.Identification IN (:moyens) AND p.Statut = :statut
+                ORDER BY p.DebutDate ASC');
+            $query-> setParameter ( 'dateD' , $datedeb );
+            $query-> setParameter ('dateF' , $datefin);
+            $query-> setParameter ('moyens' , $moyen);
+            $query-> setParameter ('statut' , $statut);
+    
+            // returns an array of Product objects
+            return $query -> execute ();
+        }
         $query = $entityManager -> createQuery (
             'SELECT p
             FROM App\Entity\Planning p LEFT OUTER JOIN  App\Entity\Demandes g WITH g.id = p.NumDemande

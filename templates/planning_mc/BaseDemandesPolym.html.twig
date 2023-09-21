@@ -169,10 +169,10 @@ $cycle.change(function() {
 
 // Function qui renvoie les données du CTO avec les OF associés trouvés dans la charge du jour + qqs jours autour
 function rebindDatasCTO($CTO, $idChargement, $idDemande){
-	console.log($CTO.val());
+	console.log(location);
 	console.log($('#demandes_chargement option:selected').val());
 	$.ajax({
-    url : 'http://localhost/PlanningMC/Public/Demandes/Charge_Fige/'+$CTO.val()+'/OF',
+    url : 'http://'+location.host+'/PlanningMC/Public/Demandes/Charge_Fige/'+$CTO.val()+'/OF',
     method: 'POST',
     data : {DateJour: $datW.val(), idChargement : $('#demandes_chargement option:selected').val(), idDemande : $idDemande.val()},
     complete: function(html) {

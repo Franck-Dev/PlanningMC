@@ -67,38 +67,52 @@ class SuperviseurController extends AbstractController
                 
         //Chargement d'une variable par tâche plannifiée, encours, annulée et terminée
         $taskPla=$repo->findChargeStatut(new \DateTime(), $lastDateTime, $tbMoyens, 'PLANNIFIE');
+
+        //Traitement des polyms plannifiées mais lancées, donc plutôt dans encours
+        foreach($taskPla as $key=>$polyPla){
+            if ($repi->findBy(['PolymPlannif' => $polyPla->getId()])) {
+                unset($taskPla[$key]);
+            }
+        }
         $taskEC=$repi->findChargeStatut($firstDateTime, $lastDateTime, $tbMoyens, 'LANCER');
         $taskANul=$repo->findChargeStatut($firstDateTime, $lastDateTime, $tbMoyens, 'ANNULE');
         $taskTER=$repi->findChargeStatut($firstDateTime, $lastDateTime, $tbMoyens, 'TERMINE');
 
-        dump($taskPla);
         //Traitement du cas des retard qui sont en statut PLANNIFIE
-        $taskRetard=$repo->findChargeStatut($firstDateTime, new \DateTime(), $tbMoyens, 'PLANNIFIE');
+        $taskRetard=$repo->findChargeStatut($firstDateTime, new \DateTime(), $tbMoyens, 'RETARD');
         //Modification du statut juste pour échéancier
         foreach ($taskRetard as $key => $item) {
             $item->getStatut('RETARD');
+            //Traitement des polyms plannifiées mais lancées, donc plutôt dans encours
+            if ($repi->findBy(['PolymPlannif' => $item->getId()])) {
+                unset($taskRetard[$key]);
+            }
         }
+
         //Fusion des tableaux Annulé et Retard pour n'avoir qu'une seule variable
         $taskAnuRet=array_merge($taskRetard,$taskANul);
 
         //Calcul du nombre de pièces pour indicateurHeader
+        //Indic polym
         $nbPoly['NbrRef']=count($taskRetard)+count($taskPla)+count($taskEC)+count($taskTER);
+        $indic1=['label'=>'AVANCEMENT :', 'val'=>$nbPoly['NbrRef'], 'unit'=>'%', 'icon'=>''];
         $indic2['Nom']='test';
         $indic2['Valeur']=70;
+        $listIndicHeader=[$indic1];
 
         //Concatenation de tous les tableaux en un seul par type de statut
         $taskTotal['RETARD/ANNULE']=$taskAnuRet;
         $taskTotal['A FAIRE']=$taskPla;
         $taskTotal['EN COURS']=$taskEC;
         $taskTotal['TERMINE']=$taskTER;
-        //dump($taskTotal);
-
+        
         return $this->render('superviseur/ChargeJour.html.twig',[
             'service' => $service,
             'taches' => $taskTotal,
             'Titres' => $Titres,
             'ChargeMois' => $nbPoly,
             'indic2' => $indic2,
+            'listIndicHeader' => $listIndicHeader,
             'moyens'=> $moyens
         ]);
     }
@@ -118,7 +132,7 @@ class SuperviseurController extends AbstractController
                 $repo=$manaReg->getRepository(ConfSmenu::class);
                 $Titres=$repo->findAll();
             }
-            
+            dump($Titres);
             //Récupération des kits tissus découpés liés au programme avion de l'utilisateur
             $Kits=$api->getDatasAPI('/api/datas_kits?status=false','tracakit',[],'GET',);
             $listKits=$paginator->paginate($Kits, $request->query->getInt('page',1),10);
@@ -154,12 +168,16 @@ class SuperviseurController extends AbstractController
             $listMoyens=$paginator->paginate([], $request->query->getInt('page',1),10);
             $listKits=$paginator->paginate([], $request->query->getInt('page',1),10);
         }
+        //Création variables des indicateurs Headers
+        $listIndicHeader=[];
+
             return $this->render('superviseur/TableauBordActivites.html.twig',[
                 'service' => $service,
                 'Titres' => $Titres,
                 'listOTs' => $listOTs,
                 'suiviOT' => $OTparNbPolym,
                 'moyens' => $listMoyens,
+                'listIndicHeader' => $listIndicHeader,
                 'ChargeMois' => ['NbrRef' => 0],
                 'listKits' => $listKits
             ]);

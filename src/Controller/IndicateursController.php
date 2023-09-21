@@ -656,10 +656,14 @@ class IndicateursController extends AbstractController
         $repo=$manaReg->getRepository(Charge::class);
         $ChargeMois=$repo->myFindPcsTotMois($jour,$jourVisu);
 
+        //Création variables des indicateurs Headers
+        $listIndicHeader=[];
+
         return $this->render('indicateurs/Frames/IndicHeader.html.twig', [
             'controller_name' => 'IndicateursController',
             'datedeb' => $jourVisu,
             'ChargeMois' => $ChargeMois[0],
+            'listIndicHeader' => $listIndicHeader,
             'service' => $service
         ]);
     }
