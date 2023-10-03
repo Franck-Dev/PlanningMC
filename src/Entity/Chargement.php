@@ -53,6 +53,16 @@ class Chargement
      */
     private $Outillages;
 
+    /**
+     * @ORM\Column(type="dateinterval", nullable=true)
+     */
+    private $TpsChargeOT;
+
+    /**
+     * @ORM\Column(type="smallint", nullable=true)
+     */
+    private $txChargeOT;
+
     public function __toString(): string
     {
         return (string) $this->getId();
@@ -180,6 +190,30 @@ class Chargement
     public function removeOutillage(Outillages $outillage): self
     {
         $this->Outillages->removeElement($outillage);
+
+        return $this;
+    }
+
+    public function getTpsChargeOT(): ?\DateInterval
+    {
+        return $this->TpsChargeOT;
+    }
+
+    public function setTpsChargeOT(?\DateInterval $TpsChargeOT): self
+    {
+        $this->TpsChargeOT = $TpsChargeOT;
+
+        return $this;
+    }
+
+    public function getTxChargeOT(): ?int
+    {
+        return $this->txChargeOT;
+    }
+
+    public function setTxChargeOT(?int $txChargeOT): self
+    {
+        $this->txChargeOT = $txChargeOT;
 
         return $this;
     }
