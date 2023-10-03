@@ -1535,45 +1535,51 @@ class PlanningMCController extends AbstractController
     {
         //Si c'est le retour de la requette AJAX, on récupère les données
         if($request->isXmlHttpRequest()) {
-
             //Récupération des données de la requette
             $PolymPla = $request->request->get('id');
-            // Récupère l'id de la polym en enlevant le premier digit
-            $idPolymPla=substr($PolymPla,1);
-            $olddebdate=new \Datetime($request->request->get('olddatedeb'));
-            $oldfindate=new \Datetime($request->request->get('olddatefin'));
-            $idmoyen=$request->request->get('moyen');
-            $firstDateTime=date("Y-m-d H:i",strtotime($request->request->get('newdatedeb')));
+            //Si premier chiffre de l'id est 3 ou 4, on ne traite pas car Chargement/Déchargement
+            if (substr($PolymPla,0,1) == 3 or substr($PolymPla,0,1) == 4) {
+                return new Response("Chargement/Déchargement");
+            } else {
+                 // Récupère l'id de la polym en enlevant le premier digit
+                $idPolymPla=substr($PolymPla,1);
+                $olddebdate=new \Datetime($request->request->get('olddatedeb'));
+                $oldfindate=new \Datetime($request->request->get('olddatefin'));
+                $idmoyen=$request->request->get('moyen');
+                $firstDateTime=date("Y-m-d H:i",strtotime($request->request->get('newdatedeb')));
 
-            $newdebdate = new \DateTime($firstDateTime);
-            $lastDateTime=date("Y-m-d H:i",strtotime($request->request->get('newdatefin')));
-            $newfindate = new \DateTime($lastDateTime);
-            //Récupération de la désignation du moyen suivant id
-            $basemoy = $manaReg->getRepository(Moyens::class);
-            $moyen = $basemoy->findBy(['id' => $idmoyen]);
-            //dump($idPolymPla);//die();
-            if($idPolymPla) {
+                $newdebdate = new \DateTime($firstDateTime);
+                $lastDateTime=date("Y-m-d H:i",strtotime($request->request->get('newdatefin')));
+                $newfindate = new \DateTime($lastDateTime);
+                //Récupération de la désignation du moyen suivant id
+                $basemoy = $manaReg->getRepository(Moyens::class);
+                $moyen = $basemoy->findBy(['id' => $idmoyen]);
+                //dump($idPolymPla);//die();
+                if($idPolymPla) {
 
-                $mr = $manaReg->getRepository(Planning::class);
-                //$maga = $mr->findOneBySomeField($olddebdate,$oldfindate,$moyen[0]->getLibelle($idmoyen));
-                $maga=$mr->findBy(['id' => $idPolymPla]);
-                $old=$request->request->get('olddatedeb');
-                //$new=date("Y-m-d H:m",strtotime($request->request->get('newdatedeb')));
+                    $mr = $manaReg->getRepository(Planning::class);
+                    //$maga = $mr->findOneBySomeField($olddebdate,$oldfindate,$moyen[0]->getLibelle($idmoyen));
+                    $maga=$mr->findBy(['id' => $idPolymPla]);
+                    $old=$request->request->get('olddatedeb');
+                    //$new=date("Y-m-d H:m",strtotime($request->request->get('newdatedeb')));
 
-                $maga[0]->setDebutDate($newdebdate);
-                $maga[0]->setFinDate($newfindate);
-                $maga[0]->getNumDemande()->setMoyenUtilise($moyen[0]);
-                $maga[0]->setIdentification($moyen[0]->getLibelle());
+                    $maga[0]->setDebutDate($newdebdate);
+                    $maga[0]->setFinDate($newfindate);
+                    $maga[0]->getNumDemande()->setMoyenUtilise($moyen[0]);
+                    $maga[0]->setIdentification($moyen[0]->getLibelle());
 
-                $manager = $manaReg->getManager();
-                $manager->persist($maga[0]);
-                $manager->flush();
-                
-            return new JsonResponse("Modification de l'item n°".$idPolymPla." effectuée avec succès");
+                    $manager = $manaReg->getManager();
+                    $manager->persist($maga[0]);
+                    $manager->flush();
+                    
+                    return new JsonResponse("Modification de l'item n°".$idPolymPla." effectuée avec succès");
 
+                }
+                    return new Response("Pas d'id");
+            }
         }
-            return new Response("Pas d'id");
-        }
+            
+           
         return new Response("Ce n'est pas une requête Ajax");
     }
 

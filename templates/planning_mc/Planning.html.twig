@@ -209,6 +209,10 @@
         .vis-timeline{
             max-height: 100%;
         }
+        .vis-item.expected {
+            border-style: dashed !important;
+            z-index: 0;
+        }
 	</style>
 {% endblock %}
 {% block body %}
@@ -326,8 +330,10 @@
             locale: 'fr',
             zoomMin: 23000000,
             zoomMax: 20160000000,
+            margin: { item: 0 },
             template:template ,
-            stack: true,
+            stack: false,
+            stackSubgroups: false,
             start: new Date(),
             end: new Date(1000*60*60*24*3 + (new Date()).valueOf()),
 			zoomKey: "ctrlKey",

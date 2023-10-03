@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -60,6 +62,16 @@ class Planning
      * @ORM\OneToOne(targetEntity="App\Entity\RecurrancePolym", mappedBy="NumPlanning", cascade={"persist", "remove"})
      */
     private $recurrancePolym;
+
+    /**
+     * @ORM\OneToMany(targetEntity=ChangementOutillages::class, mappedBy="prodImpacte")
+     */
+    private $changementOutillages;
+
+    public function __construct()
+    {
+        $this->changementOutillages = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -186,6 +198,36 @@ class Planning
         // set the owning side of the relation if necessary
         if ($this !== $recurrancePolym->getNumPlanning()) {
             $recurrancePolym->setNumPlanning($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ChangementOutillages>
+     */
+    public function getChangementOutillages(): Collection
+    {
+        return $this->changementOutillages;
+    }
+
+    public function addChangementOutillage(ChangementOutillages $changementOutillage): self
+    {
+        if (!$this->changementOutillages->contains($changementOutillage)) {
+            $this->changementOutillages[] = $changementOutillage;
+            $changementOutillage->setProdImpacte($this);
+        }
+
+        return $this;
+    }
+
+    public function removeChangementOutillage(ChangementOutillages $changementOutillage): self
+    {
+        if ($this->changementOutillages->removeElement($changementOutillage)) {
+            // set the owning side to null (unless already changed)
+            if ($changementOutillage->getProdImpacte() === $this) {
+                $changementOutillage->setProdImpacte(null);
+            }
         }
 
         return $this;

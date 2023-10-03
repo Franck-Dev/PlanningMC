@@ -31,7 +31,7 @@ class FunctPlanning
         $DureCycH="-21days";
         $newDateFin=date_modify($dateInit, $DureCycH);
         
-        foreach($Taches as $tache){
+        foreach($Taches as $key=>$tache){
             if ($tache->getDebutDate() > $newDateFin) {
                 //On récupère la date de départ en français
                 $dateDep=$this->dateFrench($tache->getDebutDate());
@@ -39,13 +39,27 @@ class FunctPlanning
                 $commentaires=nl2br("Demande n° ". $tache->getNumDemande()->getId()." / ID Plannif : ". $tache->getId()."\n" ."Départ: ". $dateDep . "\n" .$tache->getNumDemande()->getCommentaires()."\n".$tache->getNumDemande()->getOutillages() ."\n" . "Fin à : " . ($tache->getFinDate())->format('G:i'));
                 //On cherche le moyen attribué à la polym suivant la demande et l'activité Plannification
                 $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification(),'Activitees'=> 'Plannifie']);
+                //Formatage de la durée de Chargement
+                $dureeCharge="-".idate("i",$tache->getNumDemande()->getCycle()->getTpsChargement()->format("U"))." minutes";
+                $dateFinCharge=clone($tache->getDebutDate());
+                $dateChargDeb=date_modify($dateFinCharge, $dureeCharge);
+                //Rajout du chargement suivant données du cycle de polym
+                $data[$i]=['id'=> '3'.$tache->getId(),'programmes'=> 'Chargement','statut'=> 'Changement outil','start'=> ($dateChargDeb)->format('c'),'end'=> ($tache->getDebutDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background: repeating-linear-gradient(45deg,'.$tache->getNumDemande()->getCycle()->getCouleur().' 0 20px,#e19965 20px 40px);','className'=> "expected",'subgroup'=> "sg_".$key];
+                //Mise en forme de la tâche
+                $i = $i + 1;
                 if($Pourc<75){
-                    $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires,'visibleFrameTemplate' => '<div class="progress"><div class="progress-bar progress-bar-warning" role="progressbar" style="width:' .$Pourc.'%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">' .$Pourc. '%</div></div>'];
+                    $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires,'visibleFrameTemplate' => '<div class="progress"><div class="progress-bar progress-bar-warning" role="progressbar" style="width:' .$Pourc.'%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">' .$Pourc. '%</div></div>','subgroup'=> "sg_".$key];
                 }
                 else{
-                    $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires, 'visibleFrameTemplate' => '<div class="progress"><div class="progress-bar progress-bar-success" role="progressbar" style="width:' .$Pourc.'%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">' .$Pourc. '%</div></div>'];
+                    $data[$i] = ['id'=> '1'.$tache->getId(),'programmes'=> $tache->getAction(),'statut'=> $tache->getStatut(),'start'=> ($tache->getDebutDate())->format('c'),'end'=> ($tache->getFinDate())->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background-color: '.$tache->getNumDemande()->getCycle()->getCouleur(),'title'=> $commentaires, 'visibleFrameTemplate' => '<div class="progress"><div class="progress-bar progress-bar-success" role="progressbar" style="width:' .$Pourc.'%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">' .$Pourc. '%</div></div>','subgroup'=> "sg_".$key];
                 }
-                
+                $i = $i + 1;
+                //Formatage de la durée de Déchargement
+                $dureeDecharge="+".idate("i",$tache->getNumDemande()->getCycle()->getTpsDechargement()->format("U"))." minutes";
+                $dateDebDecharge=clone($tache->getFinDate());
+                $dateChargFin=date_modify($dateDebDecharge, $dureeDecharge);
+                //Rajout du chargement suivant données du cycle de polym
+                $data[$i]=['id'=> '4'.$tache->getId(),'programmes'=> 'Dechargement','statut'=> 'Changement outil','start'=> ($tache->getFinDate())->format('c'),'end'=> ($dateChargFin)->format('c'),'group'=> $MoyUtil[0]->getId(),'style'=> 'background: repeating-linear-gradient(-45deg,'.$tache->getNumDemande()->getCycle()->getCouleur().' 0 20px,#e19965 20px 40px);','className'=> "expected",'subgroup'=> "sg_".$key];
                 $i = $i + 1;
             }
         }

@@ -114,6 +114,11 @@ class ProgMoyens
      */
     private $moyenVal;
 
+    /**
+     * @ORM\OneToMany(targetEntity=ChangementOutillages::class, mappedBy="prog")
+     */
+    private $changementOutillages;
+
     public function __toString(): string
     {
         return (string) $this->getNom();
@@ -127,6 +132,7 @@ class ProgMoyens
         $this->avion = new ArrayCollection();
         $this->articles = new ArrayCollection();
         $this->moyenVal = new ArrayCollection();
+        $this->changementOutillages = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -451,6 +457,36 @@ class ProgMoyens
     public function removeMoyenVal(Moyens $moyenVal): self
     {
         $this->moyenVal->removeElement($moyenVal);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ChangementOutillages>
+     */
+    public function getChangementOutillages(): Collection
+    {
+        return $this->changementOutillages;
+    }
+
+    public function addChangementOutillage(ChangementOutillages $changementOutillage): self
+    {
+        if (!$this->changementOutillages->contains($changementOutillage)) {
+            $this->changementOutillages[] = $changementOutillage;
+            $changementOutillage->setProg($this);
+        }
+
+        return $this;
+    }
+
+    public function removeChangementOutillage(ChangementOutillages $changementOutillage): self
+    {
+        if ($this->changementOutillages->removeElement($changementOutillage)) {
+            // set the owning side to null (unless already changed)
+            if ($changementOutillage->getProg() === $this) {
+                $changementOutillage->setProg(null);
+            }
+        }
 
         return $this;
     }
