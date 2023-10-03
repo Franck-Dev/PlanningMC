@@ -40,7 +40,7 @@ class FunctPlanning
                 //On cherche le moyen attribué à la polym suivant la demande et l'activité Plannification
                 $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification(),'Activitees'=> 'Plannifie']);
                 //Formatage de la durée de Chargement, si pas chargement avec outillages
-                if ($tache->getNumDemande()->getChargement()->getTpsChargeOT() OR $tache->getNumDemande()->getChargement()->getTpsChargeOT() > $tache->getNumDemande()->getChargement()->getTpsChargeOT()) {
+                if ($tache->getNumDemande()->getChargement()->getTpsChargeOT() OR $tache->getNumDemande()->getCycle()->getTpsChargement() > $tache->getNumDemande()->getChargement()->getTpsChargeOT()) {
                     $dureeCharge="-".idate("i",$tache->getNumDemande()->getCycle()->getTpsChargement()->format("U"))." minutes";
                 } else {
                     $dureeCharge="-".idate("i",$tache->getNumDemande()->getChargement()->getTpsChargeOT()->format("U"))." minutes";
