@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use DateInterval;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -511,5 +512,19 @@ class Outillages
         $this->Projet = $Projet;
 
         return $this;
+    }
+
+    public function getTpsChargeInterval(): DateInterval
+    {
+        $interDur=strtotime($this->TpsCharge->format('Y-m-d H:i:s'))-strtotime('1970-01-01 00:00:00');
+        $interval = new DateInterval("PT".$interDur."S");
+        return $interval;
+    }
+
+    public function getTpsDechargeInterval(): DateInterval
+    {
+        $interDur=strtotime($this->TpsDecharge->format('Y-m-d H:i:s'))-strtotime('1970-01-01 00:00:00');
+        $interval = new DateInterval("PT".$interDur."S");
+        return $interval;
     }
 }

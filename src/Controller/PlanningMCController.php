@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use DateInterval;
 use App\Entity\User;
 use App\Entity\Charge;
 use App\Entity\Moyens;
@@ -66,7 +67,6 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
-
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -164,10 +164,16 @@ class PlanningMCController extends AbstractController
                     //Création de la demande
                     $demande = new Demandes();
                     $demande=clone $dem->getNumPlanning()->getNumDemande();
-
+                    $demande->setMoyenUtilise($dem->getNumPlanning()->getNumDemande()->getMoyenUtilise());
                     $demande->setDatePropose($dem->getDateFinrecurrance());
                     $demande->setOutillages('');
                     $demande->setCommentaires('');
+                    //Création de la copie du chargement
+                    $chargement=new Chargement();
+                    $chargmnt=$dem->getNumPlanning()->getNumDemande()->getChargement();
+                    $chargement=clone $chargmnt;
+
+                    $demande->setChargement($chargement);
 
                     $manager = $manaReg->getManager();
                     $manager->persist($demande);
@@ -285,7 +291,17 @@ class PlanningMCController extends AbstractController
                     $demande->setPlannifie(1);
                     $demande->setRecurValide($TabDem["Reccurance"]);
                     $demande->setUserCrea($user->getUsername());
-                    
+
+                    //Création du chargement MANUe en attendant/!\ Intégrer un vrai plus tard
+                    $chargement= new Chargement;
+                    $chargement->setNomChargement('MANU');
+                    $chargement->setIdPlanning(0);
+                    $chargement->setDatePlannif($newfindate);
+                    $chargement->setRemplissage(0);
+                    $chargement->setProgramme($Cyc[0]->getNom());
+
+                    $demande->setChargement($chargement);
+
                     $manager = $manaReg->getManager();
                     $manager->persist($demande);
                     $manager->flush();
@@ -802,8 +818,23 @@ class PlanningMCController extends AbstractController
     {
         if (!$demande) {
             $demande= new Demandes();
-            $datejour=new \Datetime($requette->get('datejour'));
-            $demande->setDatepropose($datejour);
+            //Vérification si demande récurrante
+            if ($requette->get('IdPla')) {
+                $repoDem=$manaReg->getRepository(Demandes::class);
+                $demOld=$repoDem->find($requette->get('Demandes'));
+                $demande = clone $demOld;
+                $datejour=new \Datetime($requette->get('DatePla'));
+                $demande->setDatepropose($datejour->modify('7 days'));
+                $demande->setHeurepropose(new \Datetime($requette->get('HeurePla')));
+                $demande->setPlannifie(0);
+                $demande->setMoyenUtilise(null);
+                $demande->setId(null);
+                $demande->setChargement(null);
+            } else {
+                $datejour=new \Datetime($requette->get('datejour'));
+                $demande->setDatepropose($datejour);
+            }
+            
         } else {
             $datejour=$demande->getDatePropose();
         }
@@ -813,6 +844,8 @@ class PlanningMCController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             if(!$demande->getId()){
+                //Récupération du statut pour message
+                $statDem='création';
                 $demande->setDateCreation(new \datetime());
                 $demande->setPlannifie(0);
                 $demande->setRecurValide(0);
@@ -825,6 +858,7 @@ class PlanningMCController extends AbstractController
                     $chargement->setNomChargement('MANU');
                     $chargement->setDatePlannif(new \DateTime());
                     $chargement->setRemplissage(0);
+                    $chargement->setIdPlanning(0);
                     $chargement->setProgramme($demande->getCycle()->getNom());
                     //Rajout des outillages
                     foreach ($demande->getListOT() as $key => $OT) {
@@ -845,7 +879,8 @@ class PlanningMCController extends AbstractController
             }
             else{
                 $demande->setDateModif(new \datetime());
-                //dump($user);
+                //Récupération du statut pour message
+                $statDem='modification';
                 $demande->setUserModif($user->getUsername());
                 //Modification du chargement si besoin
                 if ($demande->getChargement() and $demande->getChargement()->getNomChargement() != 'MANU') {
@@ -905,8 +940,14 @@ class PlanningMCController extends AbstractController
             $manager = $manaReg->getManager();
             $manager->persist($demande);
             $manager->flush();
+            //Si création à demande reccurante, mise du statut traité(2) sur ancienne demande
+            if ($demOld) {
+                $demOld->setReccurance(2);
+                $manager->persist($demOld);
+                $manager->flush();
+            }
             
-            $com->sendNotif('La demande n° '. $demande->getId() . ' a bien été enregistré.');
+            $com->sendNotif('La demande de '.$statDem.' n° '. $demande->getId() . ' a bien été enregistrée.');
             //$requette->getSession()->getFlashbag()->add('success', 'La demande'. $demande->getId() . 'a bien été enregistré.');
                 
                 return $this->redirectToRoute('Demandes',['service' => 'MOULAGE']);
@@ -1058,7 +1099,7 @@ class PlanningMCController extends AbstractController
 
     $repo=$manaReg->getRepository(Demandes::class);
     if(!$requette->get('UtilisateursCE')){
-        $DemRec=$repo -> findBy(['Reccurance'=>'1','UserCrea'=>$user->getUserIdentifier(),'Plannifie'=>'1','RecurValide'=>'0']);
+        $DemRec=$repo -> findBy(['Reccurance'=>'1','UserCrea'=>$user->getUsername(),'Plannifie'=>'1','RecurValide'=>'0']);
     }
     else{
         $DemRec=$repo -> findBy(['Reccurance'=>'1','UserCrea'=>$requette->get('UtilisateursCE'),'Plannifie'=>'1','RecurValide'=>'0']);
@@ -1278,6 +1319,7 @@ class PlanningMCController extends AbstractController
         $test=$chargeFige->checkOTCTO($listCTO, $repo, $Out, $Art, $creno);
 
         //Récupération des nombres de polym par OT pour B15
+        $listOTDatas=['Pas d\'OF'];
         foreach ($test[0]['Contenu'] as $key => $OT) {
             $listOTDatas[$key]=$Out->findOneBy(['Ref' => $key]);
         }
@@ -1350,8 +1392,10 @@ class PlanningMCController extends AbstractController
             $chargement = new Chargement;
             $chargement->setNomChargement($request->query->get('CTO'));
             $chargement->setDatePlannif(new \DateTime());
-            $chargement->setRemplissage(0);
+            $chargement->setRemplissage(1);
             $chargement->setProgramme('CREATION');
+            $chargement->setTpsChargeOT($outillage->getTpsChargeInterval());
+            $chargement->setIdPlanning(0);
         }
         $chargement->addOutillage($outillage);
         $manager->persist($chargement);
@@ -1364,8 +1408,12 @@ class PlanningMCController extends AbstractController
 
         //Déduire le taux de remplissage
         $pourcRemp=count($listOTCharge)/count($listOTCTO->getOT());
-        $chargement->setRemplissage($pourcRemp*100);
+        $chargement->setTxChargeOT($pourcRemp*100);
+        //Rajout du tps de charge de l'OT au tps de charge total du chargement
+        $durTotChar=$chargement->getTpsChargeOT()->format('%s')+$outillage->getTpsChargeInterval()->format('%s');
+        $chargement->setTpsChargeOT(new DateInterval("PT".$durTotChar."S"));
         $chargement->setProgramme($listOTCTO->getProgramme());
+        $chargement->setRemplissage(count( $listOTCharge));
         $manager->persist($chargement);
         $manager->flush();
 

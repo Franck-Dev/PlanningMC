@@ -143,7 +143,7 @@
 				{% set myDateJour = myDate|date('Y-m-d') %}
 				<tr>
 					<td colspan="11">
-						<button type="button" class="btn btn-info btn-block">
+						<button type="button" class="w-100 btn btn-info btn-block">
 							<a href="{{ path('Crea_Demandes', {'datejour': myDateJour|date('Y-m-d')}) }}"  data-jour={{ myDateJour|date('Y-m-d') }}>
 									<span>CREER UNE DEMANDE POUR LE {{myDa}} {{myDat}}</span></a>
 						</button>

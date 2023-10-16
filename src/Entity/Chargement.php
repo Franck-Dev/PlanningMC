@@ -79,6 +79,13 @@ class Chargement
         return $this->id;
     }
 
+    public function setId($id)
+    {
+        $this->id = $id;
+
+        return $this;
+    }
+
     public function getNomChargement(): ?string
     {
         return $this->NomChargement;
@@ -216,5 +223,22 @@ class Chargement
         $this->txChargeOT = $txChargeOT;
 
         return $this;
+    }
+
+     /**
+     * __clone  'Permet de dupliquer l'entity sans certains attributs
+     *
+     * @return void
+     */
+    public function __clone() {
+        if ($this->id) {
+            $this->setId(null);
+            $this->setIdPlanning(0);
+        }
+        if(count($this->getOF())>0) {
+            foreach ($this->getOF() as $key => $OF) {
+                $this->removeOF($OF);
+            }
+        }
     }
 }

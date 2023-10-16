@@ -97,6 +97,8 @@ class DemandesType extends AbstractType
         }
 
         $formModifier = function (FormInterface $form, ProgMoyens $cycle = null, $chargeRepository, $chargFigeRepository, $Out, $options) {
+            //Choix du type de style pour la liste suivant nombre de données
+            $listOFCycle = null === $cycle ? $styListOF = false : $styListOF = true;
             $listOFCycle =  null === $cycle ? $chargeRepository->findBy(['Statut' => ['OUV','PREPLAN','PLANNIFIE']],['DateDeb' => 'ASC']) : $chargeRepository->findBy(['NumProg' => $cycle->getNom(),'Statut' => ['OUV','PREPLAN','PLANNIFIE']],
             ['DateDeb' => 'ASC']);
 
@@ -104,17 +106,22 @@ class DemandesType extends AbstractType
 
             $listCTOCycle = null === $cycle ?  $listCTOCycle : $this->checkRemplissage($listCTOCycle, $options['data']->getDatePropose());
 
+            //Choix du type de style pour la liste suivant nombre de données
+            $listOTCycle = null === $cycle ? $styListOT = false : $styListOT = true;
             $listOTCycle =  null === $cycle ? $Out->findBy(['Dispo' => '1']) : $Out->myFindByCyc('1', $cycle->getId());
+            dump($styListOF,$styListOT);
 
             $form->add('ListOF', EntityType::class, [
                 'class' => Charge::class,
                 'placeholder' => 'Sélectionner les OF',
                 'choices' => $listOFCycle,
                 'multiple' => true,
-                'expanded' => false,
+                'mapped' => true,
+                'expanded' => $styListOF,
                 'by_reference' => false,
                 'required' => false,
-                'label' => 'Liste des OF encours: ('. count($listOFCycle) .' OF)'
+                'attr' => ['class'=>'w-100 p-3 d-inline-block overflow-auto','style'=>'height : 150px;'],
+                'label' => 'Liste des OF encours: ('. count($listOFCycle) .' OF :)'
             ]);
 
             $form->add('ListCTO', EntityType::class, [
@@ -134,10 +141,11 @@ class DemandesType extends AbstractType
                 'placeholder' => 'Sélectionner des outillages',
                 'choices' => $listOTCycle,
                 'multiple' => true,
-                'expanded' => false,
+                'expanded' => $styListOT,
                 'mapped' => true,
                 'by_reference' => false,
                 'required' => false,
+                'attr' => ['class'=>'w-100 p-3 d-inline-block overflow-auto','style'=>'height : 150px;'],
                 'label' => 'Liste des Outillages :'
             ]);
         };

@@ -40,11 +40,15 @@ class FunctPlanning
                 //On cherche le moyen attribué à la polym suivant la demande et l'activité Plannification
                 $MoyUtil=$repos -> findBy(['Libelle' => $tache->getIdentification(),'Activitees'=> 'Plannifie']);
                 //Formatage de la durée de Chargement, si pas chargement avec outillages
-                if ($tache->getNumDemande()->getChargement()->getTpsChargeOT() OR $tache->getNumDemande()->getCycle()->getTpsChargement() > $tache->getNumDemande()->getChargement()->getTpsChargeOT()) {
-                    $dureeCharge="-".idate("i",$tache->getNumDemande()->getCycle()->getTpsChargement()->format("U"))." minutes";
-                } else {
-                    $dureeCharge="-".idate("i",$tache->getNumDemande()->getChargement()->getTpsChargeOT()->format("U"))." minutes";
-                }
+                if ($tache->getNumDemande()->getChargement()) {
+                    if (!$tache->getNumDemande()->getChargement()->getTpsChargeOT() OR idate("i",$tache->getNumDemande()->getCycle()->getTpsChargement()->format("U"))>$tache->getNumDemande()->getChargement()->getTpsChargeOT()->format("%s")/60) {
+                        $dureeCharge="-".idate("i",$tache->getNumDemande()->getCycle()->getTpsChargement()->format("U"))." minutes";
+                    } else {
+                        $dureeCharge="-". $tache->getNumDemande()->getChargement()->getTpsChargeOT()->format("%s")/60 ." minutes";
+                    }
+                }else{
+                    $dureeCharge="- 0 minutes";
+                }  
                 $dateFinCharge=clone($tache->getDebutDate());
                 $dateChargDeb=date_modify($dateFinCharge, $dureeCharge);
                 //Rajout du chargement suivant données du cycle de polym

@@ -126,6 +126,13 @@ class Demandes
         return $this->id;
     }
 
+    public function setId($id)
+    {
+        $this->id = $id;
+
+        return $this;
+    }
+
     public function getCycle(): ?ProgMoyens
     {
         return $this->Cycle;
@@ -402,4 +409,23 @@ class Demandes
 
         return $this;
     }
+        
+    /**
+     * __clone  'Permet de dupliquer l'entity sans certains attributs
+     *
+     * @return void
+     */
+    public function __clone() {
+        if ($this->id) {
+            $this->setId(null);
+            $this->setPlannifie(0);
+            $this->setMoyenUtilise(null);
+        }
+        if(count($this->getListOF())>0) {
+            foreach ($this->getListOF() as $key => $OF) {
+                $this->removeListOF($OF);
+            }
+        }
+    }
+
 }
