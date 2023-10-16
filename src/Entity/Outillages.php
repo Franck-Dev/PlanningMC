@@ -136,6 +136,11 @@ class Outillages
      */
     private $Projet;
 
+    /**
+     * @ORM\OneToMany(targetEntity=EqOT::class, mappedBy="ArtOut")
+     */
+    private $eqOTs;
+
     public function __toString(): string
     {
         return (string) $this->getRef()."-".$this->getDesignation();
@@ -148,6 +153,7 @@ class Outillages
         $this->articles = new ArrayCollection();
         $this->chargements = new ArrayCollection();
         $this->demandes = new ArrayCollection();
+        $this->eqOTs = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -526,5 +532,35 @@ class Outillages
         $interDur=strtotime($this->TpsDecharge->format('Y-m-d H:i:s'))-strtotime('1970-01-01 00:00:00');
         $interval = new DateInterval("PT".$interDur."S");
         return $interval;
+    }
+
+    /**
+     * @return Collection<int, EqOT>
+     */
+    public function getEqOTs(): Collection
+    {
+        return $this->eqOTs;
+    }
+
+    public function addEqOT(EqOT $eqOT): self
+    {
+        if (!$this->eqOTs->contains($eqOT)) {
+            $this->eqOTs[] = $eqOT;
+            $eqOT->setArtOut($this);
+        }
+
+        return $this;
+    }
+
+    public function removeEqOT(EqOT $eqOT): self
+    {
+        if ($this->eqOTs->removeElement($eqOT)) {
+            // set the owning side to null (unless already changed)
+            if ($eqOT->getArtOut() === $this) {
+                $eqOT->setArtOut(null);
+            }
+        }
+
+        return $this;
     }
 }

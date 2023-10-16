@@ -44,10 +44,16 @@ class ProgAvions
      */
     private $outillages;
 
+    /**
+     * @ORM\OneToMany(targetEntity=DatasMoulage::class, mappedBy="programme")
+     */
+    private $datasMoulages;
+
     public function __construct()
     {
         $this->progMoyens = new ArrayCollection();
         $this->outillages = new ArrayCollection();
+        $this->datasMoulages = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -142,6 +148,36 @@ class ProgAvions
             // set the owning side to null (unless already changed)
             if ($outillage->getProjet() === $this) {
                 $outillage->setProjet(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, DatasMoulage>
+     */
+    public function getDatasMoulages(): Collection
+    {
+        return $this->datasMoulages;
+    }
+
+    public function addDatasMoulage(DatasMoulage $datasMoulage): self
+    {
+        if (!$this->datasMoulages->contains($datasMoulage)) {
+            $this->datasMoulages[] = $datasMoulage;
+            $datasMoulage->setProgramme($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDatasMoulage(DatasMoulage $datasMoulage): self
+    {
+        if ($this->datasMoulages->removeElement($datasMoulage)) {
+            // set the owning side to null (unless already changed)
+            if ($datasMoulage->getProgramme() === $this) {
+                $datasMoulage->setProgramme(null);
             }
         }
 

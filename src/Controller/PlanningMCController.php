@@ -709,12 +709,12 @@ class PlanningMCController extends AbstractController
     public function deletepolym(Request $request, ManagerRegistry $manaReg)
     {
         //Suppression de la polym
-        dump($request->get('PolymId'));
+        //dump($request->get('PolymId'));
         if($request->get('PolymId')){
             if ($request->isMethod('POST')) {
                 $planning = new Planning();
                 $idPolym=substr($request->get('PolymId'),1,strlen($request->get('PolymId'))-1);
-                dump($idPolym);
+                //dump($idPolym);
                 $PolymPla = $manaReg
                     ->getRepository(Planning::class)
                     ->findBy(['id' => $idPolym]);
