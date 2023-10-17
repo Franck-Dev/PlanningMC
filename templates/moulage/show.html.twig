@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}DatasMoulage{% endblock %}
+
+{% block body %}
+    <h1>DatasMoulage</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ datas_moulage.id }}</td>
+            </tr>
+            <tr>
+                <th>ArtGamm</th>
+                <td>{{ datas_moulage.artGamm }}</td>
+            </tr>
+            <tr>
+                <th>DescriptifPhase</th>
+                <td>{{ datas_moulage.DescriptifPhase }}</td>
+            </tr>
+            <tr>
+                <th>CycleMoulage</th>
+                <td>{{ datas_moulage.cycleMoulage ? datas_moulage.cycleMoulage.format('%y year(s), %m month(s), %d day(s)') : '' }}</td>
+            </tr>
+            <tr>
+                <th>Active</th>
+                <td>{{ datas_moulage.active ? 'Yes' : 'No' }}</td>
+            </tr>
+            <tr>
+                <th>DebVal</th>
+                <td>{{ datas_moulage.debVal ? datas_moulage.debVal|date('Y-m-d H:i:s') : '' }}</td>
+            </tr>
+            <tr>
+                <th>ZoneTrav</th>
+                <td>{{ datas_moulage.zoneTrav }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_moulage_index') }}">back to list</a>
+
+    <a href="{{ path('app_moulage_edit', {'id': datas_moulage.id}) }}">edit</a>
+
+    {{ include('moulage/_delete_form.html.twig') }}
+{% endblock %}

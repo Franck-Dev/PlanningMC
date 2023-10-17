@@ -2,72 +2,77 @@
 
 namespace App\Controller;
 
-use App\Entity\ConfSmenu;
 use App\Entity\DatasMoulage;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Form\DatasMoulageType;
+use App\Repository\DatasMoulageRepository;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
+#[Route('/moulage')]
 class MoulageController extends AbstractController
 {
-    #[Route('/moulage', name: 'app_moulage')]
-    public function index(): Response
+    #[Route('/', name: 'app_moulage_index', methods: ['GET'])]
+    public function index(DatasMoulageRepository $datasMoulageRepository): Response
     {
-        //Création du menu pour gérer le controller avec données dans un tableau
-        $tbMenu[0]=['Nom'=> 'MOULAGE', 'Description' => '', 'IdSmenu1' => 'Creation', 'IdSmenu2' => 'Consultation'];
-        $tbMenu[1]=['Nom'=> 'CONTRAINTES', 'Description' => '', 'IdSmenu1' => 'Creation', 'IdSmenu2' => 'Consultation'];
-        $tbMenu[2]=['Nom'=> 'OUTILLAGES', 'Description' => '', 'IdSmenu1' => 'Suivi', 'IdSmenu2' => 'Planification'];
-        foreach ($tbMenu as $id => $varMenu) {
-            $menu = new ConfSmenu();
-            foreach ($varMenu as $key => $var) {
-                $methodSet = 'set'.ucfirst($key);
-                $menu->$methodSet($var);
-            }
-            $Titres[$id]=$menu;
-            dump($Titres);
+        return $this->render('moulage/index.html.twig', [
+            'datas_moulages' => $datasMoulageRepository->findAll(),
+        ]);
+    }
+
+    #[Route('/new', name: 'app_moulage_new', methods: ['GET', 'POST'])]
+    public function new(Request $request, DatasMoulageRepository $datasMoulageRepository): Response
+    {
+        $datasMoulage = new DatasMoulage();
+        $form = $this->createForm(DatasMoulageType::class, $datasMoulage);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $datasMoulageRepository->add($datasMoulage, true);
+
+            return $this->redirectToRoute('app_moulage_index', [], Response::HTTP_SEE_OTHER);
         }
 
-        return $this->render('moulage/index.html.twig', [
-            'controller_name' => 'MoulageController',
-            'Titres' => $Titres
+        return $this->renderForm('moulage/new.html.twig', [
+            'datas_moulage' => $datasMoulage,
+            'form' => $form,
         ]);
     }
 
-    #[Route('/moulage/Creation', name: 'Creation')]
-    public function Creation(): Response
+    #[Route('/{id}', name: 'app_moulage_show', methods: ['GET'])]
+    public function show(DatasMoulage $datasMoulage): Response
     {
-        $Titres=[];
-        return $this->render('moulage/Moulage.html.twig', [
-            'Titres' => $Titres
+        return $this->render('moulage/show.html.twig', [
+            'datas_moulage' => $datasMoulage,
         ]);
     }
 
-    #[Route('/moulage/Consultation', name: 'Consultation')]
-    public function Consultation(Request $Requet,EntityManagerInterface $manager,DatasMoulage $Moul=null): Response
+    #[Route('/{id}/edit', name: 'app_moulage_edit', methods: ['GET', 'POST'])]
+    public function edit(Request $request, DatasMoulage $datasMoulage, DatasMoulageRepository $datasMoulageRepository): Response
     {
-        $Titres=[];
-        return $this->render('moulage/Moulage.html.twig', [
-            'Titres' => $Titres
+        $form = $this->createForm(DatasMoulageType::class, $datasMoulage);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $datasMoulageRepository->add($datasMoulage, true);
+
+            return $this->redirectToRoute('app_moulage_index', [], Response::HTTP_SEE_OTHER);
+        }
+
+        return $this->renderForm('moulage/edit.html.twig', [
+            'datas_moulage' => $datasMoulage,
+            'form' => $form,
         ]);
     }
 
-    #[Route('/moulage/Suivi/Outillage', name: 'Suivi')]
-    public function Suivi(): Response
+    #[Route('/{id}', name: 'app_moulage_delete', methods: ['POST'])]
+    public function delete(Request $request, DatasMoulage $datasMoulage, DatasMoulageRepository $datasMoulageRepository): Response
     {
-        $Titres=[];
-        return $this->render('moulage/suiviOut.html.twig', [
-            'Titres' => $Titres
-        ]);
-    }
+        if ($this->isCsrfTokenValid('delete'.$datasMoulage->getId(), $request->request->get('_token'))) {
+            $datasMoulageRepository->remove($datasMoulage, true);
+        }
 
-    #[Route('/moulage/Planification/TraitementOut', name: 'Planification')]
-    public function Planification(): Response
-    {
-        $Titres=[];
-        return $this->render('moulage/PlanifTraitOut.html.twig', [
-            'Titres' => $Titres
-        ]);
+        return $this->redirectToRoute('app_moulage_index', [], Response::HTTP_SEE_OTHER);
     }
 }
