@@ -297,8 +297,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if (!empty($this->programmeAvion)) {
             foreach ($this->programmeAvion as  $key => $value) {
-                if (array_key_exists('designation',$value)) {
-                    $test[$key]=$value['designation'];
+                if (is_array($value)==true) {
+                    if (array_key_exists('designation',$value)) {
+                        $test[$key]=$value['designation'];
+                    }
                 } else {
                     $test[$key]=$value;
                 }

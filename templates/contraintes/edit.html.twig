@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit Contraintes{% endblock %}
+
+{% block body %}
+    <h1>Edit Contraintes</h1>
+
+    {{ include('contraintes/_form.html.twig', {'button_label': 'Update'}) }}
+
+    <a href="{{ path('app_contraintes_index') }}">back to list</a>
+
+    {{ include('contraintes/_delete_form.html.twig') }}
+{% endblock %}

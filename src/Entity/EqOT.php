@@ -30,12 +30,12 @@ class EqOT
     private $Descriptif;
 
     /**
-     * @ORM\ManyToOne(targetEntity=outillages::class, inversedBy="eqOTs")
+     * @ORM\ManyToOne(targetEntity=Outillages::class, inversedBy="eqOTs")
      */
     private $ArtOut;
 
     /**
-     * @ORM\ManyToMany(targetEntity=progMoyens::class, inversedBy="eqOTs")
+     * @ORM\ManyToMany(targetEntity=ProgMoyens::class, inversedBy="eqOTs")
      */
     private $progPolym;
 

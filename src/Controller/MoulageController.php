@@ -12,12 +12,12 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 class MoulageController extends AbstractController
 {
-    #[Route('/moulage', name: 'app_moulage')]
+    #[Route('/Moulage', name: 'Moulage')]
     public function index(): Response
     {
         //Création du menu pour gérer le controller avec données dans un tableau
-        $tbMenu[0]=['Nom'=> 'MOULAGE', 'Description' => '', 'IdSmenu1' => 'Creation', 'IdSmenu2' => 'Consultation'];
-        $tbMenu[1]=['Nom'=> 'CONTRAINTES', 'Description' => '', 'IdSmenu1' => 'Creation', 'IdSmenu2' => 'Consultation'];
+        $tbMenu[0]=['Nom'=> 'DONNEES_MOULAGE', 'Description' => '', 'IdSmenu1' => 'Consultation_Donnees', 'IdSmenu2' => 'Creation_Donnees'];
+        $tbMenu[1]=['Nom'=> 'CONTRAINTES', 'Description' => '', 'IdSmenu1' => 'Creation_Contraintes', 'IdSmenu2' => 'Consultation_Contraintes'];
         $tbMenu[2]=['Nom'=> 'OUTILLAGES', 'Description' => '', 'IdSmenu1' => 'Suivi', 'IdSmenu2' => 'Planification'];
         foreach ($tbMenu as $id => $varMenu) {
             $menu = new ConfSmenu();

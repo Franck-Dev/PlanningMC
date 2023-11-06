@@ -33,7 +33,7 @@ class DatasMoulage
     private $eqOut;
 
     /**
-     * @ORM\ManyToOne(targetEntity=progMoyens::class, inversedBy="datasMoulages")
+     * @ORM\ManyToOne(targetEntity=ProgMoyens::class, inversedBy="datasMoulages")
      */
     private $progLaser;
 
@@ -43,7 +43,7 @@ class DatasMoulage
     private $cycleMoulage;
 
     /**
-     * @ORM\ManyToOne(targetEntity=progMoyens::class, inversedBy="datasMoulages")
+     * @ORM\ManyToOne(targetEntity=ProgMoyens::class, inversedBy="datasMoulages")
      */
     private $progPolym;
 
@@ -58,7 +58,7 @@ class DatasMoulage
     private $debVal;
 
     /**
-     * @ORM\ManyToOne(targetEntity=progAvions::class, inversedBy="datasMoulages")
+     * @ORM\ManyToOne(targetEntity=ProgAvions::class, inversedBy="datasMoulages")
      */
     private $programme;
 

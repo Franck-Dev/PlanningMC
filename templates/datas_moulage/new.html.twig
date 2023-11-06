@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New DatasMoulage{% endblock %}
+
+{% block body %}
+    <h1>Create new DatasMoulage</h1>
+
+    {{ include('datas_moulage/_form.html.twig') }}
+
+    <a class="btn btn-primary" href="{{ path('Consultation_Donnees') }}"><i class="fa fa-rotate-left m-1"></i>Retour</a>
+{% endblock %}

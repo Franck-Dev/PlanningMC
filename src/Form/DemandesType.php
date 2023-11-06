@@ -109,7 +109,7 @@ class DemandesType extends AbstractType
             //Choix du type de style pour la liste suivant nombre de données
             $listOTCycle = null === $cycle ? $styListOT = false : $styListOT = true;
             $listOTCycle =  null === $cycle ? $Out->findBy(['Dispo' => '1']) : $Out->myFindByCyc('1', $cycle->getId());
-            dump($styListOF,$styListOT);
+            //dump($styListOF,$styListOT);
 
             $form->add('ListOF', EntityType::class, [
                 'class' => Charge::class,

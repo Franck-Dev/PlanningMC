@@ -814,7 +814,8 @@ class PlanningMCController extends AbstractController
     ComService $com,
     Demandes $demande=null,
     $datejour=null,
-    userInterface $user=null)
+    userInterface $user=null,
+    Demandes $demOld=null)
     {
         if (!$demande) {
             $demande= new Demandes();
