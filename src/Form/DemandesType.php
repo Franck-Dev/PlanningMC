@@ -120,7 +120,7 @@ class DemandesType extends AbstractType
                 'expanded' => $styListOF,
                 'by_reference' => false,
                 'required' => false,
-                'attr' => ['class'=>'w-100 p-3 d-inline-block overflow-auto','style'=>'height : 150px;'],
+                'attr' => ['class'=>'w-100 p-3 d-inline-block overflow-auto','style'=>'height : 250px;'],
                 'label' => 'Liste des OF encours: ('. count($listOFCycle) .' OF :)'
             ]);
 
@@ -145,7 +145,7 @@ class DemandesType extends AbstractType
                 'mapped' => true,
                 'by_reference' => false,
                 'required' => false,
-                'attr' => ['class'=>'w-100 p-3 d-inline-block overflow-auto','style'=>'height : 150px;'],
+                'attr' => ['class'=>'w-100 p-3 d-inline-block overflow-auto','style'=>'height : 300px;'],
                 'label' => 'Liste des Outillages :'
             ]);
         };

@@ -11,7 +11,7 @@
 {% block body %}
 	<h1>Demandes de créneaux de polymérisations ✅</h1>
 	<div class="row d-flex align-items-top justify-content-center m-2">
-		<div class="d-flex align-items-center justify-content-center col-sm-12 col-lg-6">
+		<div class="d-flex align-items-top justify-content-center col-sm-12 col-lg-6">
 			{% block form %}
 		
 			{% endblock %}
@@ -160,6 +160,8 @@ $cycle.change(function() {
         // ... with the returned one from the AJAX response.
         $(html.responseText).find('#demandes_ListOT')
       );
+	  //Rajoute l'évènement click sur le select
+	  $('#demandes_ListOT').on('change', event, rebindDatasOT);
       // Position field now displays the appropriate positions.
 	  $('#loader').addClass('hidden');
     }
@@ -169,8 +171,8 @@ $cycle.change(function() {
 
 // Function qui renvoie les données du CTO avec les OF associés trouvés dans la charge du jour + qqs jours autour
 function rebindDatasCTO($CTO, $idChargement, $idDemande){
-	console.log(location);
-	console.log($('#demandes_chargement option:selected').val());
+	//console.log(location);
+	//console.log($('#demandes_chargement option:selected').val());
 	$.ajax({
     url : 'http://'+location.host+'/PlanningMC/Public/Demandes/Charge_Fige/'+$CTO.val()+'/OF',
     method: 'POST',
@@ -179,11 +181,61 @@ function rebindDatasCTO($CTO, $idChargement, $idDemande){
       // Replace current position field ...
       $('#myDatasCTO').replaceWith(
         // ... with the returned one from the AJAX response.
-        $(html.responseText)
+        $(html.responseText) 
       );
 	  $('#Num_CTO').text($('#demandes_ListCTO option:selected').text());
     }
   });
+};
+
+//Intégration Outillage dans CTO
+function rebindDatasOT(event){
+	//Récup CTO traité
+	$nameCTO=$('#Num_CTO').text();
+	//Test si sélection ou desélection
+	if (event.target.checked === true) {
+		//alert($nameCTO);
+		if ($nameCTO.substr(0,1) == '') {
+			//Création CTO
+			$nameCTO='MANU0';
+		} else if($nameCTO.substr(0,1) == 'M') {
+			//Modification du CTO pour ajouter un OT
+			$nameCTO=$('#Num_CTO').text();
+		} else {
+			$tbNameCTO=$nameCTO.split('|');
+			$nameCTO=$tbNameCTO[0];
+		}
+		//Récup de l'id de l'OT
+			$idOT=event.target.attributes[4].value;
+			$.ajax({
+				url : 'http://'+location.host+'/PlanningMC/Public/Demandes/Charge_Fige/Ajout_OTOF/'+$idOT,
+				method: 'POST',
+				data : {DateJour: $datW.val(), idChargement : 'MANU', idDemande : $idDemande.val(), idCycle : $cycle.val(), nameCTO : $nameCTO},
+				complete: function(html) {
+					//Ajout du retour html de la requette
+					$('#myDatasCTO').replaceWith($(html.responseText));
+					//Ajout du nom du CTO dans l'entête du form
+					$('#Num_CTO').text($('#nameCTO').val());
+				}
+			});
+	} else {
+		//Modification du CTO
+		alert(event.target.attributes[4].value);
+		//Récup de l'id de l'OT
+		$idOT=event.target.attributes[4].value;
+		$.ajax({
+				url : 'http://'+location.host+'/PlanningMC/Public/Demandes/Charge_Fige/Sup_OTOF/'+$idOT,
+				method: 'POST',
+				data : {nameCTO : $nameCTO, idOT : $idOT},
+				complete: function(html) {
+					//Ajout du retour html de la requette
+					$('#myDatasCTO').replaceWith($(html.responseText));
+					//Ajout du nom du CTO dans l'entête du form
+					$('#Num_CTO').text($('#nameCTO').val());
+				}
+			});
+	}
+		
 };
 
 $CTO.change(function() {
@@ -193,14 +245,12 @@ $CTO.change(function() {
 });
 
 $listOF.change(function() {
-	console.log('toto');
 	var $data={};
 	$data[$listOF.attr('name')] = $listOF.val();
-	alert($data[$listOF.attr('name')]);
+	//alert($data[$listOF.attr('name')]);
 });
 	//Permet de modifier l'OF présélectionné dans le select
 	function affichageSelectOF($art, $url){
-
 		$.ajax({
 			url : $url,
 			method: 'GET',
@@ -235,5 +285,17 @@ $listOF.change(function() {
 		console.log($url);
 		return $OFs
 	};
+
+	//Sélection d'un outillage pour création d'un CTO
+	$('#demandes_ListOT').on('change', function () {
+		var selectVal = $("#demandes_ListOT option:selected").val();
+		console.log($listOT);
+		alert(selectVal);
+	});
+
+	//Créer le chargement polym
+	function crea_CTO($OT) {
+		
+	}
 </script>
 {% endblock %}

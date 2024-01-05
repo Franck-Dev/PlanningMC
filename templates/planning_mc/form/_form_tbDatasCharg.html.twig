@@ -1,4 +1,5 @@
 <div id="myDatasCTO">
+    <input id="nameCTO" name="nameCTO" type="hidden" value={{CTO[0].Nom}}>
     <div class="table-responsive h-100 bg-primary" id="tbDatasChargt">
         <table class="table">
             <thead>	
@@ -19,7 +20,7 @@
                         {% set nbPol = datasOT[key].nbPolymssTrait %}
                     {% endif %}
                 {% else %}
-                    {% set nbPol = random(0, 10) %}
+                    {% set nbPol = random(0, 8) %}
                 {% endif %}
                                             
                 {# {% set nameTR = ['IDChargt',jour,CTO.Nom,loop.index]|join %} #}

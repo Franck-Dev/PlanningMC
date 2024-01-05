@@ -19,22 +19,21 @@ class ChargFigeRepository extends ServiceEntityRepository
         parent::__construct($registry, ChargFige::class);
     }
 
-    // /**
-    //  * @return ChargFige[] Returns an array of ChargFige objects
-    //  */
     /*
-    public function findByExampleField($value)
+      @return ChargFige[] Returns an array of ChargFige objects
+    */
+
+    public function findByCode($value)
     {
         return $this->createQueryBuilder('c')
-            ->andWhere('c.exampleField = :val')
-            ->setParameter('val', $value)
+            ->andWhere('c.Code LIKE :val')
+            ->setParameter('val', '%'.$value.'%')
             ->orderBy('c.id', 'ASC')
-            ->setMaxResults(10)
+            //->setMaxResults(10)
             ->getQuery()
             ->getResult()
         ;
     }
-    */
 
     /*
     public function findOneBySomeField($value): ?ChargFige
