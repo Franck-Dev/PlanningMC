@@ -1,0 +1,45 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}DatasMoulage index{% endblock %}
+
+{% block body %}
+    <h1>DatasMoulage index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>ArtGamm</th>
+                <th>DescriptifPhase</th>
+                <th>CycleMoulage</th>
+                <th>Active</th>
+                <th>DebVal</th>
+                <th>ZoneTrav</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for datas_moulage in datas_moulages %}
+            <tr>
+                <td>{{ datas_moulage.id }}</td>
+                <td>{{ datas_moulage.artGamm }}</td>
+                <td>{{ datas_moulage.DescriptifPhase }}</td>
+                <td>{{ datas_moulage.cycleMoulage ? datas_moulage.cycleMoulage.format('%y year(s), %m month(s), %d day(s)') : '' }}</td>
+                <td>{{ datas_moulage.active ? 'Yes' : 'No' }}</td>
+                <td>{{ datas_moulage.debVal ? datas_moulage.debVal|date('Y-m-d H:i:s') : '' }}</td>
+                <td>{{ datas_moulage.zoneTrav }}</td>
+                <td>
+                    <a href="{{ path('app_datas_moulage_show', {'id': datas_moulage.id}) }}"><i class="fa fa-eyes m-1">Voir</a>
+                    <a href="{{ path('app_datas_moulage_edit', {'id': datas_moulage.id}) }}"><i class="fa fa-pencil m-1">Modifier</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="8">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a class="btn btn-primary" href="{{ path('Creation_Donnees') }}"><i class="fa fa-plus m-1"></i>Creation</a>
+{% endblock %}

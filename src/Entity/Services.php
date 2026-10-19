@@ -48,6 +48,11 @@ class Services
      */
     private $NbUser;
 
+    /**
+     * @ORM\OneToMany(targetEntity=Contraintes::class, mappedBy="service")
+     */
+    private $contraintes;
+
     public function __toString(): string
     {
         return (string) $this->getNom();
@@ -57,6 +62,7 @@ class Services
     {
         $this->users = new ArrayCollection();
         $this->NbUser = new ArrayCollection();
+        $this->contraintes = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -168,6 +174,36 @@ class Services
             // set the owning side to null (unless already changed)
             if ($nbUser->getService() === $this) {
                 $nbUser->setService(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Contraintes>
+     */
+    public function getContraintes(): Collection
+    {
+        return $this->contraintes;
+    }
+
+    public function addContrainte(Contraintes $contrainte): self
+    {
+        if (!$this->contraintes->contains($contrainte)) {
+            $this->contraintes[] = $contrainte;
+            $contrainte->setService($this);
+        }
+
+        return $this;
+    }
+
+    public function removeContrainte(Contraintes $contrainte): self
+    {
+        if ($this->contraintes->removeElement($contrainte)) {
+            // set the owning side to null (unless already changed)
+            if ($contrainte->getService() === $this) {
+                $contrainte->setService(null);
             }
         }
 

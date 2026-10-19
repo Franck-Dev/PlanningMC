@@ -126,7 +126,11 @@ class FunctChargPlan
         foreach($ChargementsFiG as $ChargeFiG){
             dump($ChargeFiG);
             //Pour chaque chargement figé on récupère sa composition en outillages
-            $listeOT = $Out->myFindByCharFiG($ChargeFiG->getCode());
+            if (substr($ChargeFiG->getCode(), 0, 4) === 'MANU') {
+                $listeOT=$ChargeFiG->getOT();
+            } else {
+                $listeOT = $Out->myFindByCharFiG($ChargeFiG->getCode());
+            }
             if ($listeOT) {
                 dump('Liste des OT du CTO');
                 dump($listeOT);

@@ -214,6 +214,13 @@ class PlanningMCController extends AbstractController
                         $manager->persist($Planning);
                         $manager->flush();
 
+                        //Validation de la plannification de la demande si OK
+                        if ($Planning->getId()) {
+                            $demande->setPlannifie(1);
+                            $manager->persist($demande);
+                            $manager->flush();
+                        }
+
                         //Création de la donnée récurrance
                         $Recur = new RecurrancePolym();
                         $Recur->setTypeRecurrance($dem->getTypeRecurrance());
@@ -709,12 +716,12 @@ class PlanningMCController extends AbstractController
     public function deletepolym(Request $request, ManagerRegistry $manaReg)
     {
         //Suppression de la polym
-        dump($request->get('PolymId'));
+        //dump($request->get('PolymId'));
         if($request->get('PolymId')){
             if ($request->isMethod('POST')) {
                 $planning = new Planning();
                 $idPolym=substr($request->get('PolymId'),1,strlen($request->get('PolymId'))-1);
-                dump($idPolym);
+                //dump($idPolym);
                 $PolymPla = $manaReg
                     ->getRepository(Planning::class)
                     ->findBy(['id' => $idPolym]);
@@ -814,7 +821,8 @@ class PlanningMCController extends AbstractController
     ComService $com,
     Demandes $demande=null,
     $datejour=null,
-    userInterface $user=null)
+    userInterface $user=null,
+    Demandes $demOld=null)
     {
         if (!$demande) {
             $demande= new Demandes();
@@ -834,7 +842,6 @@ class PlanningMCController extends AbstractController
                 $datejour=new \Datetime($requette->get('datejour'));
                 $demande->setDatepropose($datejour);
             }
-            
         } else {
             $datejour=$demande->getDatePropose();
         }
@@ -941,7 +948,7 @@ class PlanningMCController extends AbstractController
             $manager->persist($demande);
             $manager->flush();
             //Si création à demande reccurante, mise du statut traité(2) sur ancienne demande
-            if ($demOld) {
+            if ($demOld!=$demande) {
                 $demOld->setReccurance(2);
                 $manager->persist($demOld);
                 $manager->flush();
@@ -1307,6 +1314,137 @@ class PlanningMCController extends AbstractController
     {
         // On va récupérer le CTO correspondant à l'id
         $CTO=$cata->findOneBy(['id' => $request->attributes->get('id')]);
+        //Intégration dans une liste de 1 CTO
+        $listCTO[0]=$CTO;
+        //Contruction du créno à chercher $Creno['Jour']), $Creno['Cycles']
+        $creno['Jour']= new \datetime($request->get('DateJour'));
+        $creno['Cycles']=$CTO->getProgramme()->getNom();
+        $creno['NbrPcs']=1;
+        $listCreno[0]=$creno;
+        
+        //Récupération de la liste des outillages de ce CTO
+        $test=$chargeFige->checkOTCTO($listCTO, $repo, $Out, $Art, $creno);
+
+        //Récupération des nombres de polym par OT pour B15
+        $listOTDatas=['Pas d\'OF'];
+        foreach ($test[0]['Contenu'] as $key => $OT) {
+            $listOTDatas[$key]=$Out->findOneBy(['Ref' => $key]);
+        }
+
+        return $this->render('planning_mc/form/_form_tbDatasCharg.html.twig', [
+            'Datas' => $test[0]['Contenu'],
+            'CTO' => $test,
+            'idChargement' => $request->request->get('idChargement'),
+            'idDemande' => $request->request->get('idDemande'),
+            'DateJour' => $request->get('DateJour'),
+            'datasOT' => $listOTDatas
+        ]);
+    }
+
+    /**
+     * @Route("/Demandes/Charge_Fige/Ajout_OTOF/{id}", name="Ajout_OT_chargement", methods={"POST"})
+     * @IsGranted("ROLE_CE_MOULAGE")
+     */
+    Public function ajoutOFOT_CTO(Request $request, ManagerRegistry $manaReg,
+    FunctChargPlan $chargeFige, ChargFigeRepository $cata, ProgMoyensRepository $repoProg,
+    ChargeRepository $repo, OutillagesRepository $Out, ArticlesRepository $Art)
+    {
+        //Si pas de CTO, on le créé
+        if ($request->get('nameCTO') === 'MANU0') {
+            //Récupération de tous les MANU pour créer l'id du dernier par incrémentation
+            $listCTOManu=$cata->findByCode('MANU');
+            $iteration=count($listCTOManu)+1;
+            $newNameCTO='MANU'.$iteration;
+            //Création du CTO
+            $CTO= new chargFige();
+            $CTO->setCode($newNameCTO);
+            $CTO->setStatut(2);
+            $CTO->setPourc(10);
+            //Récupération du programme
+            $Prog= $repoProg->findOneBy(['id'=>$request->get('idCycle')]);
+            $CTO->setProgramme($Prog);
+        } elseif (substr($request->get('nameCTO'),0,4) === 'MANU') {
+            //On va récupérer le CTO MANU correspondant au nom
+            $CTO=$cata->findOneBy(['Code' => $request->get('nameCTO')]);
+        } else {
+            //Rajout d'OT à un CTO déjà validé par programmation
+            //On va récupérer le CTO validé correspondant au nom
+            $CTO=$cata->findOneBy(['Code' => $request->get('nameCTO')]);
+            //Modififcation du nom, du statut et annulation du moyen
+            //Récupération de tous les MANU pour créer l'id du dernier par incrémentation
+            $listCTOManu=$cata->findByCode('MANU');
+            $iteration=count($listCTOManu)+1;
+            $newNameCTO='MANU'.$iteration;
+            $CTO->setCode($newNameCTO);
+            $CTO->setStatut(2);
+            $CTO->setMoyen(null);
+        }
+        //Récupération de l'outillage
+        $OT= $Out->findOneBy(['id'=>$request->attributes->get('id')]);
+        $CTO->addOT($OT);
+        //Enregistrement CTO
+        $manager = $manaReg->getManager();
+        $manager->persist($CTO);
+        $manager->flush();
+        //Intégration dans une liste de 1 CTO
+        $listCTO[0]=$CTO;
+        //Contruction du créno à chercher $Creno['Jour']), $Creno['Cycles']
+        $creno['Jour']= new \datetime($request->get('DateJour'));
+        $creno['Cycles']=$CTO->getProgramme()->getNom();
+        $creno['NbrPcs']=1;
+        $listCreno[0]=$creno;
+        
+        //Récupération de la liste des outillages de ce CTO
+        $test=$chargeFige->checkOTCTO($listCTO, $repo, $Out, $Art, $creno);
+
+        //Récupération des nombres de polym par OT pour B15
+        $listOTDatas=['Pas d\'OF'];
+        foreach ($test[0]['Contenu'] as $key => $OT) {
+            $listOTDatas[$key]=$Out->findOneBy(['Ref' => $key]);
+        }
+
+        return $this->render('planning_mc/form/_form_tbDatasCharg.html.twig', [
+            'Datas' => $test[0]['Contenu'],
+            'CTO' => $test,
+            'idChargement' => $request->request->get('idChargement'),
+            'idDemande' => $request->request->get('idDemande'),
+            'DateJour' => $request->get('DateJour'),
+            'datasOT' => $listOTDatas
+        ]);
+    }
+
+    /**
+     * @Route("/Demandes/Charge_Fige/Sup_OTOF/{id}", name="Suppression_OT_chargement", methods={"POST"})
+     * @IsGranted("ROLE_CE_MOULAGE")
+     */
+    Public function supOFOT_CTO(Request $request, ManagerRegistry $manaReg,
+    FunctChargPlan $chargeFige, ChargFigeRepository $cata, ProgMoyensRepository $repoProg,
+    ChargeRepository $repo, OutillagesRepository $Out, ArticlesRepository $Art)
+    {
+        //Si pas de CTO, on le créé
+        if (substr($request->get('nameCTO'),0,4) === 'MANU') {
+            //On va récupérer le CTO MANU correspondant au nom
+            $CTO=$cata->findOneBy(['Code' => $request->get('nameCTO')]);
+        } else {
+            //Rajout d'OT à un CTO déjà validé par programmation
+            //On va récupérer le CTO validé correspondant au nom
+            $CTO=$cata->findOneBy(['Code' => $request->get('nameCTO')]);
+            //Modififcation du nom, du statut et annulation du moyen
+            //Récupération de tous les MANU pour créer l'id du dernier par incrémentation
+            $listCTOManu=$cata->findByCode('MANU');
+            $iteration=count($listCTOManu)+1;
+            $newNameCTO='MANU'.$iteration;
+            $CTO->setCode($newNameCTO);
+            $CTO->setStatut(2);
+            $CTO->setMoyen(null);
+        }
+        //Récupération de l'outillage
+        $OT= $Out->findOneBy(['id'=>$request->attributes->get('id')]);
+        $CTO->removeOT($OT);
+        //Enregistrement CTO
+        $manager = $manaReg->getManager();
+        $manager->persist($CTO);
+        $manager->flush();
         //Intégration dans une liste de 1 CTO
         $listCTO[0]=$CTO;
         //Contruction du créno à chercher $Creno['Jour']), $Creno['Cycles']
@@ -1874,6 +2012,7 @@ class PlanningMCController extends AbstractController
         $demande=$repo->find($request->request->get('demande'));
         $listOTCharge=$demande->getListOT();
         //Création de la liste des outillages
+        $listeOTCharge=[];
         foreach ($listOTCharge as $key => $OT) {
             $listeOTCharge[$key]=$OT;
         }

@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Contraintes index{% endblock %}
+
+{% block body %}
+    <h1>Contraintes index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Libelle</th>
+                <th>Description</th>
+                <th>Impact</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for contrainte in contraintes %}
+            <tr>
+                <td>{{ contrainte.id }}</td>
+                <td>{{ contrainte.Libelle }}</td>
+                <td>{{ contrainte.Description }}</td>
+                <td>{{ contrainte.impact }}</td>
+                <td>
+                    <a href="{{ path('app_contraintes_show', {'id': contrainte.id}) }}">show</a>
+                    <a href="{{ path('app_contraintes_edit', {'id': contrainte.id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="5">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_contraintes_new') }}">Create new</a>
+{% endblock %}

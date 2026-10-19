@@ -1,0 +1,398 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}APAMC{% endblock %}
+{% block stylesheets %}
+<style type="text/css">
+    <style type="text/css">
+        table {
+             width: 100%;
+             font-size: 2vmin;
+        }
+        th {
+            background-color: transparent;
+        }
+        input {
+            border: 2px solid blue;
+            border-radius: 4px;
+            background-color: #f1f1f1;
+            font-size: 2.0vh;
+            font-size: 2vmin;
+          }
+        select {
+            width: 100%;
+            border: 2px solid blue;
+            border-radius: 4px;
+            background-color: #f1f1f1;
+            font-size-adjust:unset;
+        }
+        .btn.btn-info.btn-block {
+            -webkit-text-fill-color: aliceblue;
+            background-color: blue;
+        }
+        .button {
+            border: 2px solid blue;
+            border-radius: 40px;
+            background-color: #2b21b8;
+            -webkit-text-fill-color: aliceblue;
+        }
+        .sweetalert-lg {
+            width: 600px;
+        }
+        .gris{
+            background: rgb(0, 50, 95);
+            border-color: rgb(230, 0, 50);
+        }
+        .vis-time-axis .vis-text {
+            color: black;
+        }
+        .vis-time-axis .vis-grid.vis-h5 {
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h6{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h7{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h8{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h9{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h10{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h11{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h12{
+        background: blue;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h13{
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h14{
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h15{
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h16{
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h17{
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h18 {
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h19 {
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h20 {
+        background: red;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h21 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h22 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h23 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h0 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h1 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h2 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h3 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-grid.vis-h4 {
+        background: grey;
+        opacity: 0.3;
+        }
+        .vis-time-axis .vis-text.vis-saturday,
+        .vis-time-axis .vis-text.vis-sunday {
+        color: black;
+        }
+        .progress-wrapper {
+            background: white;
+            width: 100%;
+            height: 18px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 50%;
+            width: 90%;
+            position: absolute;
+            left: 0px;
+            top: 5px;
+            background: #63ed63;
+        }
+
+        .progress-label {
+            position: absolute;
+            z-index: 1;
+        }
+
+        .modal-body { 
+            background: rgb(0, 50, 95);
+            color:  white;
+        }
+        .button{
+            display:    block;
+            width:  100%;
+        }
+        .button_menu{
+            display: flex;
+            flex-flow: row wrap;
+        }
+        .button_menu .btn_valid{
+            border-radius:  10px;
+            position:   absolute;
+            text-align: center;
+            right:  0px;
+            vertical-align: middle;
+            background-image:radial-gradient( blue,green);
+            color:  white;
+            text-decoration:    none;  
+            width:  100px;
+            min-width:  7%;
+            height: 30px;
+        }
+        .vis-item.vis-range{
+            min-height: 0.5em;
+            border-top-left-radius:     1em;
+            border-top-right-radius:    1em;
+            top:    0px;
+        }
+        .vis-item .vis-item-overflow {
+            overflow: hidden;
+        }
+        .vis-item-visible-frame{
+            text-align: -webkit-center;
+        }
+        #icone{
+            height: 1em;
+            width: 1em;
+        }
+        .vis-timeline{
+            max-height: 100%;
+        }
+        .vis-item.expected {
+            border-style: dashed !important;
+            z-index: 0;
+        }
+	</style>
+</style>    
+{% endblock %}
+{% block body %}
+<h1>Dashboard Moulage ✅</h1>
+    <div class="row d-flex align-items-top justify-content-center m-2">
+{# 		<div class="d-flex align-items-center justify-content-center col-sm-12 col-lg-6">
+			{% block form %}
+		
+			{% endblock %}
+		</div> #}
+		<div class="d-flex col-sm-12 col-lg-6">
+			<!-- Pie Chart -->
+			<div class="card shadow mb-4 vw-100 vh-50">
+				<!-- Card Header - Dropdown -->
+				<div class="card-header d-flex flex-row align-items-center justify-content-between">
+					<h6 class="m-0 font-weight-bold text-primary">Création Demandes Moulage sem : <span id="Num_CTO"></span></h6>
+					<div class="dropdown no-arrow">
+						<a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+							data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+							<i class="fa fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+						</a>
+						<div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+							aria-labelledby="dropdownMenuLink">
+							<div class="dropdown-header">Menu :</div>
+							<a class="dropdown-item" href="#">Modifier</a>
+							<a class="dropdown-item" href="#">Valider</a>
+							<div class="dropdown-divider"></div>
+							<a class="dropdown-item" href="#">Simulation Moulage</a>
+						</div>
+					</div>
+				</div>
+				<!-- Card Body -->
+				<div class="card-body">
+					<div class="pt-4">
+						{# {% include "planning_mc/form/_form_tbDatasCharg.html.twig" %} #}
+					</div>
+					
+				</div>
+				<div class="card-footer">
+					<div class="mt-1 text-center small">
+						<span class="mr-2">
+							<i class="fa fa-circle text-primary"></i> Articles
+						</span>
+						<span class="mr-2">
+							<i class="fa fa-circle text-success"></i> Outillages
+						</span>
+						<span class="mr-2">
+							<i class="fa fa-circle text-info"></i> Moyens
+						</span>
+					</div>
+				</div>
+			</div>
+		</div>
+        <div class="d-flex col-sm-12 col-lg-6">
+			<!-- Pie Chart -->
+			<div class="card shadow mb-4 vw-100 vh-50">
+				<!-- Card Header - Dropdown -->
+				<div class="card-header d-flex flex-row align-items-center justify-content-between">
+					<h6 class="m-0 font-weight-bold text-primary">Plannification Moulage sem :<span id="Num_CTO"></span></h6>
+					<div class="dropdown no-arrow">
+						<a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+							data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+							<i class="fa fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+						</a>
+						<div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+							aria-labelledby="dropdownMenuLink">
+							<div class="dropdown-header">Menu :</div>
+							<a class="dropdown-item" href="#">Modifier</a>
+							<a class="dropdown-item" href="#">Valider</a>
+							<div class="dropdown-divider"></div>
+							<a class="dropdown-item" href="#">Simulation Moulage</a>
+						</div>
+					</div>
+				</div>
+				<!-- Card Body -->
+				<div class="card-body">
+					<div class="pt-4">
+						{# {% include "planning_mc/form/_form_tbDatasCharg.html.twig" %} #}
+					</div>
+					
+				</div>
+				<div class="card-footer">
+					<div class="mt-1 text-center small">
+						<span class="mr-2">
+							<i class="fa fa-circle text-primary"></i> Articles
+						</span>
+						<span class="mr-2">
+							<i class="fa fa-circle text-success"></i> Outillages
+						</span>
+						<span class="mr-2">
+							<i class="fa fa-circle text-info"></i> Moyens
+						</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row d-flex align-items-top justify-content-center m-2">
+		<div class="d-flex col-sm-12 col-lg-12">
+			<!-- Pie Chart -->
+			<div class="card shadow mb-4 vw-100 vh-50">
+				<!-- Card Header - Dropdown -->
+				<div class="card-header d-flex flex-row align-items-center justify-content-between">
+					<h6 class="m-0 font-weight-bold text-primary">Organisation de Moulage :</h6>
+					<div class="dropdown no-arrow">
+						<a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+							data-toggle="dropdown" 
+							aria-haspopup="true" aria-expanded="false">
+							<i class="fa fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+						</a>
+						<div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+							aria-labelledby="dropdownMenuLink">
+							<div class="dropdown-header">Plannification:</div>
+							<a class="dropdown-item" href="#">A plannifier</a>
+							<a class="dropdown-item" href="#">A valider</a>
+                            <a class="dropdown-item" href="#">Visualiser</a>
+							<div class="dropdown-divider"></div>
+							<a class="dropdown-item" href="#">Simulation</a>
+						</div>
+					</div>
+				</div>
+				<!-- Card Body -->
+				<div class="card-body">
+					<div class="pt-4">
+						<div id="myDatasCTOMoul">
+							{% include "planning_mc/Planning.html.twig" %} 
+							{# {{ render(controller('App\\Controller\\PlanningMCController::Index',{ 'service' : service})) }} #}
+						</div>
+					</div>
+					
+				</div>
+				<div class="card-footer">
+					<div class="mt-1 text-center small">
+						<span class="mr-2">
+							<i class="fa fa-circle text-primary"></i> Articles
+						</span>
+						<span class="mr-2">
+							<i class="fa fa-circle text-success"></i> Outillages
+						</span>
+						<span class="mr-2">
+							<i class="fa fa-circle text-info"></i> Moyens
+						</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}
+{% block javascripts %}
+    <script src="{{ asset('build/bootstrap-toggle.min.js') }}"></script>
+    <script type="text/javascript">
+    document.addEventListener('click', function(content) {
+        console.log(content);
+    });
+    var options = {
+        onAdd: function (item, callback) { 
+            //console.log(groups._data[groups._data[item.group].nestedInGroup].content);
+            //prettyPromptItemUpdate('Données de polymérisation', 'Edition', item, groups, timeline, callback); 
+            //item.content = prompt('Edit items text:', item.content);
+            $(document).ready(function () {
+                //console.log(items._data[item.id]);
+                //console.log(item.start);
+                //Conversion de la date pour prise en compte dans controlleur
+                alert('coucou');
+                var DateDeb = (item.start).toISOString().slice(0,24);
+                var DateFin = (item.end).toISOString().slice(0,24);
+                console.log(item);
+                $.ajax({
+                    method: "POST",
+                    data: {id: item.id, olddatedeb: items._data[item.id].start, olddatefin: items._data[item.id].end, moyen: item.group, cycle: item.programmes, newdatedeb: DateDeb, newdatefin: DateFin},
+                    url: "{{ path('Modif_Polym_Pla') }}",
+                    success: function(dat){
+                    }
+                });
+            });
+        }
+    }
+    </script>
+{% endblock %}

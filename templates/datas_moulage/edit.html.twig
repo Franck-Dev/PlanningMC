@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit DatasMoulage{% endblock %}
+
+{% block body %}
+    <h1>Edit DatasMoulage</h1>
+
+    {{ include('datas_moulage/_form.html.twig', {'button_label': 'Update'}) }}
+
+    <a class="btn btn-primary" href="{{ path('Consultation_Donnees') }}"><i class="fa fa-rotate-left m-1"></i>Retour</a>
+
+    {{ include('datas_moulage/_delete_form.html.twig') }}
+{% endblock %}

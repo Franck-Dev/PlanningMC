@@ -33,7 +33,7 @@ class ChargFige
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Moyens", inversedBy="chargFiges")
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\JoinColumn(nullable=true)
      */
     private $Moyen;
 

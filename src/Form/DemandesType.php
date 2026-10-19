@@ -109,7 +109,7 @@ class DemandesType extends AbstractType
             //Choix du type de style pour la liste suivant nombre de données
             $listOTCycle = null === $cycle ? $styListOT = false : $styListOT = true;
             $listOTCycle =  null === $cycle ? $Out->findBy(['Dispo' => '1']) : $Out->myFindByCyc('1', $cycle->getId());
-            dump($styListOF,$styListOT);
+            //dump($styListOF,$styListOT);
 
             $form->add('ListOF', EntityType::class, [
                 'class' => Charge::class,
@@ -120,7 +120,7 @@ class DemandesType extends AbstractType
                 'expanded' => $styListOF,
                 'by_reference' => false,
                 'required' => false,
-                'attr' => ['class'=>'w-100 p-3 d-inline-block overflow-auto','style'=>'height : 150px;'],
+                'attr' => ['class'=>'w-100 p-3 d-inline-block overflow-auto','style'=>'height : 250px;'],
                 'label' => 'Liste des OF encours: ('. count($listOFCycle) .' OF :)'
             ]);
 
@@ -145,7 +145,7 @@ class DemandesType extends AbstractType
                 'mapped' => true,
                 'by_reference' => false,
                 'required' => false,
-                'attr' => ['class'=>'w-100 p-3 d-inline-block overflow-auto','style'=>'height : 150px;'],
+                'attr' => ['class'=>'w-100 p-3 d-inline-block overflow-auto','style'=>'height : 300px;'],
                 'label' => 'Liste des Outillages :'
             ]);
         };

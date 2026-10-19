@@ -119,6 +119,16 @@ class ProgMoyens
      */
     private $changementOutillages;
 
+    /**
+     * @ORM\ManyToMany(targetEntity=EqOT::class, mappedBy="progPolym")
+     */
+    private $eqOTs;
+
+    /**
+     * @ORM\OneToMany(targetEntity=DatasMoulage::class, mappedBy="progLaser")
+     */
+    private $datasMoulages;
+
     public function __toString(): string
     {
         return (string) $this->getNom();
@@ -133,6 +143,8 @@ class ProgMoyens
         $this->articles = new ArrayCollection();
         $this->moyenVal = new ArrayCollection();
         $this->changementOutillages = new ArrayCollection();
+        $this->eqOTs = new ArrayCollection();
+        $this->datasMoulages = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -485,6 +497,63 @@ class ProgMoyens
             // set the owning side to null (unless already changed)
             if ($changementOutillage->getProg() === $this) {
                 $changementOutillage->setProg(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, EqOT>
+     */
+    public function getEqOTs(): Collection
+    {
+        return $this->eqOTs;
+    }
+
+    public function addEqOT(EqOT $eqOT): self
+    {
+        if (!$this->eqOTs->contains($eqOT)) {
+            $this->eqOTs[] = $eqOT;
+            $eqOT->addProgPolym($this);
+        }
+
+        return $this;
+    }
+
+    public function removeEqOT(EqOT $eqOT): self
+    {
+        if ($this->eqOTs->removeElement($eqOT)) {
+            $eqOT->removeProgPolym($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, DatasMoulage>
+     */
+    public function getDatasMoulages(): Collection
+    {
+        return $this->datasMoulages;
+    }
+
+    public function addDatasMoulage(DatasMoulage $datasMoulage): self
+    {
+        if (!$this->datasMoulages->contains($datasMoulage)) {
+            $this->datasMoulages[] = $datasMoulage;
+            $datasMoulage->setProgLaser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDatasMoulage(DatasMoulage $datasMoulage): self
+    {
+        if ($this->datasMoulages->removeElement($datasMoulage)) {
+            // set the owning side to null (unless already changed)
+            if ($datasMoulage->getProgLaser() === $this) {
+                $datasMoulage->setProgLaser(null);
             }
         }
 
